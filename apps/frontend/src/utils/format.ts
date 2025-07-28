@@ -1,5 +1,3 @@
-// Utility functions that will be implemented in later tasks
-
 /**
  * Format a wallet address to show first and last few characters
  * @param address - The full wallet address
@@ -83,33 +81,6 @@ export const isValidEthereumAddress = (address: string): boolean => {
 export const isValidSuiAddress = (address: string): boolean => {
   // Sui addresses are 32-byte hex strings with 0x prefix
   return /^0x[a-fA-F0-9]{64}$/.test(address)
-}
-
-/**
- * Sleep utility for delays
- * @param ms - Milliseconds to sleep
- * @returns Promise that resolves after the delay
- */
-export const sleep = (ms: number): Promise<void> => {
-  return new Promise(resolve => setTimeout(resolve, ms))
-}
-
-/**
- * Debounce function calls
- * @param func - Function to debounce
- * @param wait - Wait time in milliseconds
- * @returns Debounced function
- */
-export const debounce = <T extends (...args: any[]) => any>(
-  func: T,
-  wait: number
-): ((...args: Parameters<T>) => void) => {
-  let timeout: NodeJS.Timeout | null = null
-  
-  return (...args: Parameters<T>) => {
-    if (timeout) clearTimeout(timeout)
-    timeout = setTimeout(() => func(...args), wait)
-  }
 }
 
 /**

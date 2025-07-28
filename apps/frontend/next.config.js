@@ -3,9 +3,6 @@ const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
   transpilePackages: [],
-  experimental: {
-    appDir: true,
-  },
   webpack: (config) => {
     config.resolve.fallback = {
       ...config.resolve.fallback,

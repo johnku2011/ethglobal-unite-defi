@@ -1,8 +1,12 @@
 'use client'
 
 import React from 'react'
+import WalletConnect from '@/components/WalletConnect'
+import { useWallet } from '@/providers/WalletProvider'
 
 export default function Home() {
+  const { connectedWallets } = useWallet()
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       {/* Header */}
@@ -15,9 +19,7 @@ export default function Home() {
               </h1>
             </div>
             
-            <button className="btn-primary">
-              Connect Wallet
-            </button>
+            <WalletConnect />
           </div>
         </div>
       </header>
@@ -49,8 +51,10 @@ export default function Home() {
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
                 Connected Wallets
               </h3>
-              <p className="text-3xl font-bold text-accent-600">0</p>
-              <p className="text-sm text-gray-500 mt-1">EVM + Sui wallets</p>
+              <p className="text-3xl font-bold text-accent-600">{connectedWallets.length}</p>
+              <p className="text-sm text-gray-500 mt-1">
+                {connectedWallets.map(w => w.type).join(' + ') || 'None connected'}
+              </p>
             </div>
 
             <div className="card">
@@ -62,6 +66,49 @@ export default function Home() {
             </div>
           </div>
 
+          {/* Connected Wallets Info */}
+          {connectedWallets.length > 0 && (
+            <div className="card">
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">
+                Connected Wallets
+              </h3>
+              <div className="space-y-3">
+                {connectedWallets.map((wallet, index) => (
+                  <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <div className="text-2xl">
+                        {wallet.type === 'ethereum' ? '🔷' : '🔵'}
+                      </div>
+                      <div>
+                        <div className="font-medium text-gray-900">
+                          {wallet.type === 'ethereum' ? 'Ethereum' : 'Sui'} Wallet
+                        </div>
+                        <div className="text-sm text-gray-500 font-mono">
+                          {wallet.address}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm font-medium text-gray-900">
+                        {wallet.provider}
+                      </div>
+                      {wallet.chainId && (
+                        <div className="text-xs text-gray-500">
+                          Chain ID: {wallet.chainId}
+                        </div>
+                      )}
+                      {wallet.network && (
+                        <div className="text-xs text-gray-500">
+                          {wallet.network}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Getting Started */}
           <div className="card">
             <h3 className="text-xl font-semibold text-gray-900 mb-4">
@@ -69,10 +116,16 @@ export default function Home() {
             </h3>
             <div className="space-y-3">
               <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-primary-100 text-primary-600 rounded-full flex items-center justify-center font-semibold">
-                  1
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold ${
+                  connectedWallets.length > 0 
+                    ? 'bg-green-100 text-green-600' 
+                    : 'bg-primary-100 text-primary-600'
+                }`}>
+                  {connectedWallets.length > 0 ? '✓' : '1'}
                 </div>
-                <p className="text-gray-700">Connect your EVM and Sui wallets</p>
+                <p className={connectedWallets.length > 0 ? 'text-green-700' : 'text-gray-700'}>
+                  Connect your Ethereum and Sui wallets
+                </p>
               </div>
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-8 bg-gray-100 text-gray-400 rounded-full flex items-center justify-center font-semibold">

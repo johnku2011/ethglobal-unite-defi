@@ -13,7 +13,7 @@ Unified DeFi portfolio management across multiple blockchains with seamless cros
 
 ## Tech Stack
 
-- **Frontend**: React 18 + TypeScript + Vite
+- **Frontend**: React 18 + TypeScript + Webpack
 - **Styling**: Tailwind CSS
 - **State Management**: Zustand
 - **Wallet Integration**: wagmi (EVM) + @mysten/sui.js (Sui)
@@ -52,7 +52,7 @@ Unified DeFi portfolio management across multiple blockchains with seamless cros
 
 4. **Start development server**
    ```bash
-   npm run dev
+   npm start
    ```
 
 5. **Open your browser**
@@ -60,9 +60,8 @@ Unified DeFi portfolio management across multiple blockchains with seamless cros
 
 ## Available Scripts
 
-- `npm run dev` - Start development server
+- `npm start` - Start development server
 - `npm run build` - Build for production
-- `npm run preview` - Preview production build
 - `npm run lint` - Run ESLint
 - `npm test` - Run unit tests
 - `npm run test:watch` - Run tests in watch mode
@@ -90,7 +89,7 @@ src/
 │   └── constants.ts   # Constants and configuration
 ├── utils/             # Utility functions (to be implemented)
 ├── App.tsx            # Main App component
-├── main.tsx           # Application entry point
+├── index.tsx          # Application entry point
 └── index.css          # Global styles
 ```
 
@@ -117,6 +116,16 @@ This project follows a structured implementation plan:
 - **Task 11**: Comprehensive testing
 - **Task 12**: Future extensibility
 
+## Build System
+
+This project uses **Webpack 5** as the build system instead of Vite:
+
+- **Development**: Hot reloading with webpack-dev-server
+- **Production**: Optimized builds with code splitting
+- **TypeScript**: Compiled with ts-loader
+- **CSS**: PostCSS with Tailwind CSS support
+- **Assets**: Handled with webpack asset modules
+
 ## API Integration
 
 ### 1inch API
@@ -132,6 +141,18 @@ This project follows a structured implementation plan:
 ### Blockchain RPCs
 - Ethereum/Polygon: Infura, Alchemy
 - Sui: Official RPC endpoints
+
+## Environment Variables
+
+All environment variables use the `REACT_APP_` prefix:
+
+```bash
+REACT_APP_ENVIRONMENT=development
+REACT_APP_ONEINCH_API_KEY=your_api_key
+REACT_APP_WORMHOLE_API_KEY=your_api_key
+REACT_APP_INFURA_PROJECT_ID=your_project_id
+REACT_APP_WALLETCONNECT_PROJECT_ID=your_project_id
+```
 
 ## Contributing
 

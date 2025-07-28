@@ -256,7 +256,7 @@ export const UI_CONFIG = {
 
 // Feature Flags
 export const FEATURE_FLAGS = {
-  ENABLE_TESTNET: process.env.NODE_ENV === 'development',
+  ENABLE_TESTNET: process.env.REACT_APP_ENVIRONMENT === 'development',
   ENABLE_BRIDGE: true,
   ENABLE_ADVANCED_TRADING: false,
   ENABLE_ANALYTICS: true,

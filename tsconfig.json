@@ -12,12 +12,13 @@
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
 
-    /* Bundler mode */
-    "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
+    /* Module Resolution */
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "noEmit": true,
+    "noEmit": false,
     "jsx": "react-jsx",
 
     /* Linting */
@@ -36,6 +37,6 @@
       "@/stores/*": ["src/stores/*"]
     }
   },
-  "include": ["src/**/*", "vite-env.d.ts"],
+  "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "build", ".kiro"]
 } 

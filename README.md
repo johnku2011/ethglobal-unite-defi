@@ -1,185 +1,109 @@
-# UniPortfolio
+# ETHGlobal Unite DeFi Monorepo
 
-Unified DeFi portfolio management across multiple blockchains with seamless cross-chain swap capabilities.
+A DeFi application built for ETHGlobal Unite using pnpm workspaces.
 
-## Features
+## Requirements
 
-- 🌐 **Multi-Chain Support**: Track assets across Ethereum, Polygon, and Sui
-- 💰 **Portfolio Tracking**: Real-time portfolio valuation and analytics
-- 🔄 **Optimal Swaps**: Best rates using 1inch aggregated liquidity
-- 🌉 **Cross-Chain Bridge**: Seamless asset transfers via Wormhole
-- 🔐 **Secure Wallet Integration**: Support for MetaMask, WalletConnect, Sui Wallet, and more
-- 📱 **Responsive Design**: Beautiful, modern UI that works on all devices
-
-## Tech Stack
-
-- **Frontend**: React 18 + TypeScript + Webpack
-- **Styling**: Tailwind CSS
-- **State Management**: Zustand
-- **Wallet Integration**: wagmi (EVM) + @mysten/sui.js (Sui)
-- **API Integration**: 1inch API, Wormhole API
-- **Testing**: Jest + React Testing Library + Cypress
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js 18+ and npm
-- Git
+### System Requirements
+- **Node.js**: >= 18.0.0
+- **pnpm**: >= 8.0.0
 
 ### Installation
 
-1. **Clone the repository**
+1. **Install pnpm globally** (if not already installed):
    ```bash
-   git clone <repository-url>
-   cd ETHGlobal_Unite_UniPortfolio
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Environment Setup**
-   ```bash
-   cp .env.example .env.local
+   npm install -g pnpm
    ```
    
-   Edit `.env.local` and add your API keys:
-   - Get 1inch API key from [1inch Developer Portal](https://portal.1inch.dev/)
-   - Get Infura Project ID from [Infura](https://infura.io/)
-   - Get WalletConnect Project ID from [WalletConnect Cloud](https://cloud.walletconnect.com/)
-
-4. **Start development server**
+   Or using other methods:
    ```bash
-   npm start
+   # Using Homebrew (macOS)
+   brew install pnpm
+   
+   # Using curl
+   curl -fsSL https://get.pnpm.io/install.sh | sh -
    ```
 
-5. **Open your browser**
-   Navigate to `http://localhost:3000`
-
-## Available Scripts
-
-- `npm start` - Start development server
-- `npm run build` - Build for production
-- `npm run lint` - Run ESLint
-- `npm test` - Run unit tests
-- `npm run test:watch` - Run tests in watch mode
-- `npm run test:coverage` - Generate test coverage report
-- `npm run cypress:open` - Open Cypress test runner
-- `npm run cypress:run` - Run Cypress tests headlessly
+2. **Install dependencies**:
+   ```bash
+   pnpm install
+   ```
 
 ## Project Structure
 
 ```
-src/
-├── components/          # React components
-│   ├── Layout.tsx      # Main layout component
-│   ├── Dashboard.tsx   # Dashboard page
-│   ├── Portfolio.tsx   # Portfolio tracking
-│   ├── Swap.tsx       # Token swap interface
-│   ├── Bridge.tsx     # Cross-chain bridge
-│   └── WalletConnect.tsx # Wallet connection
-├── services/           # Service layer (to be implemented)
-├── hooks/             # Custom React hooks (to be implemented)
-├── stores/            # Zustand stores (to be implemented)
-├── types/             # TypeScript type definitions
-│   ├── index.ts       # Core types
-│   ├── services.ts    # Service interfaces
-│   └── constants.ts   # Constants and configuration
-├── utils/             # Utility functions (to be implemented)
-├── App.tsx            # Main App component
-├── index.tsx          # Application entry point
-└── index.css          # Global styles
+├── apps/
+│   └── frontend/          # Next.js 14 interface
+├── packages/              # Shared packages
+├── pnpm-workspace.yaml    # Workspace configuration
+└── package.json           # Root package.json
 ```
 
-## Development Roadmap
+## Development
 
-This project follows a structured implementation plan:
+### Adding New Packages
 
-### ✅ Task 1: Project Setup (Current)
-- [x] React TypeScript project structure
-- [x] Essential dependencies (React, TypeScript, Tailwind CSS, Zustand)
-- [x] Core TypeScript interfaces
-- [x] Basic folder structure and configuration
-
-### 🔄 Upcoming Tasks
-- **Task 2**: Wallet connection infrastructure
-- **Task 3**: Blockchain client infrastructure
-- **Task 4**: 1inch API integration
-- **Task 5**: Portfolio tracking functionality
-- **Task 6**: Swap functionality
-- **Task 7**: Cross-chain bridge functionality
-- **Task 8**: Security and validation
-- **Task 9**: User interface improvements
-- **Task 10**: Real-time updates and optimization
-- **Task 11**: Comprehensive testing
-- **Task 12**: Future extensibility
-
-## Build System
-
-This project uses **Webpack 5** as the build system instead of Vite:
-
-- **Development**: Hot reloading with webpack-dev-server
-- **Production**: Optimized builds with code splitting
-- **TypeScript**: Compiled with ts-loader
-- **CSS**: PostCSS with Tailwind CSS support
-- **Assets**: Handled with webpack asset modules
-
-## API Integration
-
-### 1inch API
-- Swap quotes and execution
-- Real-time price feeds
-- Supported tokens
-
-### Wormhole API
-- Cross-chain bridge quotes
-- Transaction tracking
-- Supported routes
-
-### Blockchain RPCs
-- Ethereum/Polygon: Infura, Alchemy
-- Sui: Official RPC endpoints
-
-## Environment Variables
-
-All environment variables use the `REACT_APP_` prefix:
+To add a new package to a specific app or package:
 
 ```bash
-REACT_APP_ENVIRONMENT=development
-REACT_APP_ONEINCH_API_KEY=your_api_key
-REACT_APP_WORMHOLE_API_KEY=your_api_key
-REACT_APP_INFURA_PROJECT_ID=your_project_id
-REACT_APP_WALLETCONNECT_PROJECT_ID=your_project_id
+# Add to frontend app
+pnpm add lodash --filter frontend
+
+# Add dev dependency to frontend
+pnpm add -D @types/lodash --filter frontend
+
+# Add to all workspaces
+pnpm add -w some-package
+
+# Add to root only
+pnpm add -W some-package
 ```
 
-## Contributing
+### Running Projects
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+```bash
+# Run frontend development server
+pnpm --filter frontend dev
 
-## Security
+# Or use the predefined script
+pnpm dev:interface
 
-- Never commit API keys or private keys
-- Use environment variables for sensitive configuration
-- Follow security best practices for wallet integration
-- Regularly update dependencies
+# Run all dev scripts across workspaces
+pnpm -r dev
 
-## License
+# Build all projects
+pnpm -r build
+```
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+### Available Scripts
 
-## Support
+- `pnpm dev:interface` - Start frontend development server
+- `pnpm -r build` - Build all packages
+- `pnpm -r test` - Run tests in all packages
+- `pnpm -r lint` - Lint all packages
+- `pnpm -r clean` - Clean build artifacts
 
-For support and questions:
-- Open an issue on GitHub
-- Check the documentation
-- Review the project specifications in `.kiro/specs/`
+### Workspace Commands
 
----
+```bash
+# List all workspaces
+pnpm -r list
 
-Built for ETH Global Unite hackathon 🚀 
+# Run command in specific workspace
+pnpm --filter <workspace-name> <command>
+
+# Run command in multiple workspaces
+pnpm --filter "./apps/*" <command>
+```
+
+## Getting Started
+
+1. Install dependencies: `pnpm install`
+2. Start the frontend: `pnpm dev:interface`
+3. Open http://localhost:3000 in your browser
+
+## Adding New Apps/Packages
+
+1. Create new directory in `apps/` or `packages/`
+2. Add `package.json` with proper naming: `@ethglobal-unite-defi/<name>`
+3. The workspace will automatically be detected by pnpm

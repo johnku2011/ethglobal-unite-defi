@@ -1,28 +1,28 @@
-import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
-import { WalletProvider } from '@/providers/WalletProvider'
-import { Toaster } from 'react-hot-toast'
-import './globals.css'
+import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
+import { WalletProvider } from '@/providers/WalletProvider';
+import { Toaster } from 'react-hot-toast';
+import './globals.css';
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'UniPortfolio - DeFi Portfolio Management',
   description: 'Unified DeFi portfolio management across multiple blockchains',
-}
+};
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang='en'>
       <body className={inter.className}>
         <WalletProvider>
           {children}
           <Toaster
-            position="top-right"
+            position='top-right'
             toastOptions={{
               duration: 5000,
               style: {
@@ -48,5 +48,5 @@ export default function RootLayout({
         </WalletProvider>
       </body>
     </html>
-  )
+  );
 }

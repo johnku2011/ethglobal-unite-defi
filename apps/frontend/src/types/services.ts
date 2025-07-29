@@ -52,7 +52,10 @@ export interface IWalletService {
   /**
    * Connect to a wallet provider
    */
-  connect(walletType: 'evm' | 'sui', providerName?: string): Promise<ConnectedWallet>;
+  connect(
+    walletType: 'evm' | 'sui',
+    providerName?: string
+  ): Promise<ConnectedWallet>;
 
   /**
    * Disconnect from a wallet
@@ -150,7 +153,10 @@ export interface IBridgeService {
   /**
    * Get supported assets for bridging between chains
    */
-  getSupportedAssets(sourceChain: string, destinationChain: string): Promise<Token[]>;
+  getSupportedAssets(
+    sourceChain: string,
+    destinationChain: string
+  ): Promise<Token[]>;
 }
 
 // Price Service Interface
@@ -240,7 +246,10 @@ export interface IOneInchApiClient {
   /**
    * Get token prices
    */
-  getPrices(chainId: number, tokenAddresses?: string[]): Promise<ApiResponse<any>>;
+  getPrices(
+    chainId: number,
+    tokenAddresses?: string[]
+  ): Promise<ApiResponse<any>>;
 }
 
 export interface IWormholeApiClient {
@@ -263,4 +272,4 @@ export interface IWormholeApiClient {
    * Get supported routes
    */
   getRoutes(): Promise<ApiResponse<any>>;
-} 
+}

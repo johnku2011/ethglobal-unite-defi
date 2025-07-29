@@ -3,10 +3,10 @@
 
 // These will be implemented in upcoming tasks:
 // Task 2: Wallet services
-// Task 3: Blockchain clients  
+// Task 3: Blockchain clients
 // Task 4: 1inch API integration
 // Task 5: Portfolio service
 // Task 6: Swap service
 // Task 7: Bridge service
 
-console.log('Services will be implemented in upcoming tasks 2-7') 
+console.log('Services will be implemented in upcoming tasks 2-7');

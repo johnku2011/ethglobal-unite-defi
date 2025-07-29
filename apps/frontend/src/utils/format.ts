@@ -5,10 +5,10 @@
  * @returns Formatted address like "0x1234...5678"
  */
 export const formatAddress = (address: string, chars: number = 4): string => {
-  if (!address) return ''
-  if (address.length <= chars * 2 + 3) return address
-  return `${address.slice(0, chars + 2)}...${address.slice(-chars)}`
-}
+  if (!address) return '';
+  if (address.length <= chars * 2 + 3) return address;
+  return `${address.slice(0, chars + 2)}...${address.slice(-chars)}`;
+};
 
 /**
  * Format a number as currency with proper decimals
@@ -25,8 +25,8 @@ export const formatCurrency = (
   return `${currency}${value.toLocaleString('en-US', {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
-  })}`
-}
+  })}`;
+};
 
 /**
  * Format a token amount with proper decimals
@@ -40,15 +40,15 @@ export const formatTokenAmount = (
   decimals: number,
   displayDecimals: number = 6
 ): string => {
-  const value = typeof amount === 'string' ? parseFloat(amount) : amount
-  const divisor = Math.pow(10, decimals)
-  const formattedValue = value / divisor
-  
+  const value = typeof amount === 'string' ? parseFloat(amount) : amount;
+  const divisor = Math.pow(10, decimals);
+  const formattedValue = value / divisor;
+
   return formattedValue.toLocaleString('en-US', {
     minimumFractionDigits: 0,
     maximumFractionDigits: displayDecimals,
-  })
-}
+  });
+};
 
 /**
  * Calculate percentage change
@@ -60,9 +60,9 @@ export const calculatePercentageChange = (
   current: number,
   previous: number
 ): number => {
-  if (previous === 0) return 0
-  return ((current - previous) / previous) * 100
-}
+  if (previous === 0) return 0;
+  return ((current - previous) / previous) * 100;
+};
 
 /**
  * Validate Ethereum address format
@@ -70,8 +70,8 @@ export const calculatePercentageChange = (
  * @returns True if valid Ethereum address
  */
 export const isValidEthereumAddress = (address: string): boolean => {
-  return /^0x[a-fA-F0-9]{40}$/.test(address)
-}
+  return /^0x[a-fA-F0-9]{40}$/.test(address);
+};
 
 /**
  * Validate Sui address format
@@ -80,8 +80,8 @@ export const isValidEthereumAddress = (address: string): boolean => {
  */
 export const isValidSuiAddress = (address: string): boolean => {
   // Sui addresses are 32-byte hex strings with 0x prefix
-  return /^0x[a-fA-F0-9]{64}$/.test(address)
-}
+  return /^0x[a-fA-F0-9]{64}$/.test(address);
+};
 
 /**
  * Copy text to clipboard
@@ -90,17 +90,17 @@ export const isValidSuiAddress = (address: string): boolean => {
  */
 export const copyToClipboard = async (text: string): Promise<void> => {
   try {
-    await navigator.clipboard.writeText(text)
+    await navigator.clipboard.writeText(text);
   } catch (err) {
     // Fallback for older browsers
-    const textArea = document.createElement('textarea')
-    textArea.value = text
-    document.body.appendChild(textArea)
-    textArea.select()
-    document.execCommand('copy')
-    document.body.removeChild(textArea)
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    document.body.appendChild(textArea);
+    textArea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textArea);
   }
-}
+};
 
 /**
  * Generate a random ID
@@ -108,10 +108,11 @@ export const copyToClipboard = async (text: string): Promise<void> => {
  * @returns Random ID string
  */
 export const generateId = (length: number = 8): string => {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
-  let result = ''
+  const chars =
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
   for (let i = 0; i < length; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length))
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
   }
-  return result
-} 
+  return result;
+};

@@ -19,7 +19,7 @@ export const SUPPORTED_CHAINS: Record<string, Chain> = {
     },
     isTestnet: false,
   },
-  
+
   // Polygon Mainnet
   polygon: {
     id: '137',
@@ -94,14 +94,16 @@ export const SUPPORTED_CHAINS: Record<string, Chain> = {
 
 // Popular Tokens Configuration
 export const POPULAR_TOKENS: Record<string, Token[]> = {
-  '1': [ // Ethereum
+  '1': [
+    // Ethereum
     {
       address: '0xA0b86a33E6441b53a0cbaE5eaB8C6e76C1c29cd1',
       symbol: 'USDC',
       name: 'USD Coin',
       decimals: 6,
       chainId: '1',
-      logoUrl: 'https://assets.coingecko.com/coins/images/6319/small/USD_Coin_icon.png',
+      logoUrl:
+        'https://assets.coingecko.com/coins/images/6319/small/USD_Coin_icon.png',
       coingeckoId: 'usd-coin',
     },
     {
@@ -110,7 +112,8 @@ export const POPULAR_TOKENS: Record<string, Token[]> = {
       name: 'Tether USD',
       decimals: 6,
       chainId: '1',
-      logoUrl: 'https://assets.coingecko.com/coins/images/325/small/Tether-logo.png',
+      logoUrl:
+        'https://assets.coingecko.com/coins/images/325/small/Tether-logo.png',
       coingeckoId: 'tether',
     },
     {
@@ -128,18 +131,21 @@ export const POPULAR_TOKENS: Record<string, Token[]> = {
       name: 'Wrapped Bitcoin',
       decimals: 8,
       chainId: '1',
-      logoUrl: 'https://assets.coingecko.com/coins/images/7598/small/wrapped_bitcoin_wbtc.png',
+      logoUrl:
+        'https://assets.coingecko.com/coins/images/7598/small/wrapped_bitcoin_wbtc.png',
       coingeckoId: 'wrapped-bitcoin',
     },
   ],
-  '137': [ // Polygon
+  '137': [
+    // Polygon
     {
       address: '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174',
       symbol: 'USDC',
       name: 'USD Coin',
       decimals: 6,
       chainId: '137',
-      logoUrl: 'https://assets.coingecko.com/coins/images/6319/small/USD_Coin_icon.png',
+      logoUrl:
+        'https://assets.coingecko.com/coins/images/6319/small/USD_Coin_icon.png',
       coingeckoId: 'usd-coin',
     },
     {
@@ -148,7 +154,8 @@ export const POPULAR_TOKENS: Record<string, Token[]> = {
       name: 'Tether USD',
       decimals: 6,
       chainId: '137',
-      logoUrl: 'https://assets.coingecko.com/coins/images/325/small/Tether-logo.png',
+      logoUrl:
+        'https://assets.coingecko.com/coins/images/325/small/Tether-logo.png',
       coingeckoId: 'tether',
     },
     {
@@ -168,15 +175,15 @@ export const API_CONFIG = {
   ONEINCH_API_URL: 'https://api.1inch.dev',
   WORMHOLE_API_URL: 'https://api.wormhole.com',
   COINGECKO_API_URL: 'https://api.coingecko.com/api/v3',
-  
+
   // Rate limiting
   MAX_REQUESTS_PER_MINUTE: 60,
   REQUEST_TIMEOUT: 10000, // 10 seconds
-  
+
   // Retry configuration
   MAX_RETRIES: 3,
   RETRY_DELAY: 1000, // 1 second
-  
+
   // Cache configuration
   PRICE_CACHE_TTL: 30000, // 30 seconds
   BALANCE_CACHE_TTL: 60000, // 1 minute
@@ -207,15 +214,15 @@ export const TRANSACTION_CONFIG = {
     SWAP: 200000,
     BRIDGE: 300000,
   },
-  
+
   // Default slippage (in basis points, 100 = 1%)
   DEFAULT_SLIPPAGE: 100, // 1%
   MAX_SLIPPAGE: 5000, // 50%
-  
+
   // Transaction timeouts
   TRANSACTION_TIMEOUT: 300000, // 5 minutes
   BRIDGE_TIMEOUT: 1800000, // 30 minutes
-  
+
   // Confirmation requirements
   MIN_CONFIRMATIONS: {
     ethereum: 12,
@@ -230,21 +237,21 @@ export const UI_CONFIG = {
   PORTFOLIO_REFRESH_INTERVAL: 30000, // 30 seconds
   PRICE_REFRESH_INTERVAL: 15000, // 15 seconds
   TRANSACTION_POLLING_INTERVAL: 5000, // 5 seconds
-  
+
   // Display configuration
   DECIMAL_PLACES: {
     USD: 2,
     TOKEN_BALANCE: 6,
     PERCENTAGE: 2,
   },
-  
+
   // Animation durations
   ANIMATION_DURATION: {
     FAST: 150,
     NORMAL: 300,
     SLOW: 500,
   },
-  
+
   // Toast notification durations
   TOAST_DURATION: {
     SUCCESS: 5000,
@@ -268,7 +275,8 @@ export const ERROR_MESSAGES = {
   WALLET_NOT_CONNECTED: 'Please connect your wallet to continue',
   INSUFFICIENT_BALANCE: 'Insufficient balance for this transaction',
   NETWORK_ERROR: 'Network error occurred. Please try again.',
-  TRANSACTION_FAILED: 'Transaction failed. Please check the details and try again.',
+  TRANSACTION_FAILED:
+    'Transaction failed. Please check the details and try again.',
   INVALID_ADDRESS: 'Invalid wallet address format',
   SLIPPAGE_TOO_HIGH: 'Slippage tolerance is too high',
   AMOUNT_TOO_SMALL: 'Amount is too small for this transaction',
@@ -282,4 +290,4 @@ export const SUCCESS_MESSAGES = {
   TRANSACTION_CONFIRMED: 'Transaction confirmed',
   BRIDGE_INITIATED: 'Bridge transfer initiated successfully',
   BRIDGE_COMPLETED: 'Bridge transfer completed successfully',
-}; 
+};

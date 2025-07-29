@@ -1,4 +1,4 @@
-import { PrivyClientConfig } from '@privy-io/react-auth'
+import { PrivyClientConfig } from '@privy-io/react-auth';
 
 export const privyConfig: PrivyClientConfig = {
   appearance: {
@@ -83,4 +83,4 @@ export const privyConfig: PrivyClientConfig = {
       testnet: true,
     },
   ],
-} 
+};

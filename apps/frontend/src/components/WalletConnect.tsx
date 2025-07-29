@@ -28,7 +28,7 @@ export default function WalletConnect() {
     setShowWalletModal(false)
   }
 
-  const handleConnectSui = (walletType: 'sui-wallet' | 'suiet') => {
+  const handleConnectSui = (walletType: 'suiet' | 'slush') => {
     connectSui(walletType)
     setShowWalletModal(false)
   }
@@ -136,25 +136,6 @@ export default function WalletConnect() {
                   Sui Wallets
                 </h4>
                 <div className="space-y-2">
-                  {/* Sui Wallet */}
-                  <button
-                    onClick={() => handleConnectSui('sui-wallet')}
-                    disabled={!availableWallets.suiWallet || isConnecting}
-                    className="w-full flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                        🔵
-                      </div>
-                      <div className="text-left">
-                        <div className="font-medium text-gray-900">Sui Wallet</div>
-                        <div className="text-sm text-gray-500">Official Sui Wallet</div>
-                      </div>
-                    </div>
-                    <div className={`text-sm ${availableWallets.suiWallet ? 'text-green-600' : 'text-red-600'}`}>
-                      {availableWallets.suiWallet ? 'Available' : 'Not Installed'}
-                    </div>
-                  </button>
 
                   {/* Suiet Wallet */}
                   <button
@@ -175,6 +156,26 @@ export default function WalletConnect() {
                       {availableWallets.suiet ? 'Available' : 'Not Installed'}
                     </div>
                   </button>
+
+                  {/* Slush Wallet */}
+                  <button
+                    onClick={() => handleConnectSui('slush')}
+                    disabled={!availableWallets.slush || isConnecting}
+                    className="w-full flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 bg-blue-200 rounded-full flex items-center justify-center">
+                        💧
+                      </div>
+                      <div className="text-left">
+                        <div className="font-medium text-gray-900">Slush</div>
+                        <div className="text-sm text-gray-500">Your Sui super app (formerly Sui Wallet)</div>
+                      </div>
+                    </div>
+                    <div className={`text-sm ${availableWallets.slush ? 'text-green-600' : 'text-red-600'}`}>
+                      {availableWallets.slush ? 'Available' : 'Not Installed'}
+                    </div>
+                  </button>
                 </div>
               </div>
 
@@ -183,21 +184,21 @@ export default function WalletConnect() {
                 <p className="text-sm text-gray-600 mb-2">Don&apos;t have a wallet?</p>
                 <div className="flex space-x-2 text-sm">
                   <a
-                    href="https://chromewebstore.google.com/detail/sui-wallet/opcgpfmipidbgpenhmajoajpbobppdil"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:text-blue-800"
-                  >
-                    Install Sui Wallet
-                  </a>
-                  <span className="text-gray-400">•</span>
-                  <a
                     href="https://chromewebstore.google.com/detail/suiet-sui-wallet/khpkpbbcccdmmclmpigdgddabeilkdpd"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-blue-600 hover:text-blue-800"
                   >
                     Install Suiet
+                  </a>
+                  <span className="text-gray-400">•</span>
+                  <a
+                    href="https://chromewebstore.google.com/detail/slush-%E2%80%94-a-sui-wallet/opcgpfmipidbgpenhmajoajpbobppdil"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:text-blue-800"
+                  >
+                    Install Slush
                   </a>
                 </div>
               </div>

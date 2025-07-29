@@ -7,12 +7,15 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createConfig, http } from 'wagmi'
 import { mainnet, polygon, sepolia } from 'wagmi/chains'
 import { privyConfig } from '@/lib/privy'
-import { 
-  connectSuiWallet, 
-  connectSuietWallet, 
-  isSuiWalletInstalled, 
+import {
+  connectSuiWallet,
+  connectSuietWallet,
+  connectSlushWallet,
+  isSuiWalletInstalled,
   isSuietWalletInstalled,
-  SUI_NETWORKS 
+  isSlushWalletInstalled,
+  debugWalletDetection,
+  SUI_NETWORKS
 } from '@/lib/sui'
 import toast from 'react-hot-toast'
 
@@ -55,14 +58,14 @@ interface WalletContextType {
   // Actions
   connectEthereum: () => void
   disconnectEthereum: () => void
-  connectSui: (walletType: 'sui-wallet' | 'suiet') => Promise<void>
+  connectSui: (walletType: 'suiet' | 'slush') => Promise<void>
   disconnectSui: () => void
   
   // Wallet availability
   availableWallets: {
     ethereum: boolean
-    suiWallet: boolean
     suiet: boolean
+    slush: boolean
   }
 }
 
@@ -83,18 +86,33 @@ function WalletProviderInternal({ children }: { children: React.ReactNode }) {
   // Check wallet availability
   const [availableWallets, setAvailableWallets] = useState({
     ethereum: true, // Privy handles this
-    suiWallet: false,
     suiet: false,
+    slush: false,
   })
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setAvailableWallets({
-        ethereum: true,
-        suiWallet: isSuiWalletInstalled(),
-        suiet: isSuietWalletInstalled(),
-      })
+    const detectWallets = async () => {
+      if (typeof window !== 'undefined') {
+        // Debug wallet detection in development
+        if (process.env.NODE_ENV === 'development') {
+          console.log('🔍 Running wallet detection...')
+          await debugWalletDetection()
+        }
+        
+        const [suiet, slush] = await Promise.all([
+          isSuietWalletInstalled(),
+          isSlushWalletInstalled(),
+        ])
+        
+        setAvailableWallets({
+          ethereum: true,
+          suiet,
+          slush,
+        })
+      }
     }
+    
+    detectWallets()
   }, [])
 
   // Ethereum wallet info from Privy
@@ -124,25 +142,25 @@ function WalletProviderInternal({ children }: { children: React.ReactNode }) {
   }
 
   // Connect to Sui wallet
-  const connectSui = async (walletType: 'sui-wallet' | 'suiet') => {
+  const connectSui = async (walletType: 'suiet' | 'slush') => {
     setIsConnecting(true)
     
     try {
       let result: { address: string } | null = null
       let providerName = ''
 
-      if (walletType === 'sui-wallet') {
-        if (!availableWallets.suiWallet) {
-          throw new Error('Sui Wallet is not installed')
-        }
-        result = await connectSuiWallet()
-        providerName = 'Sui Wallet'
-      } else if (walletType === 'suiet') {
+      if (walletType === 'suiet') {
         if (!availableWallets.suiet) {
           throw new Error('Suiet Wallet is not installed')
         }
         result = await connectSuietWallet()
         providerName = 'Suiet'
+      } else if (walletType === 'slush') {
+        if (!availableWallets.slush) {
+          throw new Error('Slush Wallet is not installed')
+        }
+        result = await connectSlushWallet()
+        providerName = 'Slush'
       }
 
       if (result && result.address) {

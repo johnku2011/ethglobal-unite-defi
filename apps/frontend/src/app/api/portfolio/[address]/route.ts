@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// 1inch Portfolio API v4 代理路由
+// 1inch Portfolio API v5 代理路由
 // 解決CORS問題並安全管理API密鑰
 
-const ONEINCH_API_BASE = 'https://api.1inch.dev/portfolio/v4';
+// 更新到1inch Portfolio API v5版本
+// 參考: https://portal.1inch.dev/documentation/apis/portfolio/swagger
+const ONEINCH_API_BASE = 'https://api.1inch.dev/portfolio/portfolio/v5.0';
 
 export async function GET(
   request: NextRequest,
@@ -33,7 +35,9 @@ export async function GET(
     console.log(`🔄 代理請求: Portfolio data for ${address}`);
 
     // 調用1inch Portfolio API
-    const oneinchUrl = `${ONEINCH_API_BASE}/portfolio/${address}`;
+    // 嘗試v5版API端點路徑
+    const oneinchUrl = `${ONEINCH_API_BASE}/wallets/${address}/portfolio`;
+    console.log(`🔍 嘗試訪問v5 API端點: ${oneinchUrl}`);
     const response = await fetch(oneinchUrl, {
       method: 'GET',
       headers: {

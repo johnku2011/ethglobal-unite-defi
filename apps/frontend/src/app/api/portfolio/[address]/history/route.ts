@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// 1inch Portfolio API v4 - Transaction History 代理路由
+// 1inch Portfolio API v5 - Transaction History 代理路由
 
-const ONEINCH_API_BASE = 'https://api.1inch.dev/portfolio/v4';
+// 更新到1inch Portfolio API v5版本
+const ONEINCH_API_BASE = 'https://api.1inch.dev/portfolio/portfolio/v5.0';
 
 export async function GET(
   request: NextRequest,
@@ -46,11 +47,12 @@ export async function GET(
       `📜 代理請求: Transaction history for ${address} (limit: ${limit})`
     );
 
-    // 構建1inch API URL
+    // 構建1inch API v5 URL
     const oneinchUrl = new URL(
-      `${ONEINCH_API_BASE}/portfolio/${address}/history`
+      `${ONEINCH_API_BASE}/wallets/${address}/history`
     );
     oneinchUrl.searchParams.set('limit', limit);
+    console.log(`🔍 嘗試訪問v5 History API端點: ${oneinchUrl.toString()}`);
 
     // 調用1inch Portfolio API
     const response = await fetch(oneinchUrl.toString(), {

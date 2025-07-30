@@ -96,6 +96,9 @@ export default function PortfolioValueChart() {
           onTimeRangeChange={handleTimeRangeChange}
           onRefresh={handleRefresh}
           timeRange={timeRange}
+          showHighLow={true}
+          showAverage={true}
+          showDownloadButton={true}
         />
 
         {/* Chart Information */}

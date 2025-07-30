@@ -43,6 +43,9 @@ export const ValueChart: React.FC<ValueChartProps> = ({
   onTimeRangeChange,
   onRefresh,
   timeRange = '1month',
+  showHighLow = false,
+  showAverage = false,
+  showDownloadButton = false,
 }) => {
   // Handle time range change
   const handleTimeRangeChange = (range: TimeRange) => {
@@ -72,6 +75,45 @@ export const ValueChart: React.FC<ValueChartProps> = ({
     }));
   }, [data]);
 
+  // Calculate additional statistics
+  const chartStats = React.useMemo(() => {
+    if (!chartData || chartData.length === 0) {
+      return {
+        highValue: 0,
+        lowValue: 0,
+        avgValue: 0,
+        highTimestamp: 0,
+        lowTimestamp: 0,
+      };
+    }
+
+    let sum = 0;
+    let highValue = chartData[0].value;
+    let lowValue = chartData[0].value;
+    let highTimestamp = chartData[0].timestamp;
+    let lowTimestamp = chartData[0].timestamp;
+
+    chartData.forEach((point) => {
+      sum += point.value;
+      if (point.value > highValue) {
+        highValue = point.value;
+        highTimestamp = point.timestamp;
+      }
+      if (point.value < lowValue) {
+        lowValue = point.value;
+        lowTimestamp = point.timestamp;
+      }
+    });
+
+    return {
+      highValue,
+      lowValue,
+      avgValue: sum / chartData.length,
+      highTimestamp,
+      lowTimestamp,
+    };
+  }, [chartData]);
+
   // Format X-axis dates
   const formatXAxis = (timestamp: number) => {
     if (timeRange === '1day') {
@@ -91,6 +133,38 @@ export const ValueChart: React.FC<ValueChartProps> = ({
       `$${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}`,
       'Portfolio Value',
     ];
+  };
+
+  // Handle chart download
+  const handleDownloadChart = () => {
+    if (!chartData || chartData.length === 0) return;
+
+    // Create CSV content
+    const headers = ['Date', 'Timestamp', 'Value (USD)'];
+    const rows = chartData.map((point) => [
+      moment(point.timestamp * 1000).format('YYYY-MM-DD HH:mm:ss'),
+      point.timestamp,
+      point.value.toFixed(2),
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map((row) => row.join(',')),
+    ].join('\n');
+
+    // Create download link
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute(
+      'download',
+      `portfolio-value-${timeRange}-${moment().format('YYYY-MM-DD')}.csv`
+    );
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   // Format tooltip label
@@ -144,6 +218,32 @@ export const ValueChart: React.FC<ValueChartProps> = ({
         </h3>
 
         <div className='flex items-center space-x-4'>
+          {/* Download button (optional) */}
+          {showDownloadButton && (
+            <button
+              onClick={handleDownloadChart}
+              disabled={!chartData.length}
+              className='p-1.5 rounded-md bg-gray-50 text-gray-700 hover:bg-gray-100 flex items-center space-x-1'
+              title='Download CSV'
+            >
+              <svg
+                xmlns='http://www.w3.org/2000/svg'
+                className='h-4 w-4'
+                fill='none'
+                viewBox='0 0 24 24'
+                stroke='currentColor'
+              >
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth={2}
+                  d='M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4'
+                />
+              </svg>
+              <span className='text-xs'>CSV</span>
+            </button>
+          )}
+
           {/* Time range selector */}
           <div className='flex rounded-md shadow-sm'>
             <button
@@ -325,6 +425,52 @@ export const ValueChart: React.FC<ValueChartProps> = ({
                       : '3 Years'}
             </div>
           </div>
+
+          {/* Additional statistics */}
+          {showHighLow && (
+            <>
+              <div className='bg-gray-50 p-3 rounded-md'>
+                <div className='text-xs text-gray-500'>Highest Value</div>
+                <div className='text-sm font-semibold text-gray-900'>
+                  $
+                  {chartStats.highValue.toLocaleString(undefined, {
+                    maximumFractionDigits: 2,
+                  })}
+                </div>
+                <div className='text-xs text-gray-400'>
+                  {moment(chartStats.highTimestamp * 1000).format(
+                    'MMM DD, YYYY'
+                  )}
+                </div>
+              </div>
+              <div className='bg-gray-50 p-3 rounded-md'>
+                <div className='text-xs text-gray-500'>Lowest Value</div>
+                <div className='text-sm font-semibold text-gray-900'>
+                  $
+                  {chartStats.lowValue.toLocaleString(undefined, {
+                    maximumFractionDigits: 2,
+                  })}
+                </div>
+                <div className='text-xs text-gray-400'>
+                  {moment(chartStats.lowTimestamp * 1000).format(
+                    'MMM DD, YYYY'
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+
+          {showAverage && (
+            <div className='bg-gray-50 p-3 rounded-md'>
+              <div className='text-xs text-gray-500'>Average Value</div>
+              <div className='text-sm font-semibold text-gray-900'>
+                $
+                {chartStats.avgValue.toLocaleString(undefined, {
+                  maximumFractionDigits: 2,
+                })}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

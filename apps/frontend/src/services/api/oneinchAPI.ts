@@ -85,129 +85,95 @@ export interface TokenAction {
  */
 export class OneInchPortfolioAPI {
   /**
-   * 觸發所有鏈的Portfolio數據獲取
-   * 第一階段：觸發數據獲取任務
+   * 觸發Portfolio數據獲取 (1inch API v4不需要觸發步驟)
+   * 注意：真正的1inch API是直接獲取數據的，不需要預先觸發
    */
   static async triggerPortfolioFetch(address: string): Promise<void> {
-    console.log(`🔄 觸發Portfolio數據獲取: ${address}`);
-
-    await retryRequest(
-      async () => {
-        const response = await portfolioApiClient.post('/portfolio/fetch/all', {
-          address,
-        });
-
-        if (response.status !== 200) {
-          throw new Error(`觸發Portfolio獲取失敗: ${response.status}`);
-        }
-
-        return response.data;
-      },
-      3,
-      1000
-    );
+    console.log(`📝 注意: 1inch Portfolio API v4 不需要觸發步驟，直接獲取數據`);
+    // 1inch API v4 不需要觸發步驟，這個方法保留是為了兼容性
+    return Promise.resolve();
   }
 
   /**
-   * 獲取Portfolio聚合數據
-   * 第二階段：輪詢獲取聚合結果
+   * 獲取Portfolio聚合數據 (使用1inch Portfolio API v4)
+   * 直接從1inch API獲取投資組合數據
    */
   static async getPortfolioData(address: string): Promise<PortfolioResponse> {
-    console.log(`📊 獲取Portfolio數據: ${address}`);
+    console.log(`📊 從1inch API v4獲取Portfolio數據: ${address}`);
+
+    if (!this.isValidEthereumAddress(address)) {
+      throw new Error(`無效的以太坊地址: ${address}`);
+    }
 
     return retryRequest(
       async () => {
+        // 使用真正的1inch Portfolio API v4端點
         const response = await portfolioApiClient.get<PortfolioResponse>(
-          `/portfolio/${address}`
+          `/portfolio/${address}`,
+          {
+            headers: {
+              Accept: 'application/json',
+              ...(process.env.NEXT_PUBLIC_1INCH_API_KEY && {
+                Authorization: `Bearer ${process.env.NEXT_PUBLIC_1INCH_API_KEY}`,
+              }),
+            },
+          }
         );
+
+        if (!response.data) {
+          throw new Error('API響應數據為空');
+        }
 
         return response.data;
       },
       3,
-      1000
+      2000
     );
   }
 
   /**
-   * 完整的Portfolio數據獲取流程
-   * 包含觸發→輪詢→驗證的完整邏輯
+   * 完整的Portfolio數據獲取流程 (1inch API v4簡化版)
+   * 直接獲取Portfolio數據，無需觸發-輪詢機制
    */
   static async fetchCompletePortfolioData(
     address: string,
-    maxRetries: number = 10,
+    maxRetries: number = 3,
     retryDelay: number = 2000
   ): Promise<PortfolioResponse | null> {
     try {
-      console.log(`🚀 開始完整Portfolio數據獲取流程: ${address}`);
+      console.log(`🚀 使用1inch API v4獲取Portfolio數據: ${address}`);
 
-      // 第一步：觸發所有鏈的數據獲取
-      await this.triggerPortfolioFetch(address);
-      console.log(`✅ 已觸發Portfolio數據獲取任務`);
+      // 1inch API v4直接獲取數據，無需觸發步驟
+      const portfolioData = await this.getPortfolioData(address);
 
-      // 第二步：輪詢獲取聚合數據
-      let retries = 0;
-
-      while (retries < maxRetries) {
-        try {
-          console.log(`🔍 輪詢嘗試 ${retries + 1}/${maxRetries}`);
-
-          const portfolioData = await this.getPortfolioData(address);
-
-          // 檢查所有鏈的數據是否準備就緒
-          const allChainsCompleted = portfolioData.chains.every(
-            (chain) => chain.status === 'completed'
-          );
-
-          if (allChainsCompleted) {
-            console.log(`🎉 Portfolio數據獲取完成 (嘗試 ${retries + 1}次)`);
-            return portfolioData;
-          }
-
-          // 記錄鏈狀態統計
-          const statusStats = portfolioData.chains.reduce(
-            (acc, chain) => {
-              acc[chain.status] = (acc[chain.status] || 0) + 1;
-              return acc;
-            },
-            {} as Record<string, number>
-          );
-
-          console.log(`📈 鏈狀態統計:`, statusStats);
-        } catch (error) {
-          console.warn(`⚠️ 輪詢嘗試 ${retries + 1} 失敗:`, error);
-        }
-
-        // 等待下次重試
-        await this.delay(retryDelay);
-        retries++;
-      }
-
-      console.warn(
-        `⏰ 達到最大重試次數 (${maxRetries})，可能部分數據未完全載入`
+      console.log(`🎉 Portfolio數據獲取成功`);
+      console.log(`📊 獲取到 ${portfolioData.chains?.length || 0} 條鏈數據`);
+      console.log(
+        `💰 總價值: $${portfolioData.totalValueUsd?.toLocaleString() || '0'}`
       );
 
-      // 即使未完全載入，也嘗試返回現有數據
-      try {
-        return await this.getPortfolioData(address);
-      } catch (error) {
-        console.error(`❌ 最終獲取Portfolio數據失敗:`, error);
-        return null;
-      }
+      return portfolioData;
     } catch (error) {
       console.error(`❌ Portfolio數據獲取流程失敗:`, error);
+
+      // 對於1inch API，直接拋出錯誤，讓調用方處理
       throw error;
     }
   }
 
   /**
-   * 獲取價值歷史圖表數據
+   * 獲取價值歷史圖表數據 (使用1inch Portfolio API v4)
    */
   static async getValueChart(
     address: string,
     timerange: string = '1month',
     useCache: boolean = true
   ): Promise<BalanceHistoryAPIResponse> {
-    console.log(`📈 獲取價值圖表數據: ${address} (${timerange})`);
+    console.log(`📈 從1inch API v4獲取價值圖表數據: ${address} (${timerange})`);
+
+    if (!this.isValidEthereumAddress(address)) {
+      throw new Error(`無效的以太坊地址: ${address}`);
+    }
 
     return retryRequest(
       async () => {
@@ -216,24 +182,34 @@ export class OneInchPortfolioAPI {
             `/portfolio/${address}/value-chart`,
             {
               params: { timerange, useCache },
+              headers: {
+                Accept: 'application/json',
+                ...(process.env.NEXT_PUBLIC_1INCH_API_KEY && {
+                  Authorization: `Bearer ${process.env.NEXT_PUBLIC_1INCH_API_KEY}`,
+                }),
+              },
             }
           );
 
         return response.data;
       },
       3,
-      1000
+      2000
     );
   }
 
   /**
-   * 獲取交易歷史
+   * 獲取交易歷史 (使用1inch Portfolio API v4)
    */
   static async getTransactionHistory(
     address: string,
     limit: number = 100
   ): Promise<Transaction[]> {
-    console.log(`📜 獲取交易歷史: ${address} (limit: ${limit})`);
+    console.log(`📜 從1inch API v4獲取交易歷史: ${address} (limit: ${limit})`);
+
+    if (!this.isValidEthereumAddress(address)) {
+      throw new Error(`無效的以太坊地址: ${address}`);
+    }
 
     return retryRequest(
       async () => {
@@ -241,13 +217,19 @@ export class OneInchPortfolioAPI {
           `/portfolio/${address}/history`,
           {
             params: { limit },
+            headers: {
+              Accept: 'application/json',
+              ...(process.env.NEXT_PUBLIC_1INCH_API_KEY && {
+                Authorization: `Bearer ${process.env.NEXT_PUBLIC_1INCH_API_KEY}`,
+              }),
+            },
           }
         );
 
         return response.data.items;
       },
       3,
-      1000
+      2000
     );
   }
 

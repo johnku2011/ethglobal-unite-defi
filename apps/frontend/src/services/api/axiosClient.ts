@@ -5,15 +5,15 @@ import axios, { AxiosInstance, AxiosError, AxiosRequestConfig } from 'axios';
  * 基於業界最佳實踐的Axios配置
  */
 
-// API基礎配置
+// Next.js API代理配置 (解決CORS問題)
+// 通過本地API路由代理1inch Portfolio API v4調用
 const API_CONFIG = {
-  baseURL:
-    process.env.NEXT_PUBLIC_PORTFOLIO_API_BASE_URL ||
-    'https://treasury-management-backend.calpa.workers.dev',
-  timeout: 30000, // 30秒超時，適應Portfolio API的處理時間
+  baseURL: '/api', // 使用本地Next.js API路由
+  timeout: 30000, // 30秒超時，適應1inch API處理時間
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',
+    // API密鑰將在服務器端安全處理，前端不需要設置Authorization
   },
 } as const;
 

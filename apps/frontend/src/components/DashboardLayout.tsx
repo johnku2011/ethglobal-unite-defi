@@ -39,6 +39,12 @@ const navigation: NavigationItem[] = [
     description: 'Assets & Holdings',
   },
   {
+    name: 'Value Chart',
+    href: '/portfolio/value-chart',
+    icon: ArrowsRightLeftIcon,
+    description: 'Portfolio Performance',
+  },
+  {
     name: 'Swap',
     href: '/swap',
     icon: ArrowsRightLeftIcon,

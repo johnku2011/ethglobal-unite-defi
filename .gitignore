@@ -117,3 +117,7 @@ ehthumbs.db
 Thumbs.db 
 
 **/docs/
+
+# Test scripts
+test-*.js
+**/test-*.js

@@ -51,10 +51,13 @@ export const usePortfolio = (address: string | undefined) => {
 
 /**
  * 價值圖表數據查詢 Hook
+ * 支持多種時間範圍選項
  */
+export type TimeRange = '1day' | '1week' | '1month' | '1year' | '3years';
+
 export const useValueChart = (
   address: string | undefined,
-  timerange: string = '1month'
+  timerange: TimeRange = '1month'
 ) => {
   return useQuery({
     queryKey: queryKeys.portfolio.valueChart(address || '', timerange),

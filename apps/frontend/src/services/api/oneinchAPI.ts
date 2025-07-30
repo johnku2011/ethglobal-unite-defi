@@ -175,6 +175,13 @@ export class OneInchPortfolioAPI {
       throw new Error(`無效的以太坊地址: ${address}`);
     }
 
+    // 驗證時間範圍參數
+    const validTimeRanges = ['1day', '1week', '1month', '1year', '3years'];
+    if (!validTimeRanges.includes(timerange)) {
+      console.warn(`⚠️ 無效的時間範圍參數: ${timerange}，使用默認值 1month`);
+      timerange = '1month';
+    }
+
     return retryRequest(
       async () => {
         const response =

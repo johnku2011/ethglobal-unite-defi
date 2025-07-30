@@ -1,19 +1,22 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import { useWallet } from '@/providers/WalletProvider';
 import {
   usePortfolio,
   useRefreshPortfolio,
+  useValueChart,
 } from '@/hooks/api/usePortfolioQuery';
 import AssetList from '@/components/portfolio/AssetList';
 import PortfolioChart from '@/components/portfolio/PortfolioChart';
+import SimpleValueChart from '@/components/portfolio/SimpleValueChart';
 import {
   ChartBarIcon,
   ArrowTrendingUpIcon,
   ArrowTrendingDownIcon,
-  EyeIcon,
+  ChartPieIcon,
+  ChartBarSquareIcon,
   ArrowPathIcon,
 } from '@heroicons/react/24/outline';
 import { toast } from 'react-hot-toast';
@@ -21,6 +24,7 @@ import type { Protocol } from '@/services/api/oneinchAPI';
 
 export default function Portfolio() {
   const { connectedWallets } = useWallet();
+  const [chartView, setChartView] = useState<'pie' | 'trend'>('pie');
 
   // Get the first connected Ethereum wallet address
   const ethereumWallet = connectedWallets.find(
@@ -36,6 +40,13 @@ export default function Portfolio() {
     refetch,
     isFetching,
   } = usePortfolio(walletAddress);
+
+  // Fetch value chart data
+  const {
+    data: chartData,
+    isLoading: isChartLoading,
+    refetch: refetchChart,
+  } = useValueChart(walletAddress, '1month');
 
   // Refresh portfolio mutation
   const refreshPortfolioMutation = useRefreshPortfolio();
@@ -123,12 +134,17 @@ export default function Portfolio() {
 
     try {
       await refreshPortfolioMutation.mutateAsync(walletAddress);
-      await refetch();
+      await Promise.all([refetch(), refetchChart()]);
       toast.success('Portfolio data refreshed successfully');
     } catch (error) {
       console.error('Failed to refresh portfolio:', error);
       toast.error('Failed to refresh portfolio data');
     }
+  };
+
+  // Handle chart view toggle
+  const toggleChartView = () => {
+    setChartView(chartView === 'pie' ? 'trend' : 'pie');
   };
 
   // Loading state
@@ -283,12 +299,57 @@ export default function Portfolio() {
           </div>
         </div>
 
-        {/* Portfolio Chart */}
-        <PortfolioChart
-          assets={allAssets}
-          isLoading={isLoading && !portfolioData}
-          totalValue={portfolioData?.result?.total || 0}
-        />
+        {/* Portfolio Chart with Toggle */}
+        <div className='bg-white rounded-xl shadow-soft p-6 border border-gray-100'>
+          <div className='flex justify-between items-center mb-4'>
+            <h3 className='text-lg font-semibold text-gray-900'>
+              Portfolio Visualization
+            </h3>
+            <div className='flex rounded-md shadow-sm'>
+              <button
+                onClick={() => setChartView('pie')}
+                className={`p-2 text-xs font-medium rounded-l-md flex items-center ${
+                  chartView === 'pie'
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                }`}
+                title='Pie Chart'
+              >
+                <ChartPieIcon className='w-4 h-4 mr-1' />
+                <span>Pie Chart</span>
+              </button>
+              <button
+                onClick={() => setChartView('trend')}
+                className={`p-2 text-xs font-medium rounded-r-md flex items-center ${
+                  chartView === 'trend'
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                }`}
+                title='Value Trend'
+              >
+                <ChartBarSquareIcon className='w-4 h-4 mr-1' />
+                <span>Value Trend</span>
+              </button>
+            </div>
+          </div>
+
+          {chartView === 'pie' ? (
+            <PortfolioChart
+              assets={allAssets}
+              isLoading={isLoading && !portfolioData}
+              totalValue={portfolioData?.result?.total || 0}
+            />
+          ) : (
+            <SimpleValueChart
+              data={chartData}
+              isLoading={isChartLoading}
+              timeRange='1month'
+              height={300}
+              showStats={true}
+              onRefresh={() => refetchChart()}
+            />
+          )}
+        </div>
 
         {/* Assets List */}
         <div className='bg-white rounded-xl shadow-soft border border-gray-100'>

@@ -31,6 +31,9 @@ interface ValueChartProps {
   onTimeRangeChange?: (range: TimeRange) => void; // Time range change callback
   onRefresh?: () => void; // Refresh data callback
   timeRange?: TimeRange; // Currently selected time range
+  showHighLow?: boolean; // Whether to show high/low values
+  showAverage?: boolean; // Whether to show average value
+  showDownloadButton?: boolean; // Whether to show download button
 }
 
 export const ValueChart: React.FC<ValueChartProps> = ({

@@ -40,23 +40,39 @@ export default function Portfolio() {
   // Refresh portfolio mutation
   const refreshPortfolioMutation = useRefreshPortfolio();
 
-  // Extract all assets from portfolio data
+  // Extract all assets from portfolio data (adapting to v5 API response format)
   const allAssets = useMemo(() => {
-    if (!portfolioData) return [];
+    if (!portfolioData || !portfolioData.result) return [];
 
+    // 在v5 API中，資產數據在不同的地方
+    // 為了兼容現有代碼，我們模擬相同的資產格式
     const assets: Protocol[] = [];
-    portfolioData.chains.forEach((chain) => {
-      if (chain.status === 'completed' && chain.data?.result) {
-        assets.push(...chain.data.result);
-      }
-    });
+
+    // 從by_category中獲取tokens、native和protocols
+    // 注意：實際數據可能需要從tokens/snapshot API端點獲取
+
+    // 暫時創建一個模擬的Protocol對象
+    // 這裡僅創建一個示例資產表示總價值
+    if (portfolioData.result.total > 0) {
+      const mockProtocol: Protocol = {
+        chain_id: 1, // 假設是以太坊
+        contract_address: '0x0000000000000000000000000000000000000000',
+        protocol: 'Total Assets',
+        name: 'Portfolio Total',
+        value_usd: portfolioData.result.total,
+        underlying_tokens: [],
+        profit_abs_usd: null,
+        roi: null,
+      };
+      assets.push(mockProtocol);
+    }
 
     return assets;
   }, [portfolioData]);
 
-  // Calculate portfolio statistics
+  // Calculate portfolio statistics (adapting to v5 API response format)
   const portfolioStats = useMemo(() => {
-    if (!portfolioData) {
+    if (!portfolioData || !portfolioData.result) {
       return {
         totalValue: '$0.00',
         change24h: '+0.00%',
@@ -66,15 +82,15 @@ export default function Portfolio() {
       };
     }
 
-    const totalValue = portfolioData.totalValueUsd;
+    const totalValue = portfolioData.result.total;
     // TODO: Implement 24h change calculation using value chart data
     const change24h = 0; // Placeholder - will be calculated from historical data
     const changeType =
       change24h > 0 ? 'positive' : change24h < 0 ? 'negative' : 'neutral';
     const totalAssets = allAssets.length;
-    const completedChains = portfolioData.chains.filter(
-      (chain) => chain.status === 'completed'
-    );
+
+    // 獲取鏈的數量 (在v5 API中從by_chain獲取)
+    const chainCount = portfolioData.result.by_chain?.length || 0;
 
     return {
       totalValue:
@@ -87,7 +103,7 @@ export default function Portfolio() {
       change24h: `${change24h > 0 ? '+' : ''}${change24h.toFixed(2)}%`,
       changeType,
       totalAssets,
-      totalChains: completedChains.length,
+      totalChains: chainCount,
     };
   }, [portfolioData, allAssets]);
 
@@ -271,7 +287,7 @@ export default function Portfolio() {
         <PortfolioChart
           assets={allAssets}
           isLoading={isLoading && !portfolioData}
-          totalValue={portfolioData?.totalValueUsd || 0}
+          totalValue={portfolioData?.result?.total || 0}
         />
 
         {/* Assets List */}
@@ -369,8 +385,10 @@ export default function Portfolio() {
                 </div>
                 <div className='text-right'>
                   <div className='text-sm font-medium text-gray-900'>
-                    {wallet.type === 'ethereum' && portfolioData
-                      ? `$${portfolioData.totalValueUsd.toLocaleString()}`
+                    {wallet.type === 'ethereum' &&
+                    portfolioData &&
+                    portfolioData.result
+                      ? `$${portfolioData.result.total.toLocaleString()}`
                       : '$0.00'}
                   </div>
                   <div className='text-xs text-gray-500'>

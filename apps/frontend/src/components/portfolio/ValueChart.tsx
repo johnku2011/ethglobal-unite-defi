@@ -1,9 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import {
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -15,17 +13,24 @@ import {
 import { ArrowPathIcon } from '@heroicons/react/24/outline';
 import moment from 'moment';
 
-// 定義時間範圍類型
+// Define time range type
 export type TimeRange = '1day' | '1week' | '1month' | '1year' | '3years';
 
-// 組件屬性定義
+// Chart data point interface
+interface ChartDataPoint {
+  timestamp: number;
+  date: string;
+  value: number;
+}
+
+// Component props definition
 interface ValueChartProps {
-  data?: any; // 圖表數據
-  isLoading?: boolean; // 加載狀態
-  isRefetching?: boolean; // 重新獲取狀態
-  onTimeRangeChange?: (range: TimeRange) => void; // 時間範圍變更回調
-  onRefresh?: () => void; // 刷新數據回調
-  timeRange?: TimeRange; // 當前選中的時間範圍
+  data?: { result?: Array<{ timestamp: number; value_usd: number }> }; // Chart data
+  isLoading?: boolean; // Loading state
+  isRefetching?: boolean; // Refetching state
+  onTimeRangeChange?: (range: TimeRange) => void; // Time range change callback
+  onRefresh?: () => void; // Refresh data callback
+  timeRange?: TimeRange; // Currently selected time range
 }
 
 export const ValueChart: React.FC<ValueChartProps> = ({
@@ -36,35 +41,35 @@ export const ValueChart: React.FC<ValueChartProps> = ({
   onRefresh,
   timeRange = '1month',
 }) => {
-  // 處理時間範圍變更
+  // Handle time range change
   const handleTimeRangeChange = (range: TimeRange) => {
     if (onTimeRangeChange) {
       onTimeRangeChange(range);
     }
   };
 
-  // 處理刷新按鈕點擊
+  // Handle refresh button click
   const handleRefresh = () => {
     if (onRefresh) {
       onRefresh();
     }
   };
 
-  // 格式化圖表數據
-  const chartData = React.useMemo(() => {
+  // Format chart data
+  const chartData = React.useMemo<ChartDataPoint[]>(() => {
     if (!data || !data.result || !Array.isArray(data.result)) {
       return [];
     }
 
-    // 轉換數據格式
-    return data.result.map((point: any) => ({
+    // Convert data format
+    return data.result.map((point) => ({
       timestamp: point.timestamp,
       date: moment(point.timestamp * 1000).format('MMM DD'),
       value: point.value_usd,
     }));
   }, [data]);
 
-  // 格式化X軸日期
+  // Format X-axis dates
   const formatXAxis = (timestamp: number) => {
     if (timeRange === '1day') {
       return moment(timestamp * 1000).format('HH:mm');
@@ -77,15 +82,15 @@ export const ValueChart: React.FC<ValueChartProps> = ({
     }
   };
 
-  // 格式化工具提示
-  const formatTooltip = (value: number, name: string) => {
+  // Format tooltip
+  const formatTooltip = (value: number, _name: string) => {
     return [
       `$${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}`,
       'Portfolio Value',
     ];
   };
 
-  // 格式化工具提示標籤
+  // Format tooltip label
   const formatTooltipLabel = (timestamp: number) => {
     if (timeRange === '1day') {
       return moment(timestamp * 1000).format('MMM DD, YYYY HH:mm');
@@ -94,7 +99,7 @@ export const ValueChart: React.FC<ValueChartProps> = ({
     }
   };
 
-  // 加載狀態顯示
+  // Loading state display
   if (isLoading) {
     return (
       <div className='bg-white rounded-xl shadow-sm p-6 border border-gray-100'>
@@ -109,7 +114,7 @@ export const ValueChart: React.FC<ValueChartProps> = ({
     );
   }
 
-  // 無數據顯示
+  // No data display
   if (!chartData || chartData.length === 0) {
     return (
       <div className='bg-white rounded-xl shadow-sm p-6 border border-gray-100'>
@@ -129,14 +134,14 @@ export const ValueChart: React.FC<ValueChartProps> = ({
 
   return (
     <div className='bg-white rounded-xl shadow-sm p-6 border border-gray-100'>
-      {/* 頭部控制項 */}
+      {/* Header controls */}
       <div className='flex justify-between items-center mb-6'>
         <h3 className='text-lg font-semibold text-gray-900'>
           Portfolio Value Chart
         </h3>
 
         <div className='flex items-center space-x-4'>
-          {/* 時間範圍選擇器 */}
+          {/* Time range selector */}
           <div className='flex rounded-md shadow-sm'>
             <button
               onClick={() => handleTimeRangeChange('1day')}
@@ -190,7 +195,7 @@ export const ValueChart: React.FC<ValueChartProps> = ({
             </button>
           </div>
 
-          {/* 刷新按鈕 */}
+          {/* Refresh button */}
           <button
             onClick={handleRefresh}
             disabled={isLoading || isRefetching}
@@ -208,7 +213,7 @@ export const ValueChart: React.FC<ValueChartProps> = ({
         </div>
       </div>
 
-      {/* 圖表區域 */}
+      {/* Chart area */}
       <div className='h-64'>
         <ResponsiveContainer width='100%' height='100%'>
           <AreaChart
@@ -258,7 +263,7 @@ export const ValueChart: React.FC<ValueChartProps> = ({
         </ResponsiveContainer>
       </div>
 
-      {/* 圖表統計信息 */}
+      {/* Chart statistics */}
       {chartData.length > 0 && (
         <div className='mt-4 grid grid-cols-2 md:grid-cols-4 gap-4'>
           <div className='bg-gray-50 p-3 rounded-md'>

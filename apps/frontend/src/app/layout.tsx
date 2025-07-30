@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { WalletProvider } from '@/providers/WalletProvider';
+import { QueryProvider } from '@/providers/QueryProvider';
 import { Toaster } from 'react-hot-toast';
 import './globals.css';
 
@@ -19,33 +20,35 @@ export default function RootLayout({
   return (
     <html lang='en'>
       <body className={inter.className}>
-        <WalletProvider>
-          {children}
-          <Toaster
-            position='top-right'
-            toastOptions={{
-              duration: 5000,
-              style: {
-                background: '#363636',
-                color: '#fff',
-              },
-              success: {
-                duration: 4000,
-                iconTheme: {
-                  primary: '#22c55e',
-                  secondary: '#fff',
+        <QueryProvider>
+          <WalletProvider>
+            {children}
+            <Toaster
+              position='top-right'
+              toastOptions={{
+                duration: 5000,
+                style: {
+                  background: '#363636',
+                  color: '#fff',
                 },
-              },
-              error: {
-                duration: 8000,
-                iconTheme: {
-                  primary: '#ef4444',
-                  secondary: '#fff',
+                success: {
+                  duration: 4000,
+                  iconTheme: {
+                    primary: '#22c55e',
+                    secondary: '#fff',
+                  },
                 },
-              },
-            }}
-          />
-        </WalletProvider>
+                error: {
+                  duration: 8000,
+                  iconTheme: {
+                    primary: '#ef4444',
+                    secondary: '#fff',
+                  },
+                },
+              }}
+            />
+          </WalletProvider>
+        </QueryProvider>
       </body>
     </html>
   );

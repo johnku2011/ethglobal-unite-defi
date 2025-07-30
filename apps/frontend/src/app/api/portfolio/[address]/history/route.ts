@@ -47,12 +47,14 @@ export async function GET(
       `📜 代理請求: Transaction history for ${address} (limit: ${limit})`
     );
 
-    // 構建1inch API v5 URL
-    const oneinchUrl = new URL(
-      `${ONEINCH_API_BASE}/wallets/${address}/history`
-    );
+    // 注意：目前尚未找到v5版本的history端點
+    // 臨時使用tokens/snapshot端點作為替代方案
+    const oneinchUrl = new URL(`${ONEINCH_API_BASE}/tokens/snapshot`);
+    oneinchUrl.searchParams.set('addresses', address);
     oneinchUrl.searchParams.set('limit', limit);
-    console.log(`🔍 嘗試訪問v5 History API端點: ${oneinchUrl.toString()}`);
+    console.log(
+      `🔍 訪問1inch Portfolio API v5臨時替代端點: ${oneinchUrl.toString()}`
+    );
 
     // 調用1inch Portfolio API
     const response = await fetch(oneinchUrl.toString(), {

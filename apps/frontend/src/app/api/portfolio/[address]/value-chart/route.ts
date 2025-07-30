@@ -38,12 +38,13 @@ export async function GET(
     console.log(`📈 代理請求: Value chart for ${address} (${timerange})`);
 
     // 構建1inch API v5 URL
-    const oneinchUrl = new URL(
-      `${ONEINCH_API_BASE}/wallets/${address}/value-chart`
-    );
+    const oneinchUrl = new URL(`${ONEINCH_API_BASE}/general/chart`);
+    oneinchUrl.searchParams.set('addresses', address);
     oneinchUrl.searchParams.set('timerange', timerange);
     oneinchUrl.searchParams.set('useCache', useCache.toString());
-    console.log(`🔍 嘗試訪問v5 Value-Chart API端點: ${oneinchUrl.toString()}`);
+    console.log(
+      `🔍 訪問1inch Portfolio API v5 Chart端點: ${oneinchUrl.toString()}`
+    );
 
     // 調用1inch Portfolio API
     const response = await fetch(oneinchUrl.toString(), {

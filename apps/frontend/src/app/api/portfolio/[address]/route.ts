@@ -34,10 +34,10 @@ export async function GET(
 
     console.log(`🔄 代理請求: Portfolio data for ${address}`);
 
-    // 調用1inch Portfolio API
-    // 嘗試v5版API端點路徑
-    const oneinchUrl = `${ONEINCH_API_BASE}/wallets/${address}/portfolio`;
-    console.log(`🔍 嘗試訪問v5 API端點: ${oneinchUrl}`);
+    // 調用1inch Portfolio API v5
+    // 基於測試，使用confirmed的端點
+    const oneinchUrl = `${ONEINCH_API_BASE}/general/current_value?addresses=${address}`;
+    console.log(`🔍 訪問1inch Portfolio API v5: ${oneinchUrl}`);
     const response = await fetch(oneinchUrl, {
       method: 'GET',
       headers: {

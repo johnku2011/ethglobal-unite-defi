@@ -1,6 +1,6 @@
 /**
- * 交易歷史服務
- * 使用1inch Portfolio API v5.0獲取和處理交易歷史數據
+ * Transaction history service
+ * Uses 1inch Transaction API v2.0 to fetch and process transaction history data
  */
 
 import {
@@ -8,24 +8,24 @@ import {
   TransactionHistory,
   TransactionQueryParams,
 } from '../types/transaction';
-import { axiosClient } from './api/axiosClient';
+import { historyApiClient } from './api/axiosClient';
 
 /**
- * 交易歷史服務類
+ * Transaction history service class
  */
 export class TransactionService {
   /**
-   * 獲取錢包地址的交易歷史
-   * @param address 錢包地址
-   * @param options 查詢選項
-   * @returns 交易歷史數據
+   * Fetches transaction history for a wallet address
+   * @param address Wallet address
+   * @param options Query parameters
+   * @returns Transaction history data
    */
   static async fetchTransactions(
     address: string,
     options?: TransactionQueryParams
   ): Promise<TransactionHistory> {
     try {
-      // 構建查詢參數
+      // Build query parameters according to 1inch History API requirements
       const params: Record<string, any> = {};
 
       if (options?.limit) {
@@ -33,7 +33,8 @@ export class TransactionService {
       }
 
       if (options?.chainIds && options.chainIds.length > 0) {
-        params.chains = options.chainIds.join(',');
+        // History API expects chainId as a single value or comma-separated list
+        params.chainId = options.chainIds.join(',');
       }
 
       if (options?.fromTimestampMs) {
@@ -45,15 +46,21 @@ export class TransactionService {
       }
 
       if (options?.types && options.types.length > 0) {
+        // History API expects types as a parameter
         params.types = options.types.join(',');
       }
 
-      // 調用API獲取交易歷史
-      const response = await axiosClient.get<TransactionHistory>(
-        `/portfolio/${address.toLowerCase()}/history`,
+      // Use GET request with the proper 1inch history API endpoint
+      const response = await historyApiClient.get<TransactionHistory>(
+        `/v2.0/history/${address.toLowerCase()}/events`,
         { params }
       );
 
+      console.log(
+        '📊 1inch History API response:',
+        response.status,
+        response.statusText
+      );
       return response.data;
     } catch (error) {
       console.error('Error fetching transaction history:', error);
@@ -62,10 +69,10 @@ export class TransactionService {
   }
 
   /**
-   * 過濾交易按類型
-   * @param transactions 交易列表
-   * @param type 交易類型
-   * @returns 過濾後的交易列表
+   * Filters transactions by type
+   * @param transactions Transaction list
+   * @param type Transaction type
+   * @returns Filtered transaction list
    */
   static filterTransactionsByType(
     transactions: Transaction[],
@@ -77,11 +84,11 @@ export class TransactionService {
   }
 
   /**
-   * 按日期範圍過濾交易
-   * @param transactions 交易列表
-   * @param fromDate 開始日期
-   * @param toDate 結束日期
-   * @returns 過濾後的交易列表
+   * Filters transactions by date range
+   * @param transactions Transaction list
+   * @param fromDate Start date
+   * @param toDate End date
+   * @returns Filtered transaction list
    */
   static filterTransactionsByDateRange(
     transactions: Transaction[],
@@ -104,9 +111,9 @@ export class TransactionService {
   }
 
   /**
-   * 計算交易總額
-   * @param transactions 交易列表
-   * @returns 交易總額（美元）
+   * Calculates total transaction volume
+   * @param transactions Transaction list
+   * @returns Total transaction volume (USD)
    */
   static calculateTransactionVolume(transactions: Transaction[]): number {
     return transactions.reduce((total, tx) => {
@@ -119,18 +126,19 @@ export class TransactionService {
   }
 
   /**
-   * 獲取交易詳情
-   * @param chainId 區塊鏈ID
-   * @param txHash 交易哈希
-   * @returns 交易詳情
+   * Gets transaction details
+   * @param chainId Blockchain ID
+   * @param txHash Transaction hash
+   * @returns Transaction details
    */
   static async getTransactionDetails(
     chainId: number,
     txHash: string
   ): Promise<Transaction | null> {
     try {
-      const response = await axiosClient.get<Transaction>(
-        `/portfolio/transaction/${chainId}/${txHash}`
+      // Using History API for transaction details
+      const response = await historyApiClient.get<Transaction>(
+        `/v2.0/history/transaction/${chainId}/${txHash}`
       );
 
       return response.data;
@@ -141,16 +149,16 @@ export class TransactionService {
   }
 
   /**
-   * 將交易數據分組按日期
-   * @param transactions 交易列表
-   * @returns 按日期分組的交易數據
+   * Groups transactions by date
+   * @param transactions Transaction list
+   * @returns Transactions grouped by date
    */
   static groupTransactionsByDate(
     transactions: Transaction[]
   ): Record<string, Transaction[]> {
     return transactions.reduce(
       (groups, transaction) => {
-        // 按日期分組（YYYY-MM-DD）
+        // Group by date (YYYY-MM-DD)
         const date = new Date(transaction.timeMs).toISOString().split('T')[0];
 
         if (!groups[date]) {
@@ -165,9 +173,9 @@ export class TransactionService {
   }
 
   /**
-   * 按類型統計交易數量
-   * @param transactions 交易列表
-   * @returns 按類型統計的交易數量
+   * Counts transactions by type
+   * @param transactions Transaction list
+   * @returns Transactions count by type
    */
   static countTransactionsByType(
     transactions: Transaction[]
@@ -180,5 +188,74 @@ export class TransactionService {
       },
       {} as Record<string, number>
     );
+  }
+
+  /**
+   * Gets swap transactions for a wallet address
+   * @param address Wallet address
+   * @param options Query parameters
+   * @returns Swap transactions
+   */
+  static async fetchSwapTransactions(
+    address: string,
+    options?: TransactionQueryParams
+  ): Promise<TransactionHistory> {
+    try {
+      // Build query parameters
+      const params: Record<string, any> = {};
+
+      if (options?.limit) {
+        params.limit = options.limit;
+      }
+
+      if (options?.chainIds && options.chainIds.length > 0) {
+        // History API expects chainId as a single value or comma-separated list
+        params.chainId = options.chainIds.join(',');
+      }
+
+      if (options?.fromTimestampMs) {
+        params.fromTimestampMs = options.fromTimestampMs;
+      }
+
+      if (options?.toTimestampMs) {
+        params.toTimestampMs = options.toTimestampMs;
+      }
+
+      // Use dedicated swaps endpoint for better performance with GET
+      const response = await historyApiClient.get<TransactionHistory>(
+        `/v2.0/history/${address.toLowerCase()}/events/swaps`,
+        { params }
+      );
+
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching swap transactions:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Searches transactions by parameters
+   * @param address Wallet address
+   * @param searchParams Search parameters
+   * @returns Matching transactions
+   */
+  static async searchTransactions(
+    address: string,
+    searchParams: Record<string, any>
+  ): Promise<TransactionHistory> {
+    try {
+      // Using post with search endpoint for advanced queries
+      // Note: This specific endpoint actually uses POST according to 1inch docs
+      const response = await historyApiClient.post<TransactionHistory>(
+        `/v2.0/history/${address.toLowerCase()}/search/events`,
+        searchParams
+      );
+
+      return response.data;
+    } catch (error) {
+      console.error('Error searching transactions:', error);
+      throw error;
+    }
   }
 }

@@ -1,133 +1,133 @@
 /**
- * 交易類型常量定義
+ * Transaction type constants definition
  */
 
 export interface TransactionTypeInfo {
-  type: string; // 類型標識符
-  label: string; // 顯示名稱
-  icon: string; // 圖標
-  color: string; // 顯示顏色
-  description: string; // 描述
+  type: string; // Type identifier
+  label: string; // Display name
+  icon: string; // Icon
+  color: string; // Display color
+  description: string; // Description
 }
 
 /**
- * 交易類型配置
+ * Transaction type configuration
  */
 export const transactionTypes: TransactionTypeInfo[] = [
   {
     type: 'swap',
-    label: '兌換',
+    label: 'Swap',
     icon: 'swap_horiz',
     color: 'text-blue-500',
-    description: '兌換一種代幣為另一種代幣',
+    description: 'Exchange one token for another',
   },
   {
     type: 'transfer',
-    label: '轉賬',
+    label: 'Transfer',
     icon: 'send',
     color: 'text-green-500',
-    description: '發送代幣到另一個地址',
+    description: 'Send tokens to another address',
   },
   {
     type: 'receive',
-    label: '收款',
+    label: 'Receive',
     icon: 'call_received',
     color: 'text-green-600',
-    description: '從另一個地址接收代幣',
+    description: 'Receive tokens from another address',
   },
   {
     type: 'approve',
-    label: '授權',
+    label: 'Approve',
     icon: 'verified',
     color: 'text-yellow-500',
-    description: '授權合約使用代幣',
+    description: 'Authorize contract to use tokens',
   },
   {
     type: 'cancel',
-    label: '取消',
+    label: 'Cancel',
     icon: 'cancel',
     color: 'text-red-500',
-    description: '取消待處理的交易',
+    description: 'Cancel a pending transaction',
   },
   {
     type: 'deposit',
-    label: '存入',
+    label: 'Deposit',
     icon: 'arrow_downward',
     color: 'text-indigo-500',
-    description: '將資金存入協議或合約',
+    description: 'Deposit funds to protocol or contract',
   },
   {
     type: 'withdraw',
-    label: '提取',
+    label: 'Withdraw',
     icon: 'arrow_upward',
     color: 'text-purple-500',
-    description: '從協議或合約提取資金',
+    description: 'Withdraw funds from protocol or contract',
   },
   {
     type: 'claim',
-    label: '領取',
+    label: 'Claim',
     icon: 'redeem',
     color: 'text-yellow-600',
-    description: '領取獎勵或空投',
+    description: 'Claim rewards or airdrops',
   },
   {
     type: 'stake',
-    label: '質押',
+    label: 'Stake',
     icon: 'lock',
     color: 'text-blue-600',
-    description: '質押資產以獲得獎勵',
+    description: 'Stake assets for rewards',
   },
   {
     type: 'unstake',
-    label: '解除質押',
+    label: 'Unstake',
     icon: 'lock_open',
     color: 'text-blue-400',
-    description: '解除資產質押',
+    description: 'Unstake assets',
   },
   {
     type: 'borrow',
-    label: '借款',
+    label: 'Borrow',
     icon: 'attach_money',
     color: 'text-orange-500',
-    description: '從協議借出資產',
+    description: 'Borrow assets from protocol',
   },
   {
     type: 'repay',
-    label: '償還',
+    label: 'Repay',
     icon: 'money_off',
     color: 'text-green-500',
-    description: '償還借款',
+    description: 'Repay borrowed assets',
   },
   {
     type: 'mint',
-    label: '鑄造',
+    label: 'Mint',
     icon: 'add_circle',
     color: 'text-teal-500',
-    description: '創建或鑄造新代幣',
+    description: 'Create or mint new tokens',
   },
   {
     type: 'burn',
-    label: '銷毀',
+    label: 'Burn',
     icon: 'remove_circle',
     color: 'text-red-600',
-    description: '銷毀或移除代幣',
+    description: 'Burn or remove tokens',
   },
   {
     type: 'unknown',
-    label: '未知',
+    label: 'Unknown',
     icon: 'help',
     color: 'text-gray-500',
-    description: '未知類型的交易',
+    description: 'Unknown transaction type',
   },
 ];
 
 /**
- * 根據類型獲取交易類型信息
- * @param type 交易類型
- * @returns 交易類型信息
+ * Get transaction type information by type
+ * @param type Transaction type
+ * @returns Transaction type information
  */
 export const getTransactionTypeInfo = (type: string): TransactionTypeInfo => {
   const lowerType = type.toLowerCase();
   const typeInfo = transactionTypes.find((t) => t.type === lowerType);
-  return typeInfo || transactionTypes[transactionTypes.length - 1]; // 默認返回unknown
+  return typeInfo || transactionTypes[transactionTypes.length - 1]; // Return unknown as default
 };

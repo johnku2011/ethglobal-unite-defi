@@ -1,26 +1,114 @@
 import axios, { AxiosInstance, AxiosError, AxiosRequestConfig } from 'axios';
 
 /**
- * Portfolio API 客戶端配置
- * 基於業界最佳實踐的Axios配置
+ * API Client Configuration
+ * Based on industry best practices for Axios configuration
  */
 
-// Next.js API代理配置 (解決CORS問題)
-// 通過本地API路由代理1inch Portfolio API v4調用
-const API_CONFIG = {
-  baseURL: '/api', // 使用本地Next.js API路由
-  timeout: 30000, // 30秒超時，適應1inch API處理時間
+// Next.js API proxy configuration (solves CORS issues)
+// Proxies 1inch Portfolio API v4 calls through local Next.js API routes
+const PORTFOLIO_API_CONFIG = {
+  baseURL: '/api', // Using local Next.js API route
+  timeout: 30000, // 30 second timeout for 1inch API processing time
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',
-    // API密鑰將在服務器端安全處理，前端不需要設置Authorization
+    // API key is handled securely on server-side, not needed in frontend
+  },
+} as const;
+
+// 1inch History API configuration (direct calls)
+const HISTORY_API_CONFIG = {
+  baseURL: 'https://api.1inch.dev/history', // Direct connection to 1inch History API
+  timeout: 30000, // 30 second timeout
+  headers: {
+    'Content-Type': 'application/json',
+    Accept: 'application/json',
   },
 } as const;
 
 /**
- * 創建Portfolio專用的Axios實例
+ * Create Portfolio-specific Axios instance
  */
-export const portfolioApiClient: AxiosInstance = axios.create(API_CONFIG);
+const portfolioApiClient: AxiosInstance = axios.create(PORTFOLIO_API_CONFIG);
+
+/**
+ * Create History API-specific Axios instance
+ */
+const historyApiClient: AxiosInstance = axios.create(HISTORY_API_CONFIG);
+
+/**
+ * Request interceptor for History API - adds authorization and logging
+ */
+historyApiClient.interceptors.request.use(
+  (config) => {
+    // Add API key (if available)
+    const apiKey = process.env.NEXT_PUBLIC_1INCH_API_KEY;
+    if (apiKey && config.headers) {
+      config.headers['Authorization'] = `Bearer ${apiKey}`;
+    }
+
+    // Log requests in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log(
+        `🚀 History API Request: ${config.method?.toUpperCase()} ${config.url}`
+      );
+      if (config.params) {
+        console.log('📤 Request params:', config.params);
+      }
+    }
+
+    // Add timestamp
+    config.metadata = { startTime: Date.now() };
+
+    return config;
+  },
+  (error: AxiosError) => {
+    console.error('❌ History API Request error:', error);
+    return Promise.reject(error);
+  }
+);
+
+/**
+ * Response interceptor for History API - handles responses and errors
+ */
+historyApiClient.interceptors.response.use(
+  (response) => {
+    // Calculate request time
+    const startTime = response.config.metadata?.startTime;
+    const duration = startTime ? Date.now() - startTime : 0;
+
+    // Log response in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log(
+        `✅ History API Response: ${response.config.method?.toUpperCase()} ${response.config.url} (${duration}ms)`
+      );
+      console.log('📥 Response data:', response.data);
+    }
+
+    return response;
+  },
+  (error: AxiosError) => {
+    // Calculate request time
+    const startTime = error.config?.metadata?.startTime;
+    const duration = startTime ? Date.now() - startTime : 0;
+
+    // Detailed error log
+    const errorInfo = {
+      url: error.config?.url,
+      method: error.config?.method?.toUpperCase(),
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      duration: `${duration}ms`,
+      message: error.message,
+      data: error.response?.data,
+    };
+
+    console.error('❌ History API Error:', errorInfo);
+
+    return Promise.reject(error);
+  }
+);
 
 /**
  * 請求攔截器 - 添加認證和日誌
@@ -249,4 +337,8 @@ declare module 'axios' {
   }
 }
 
+// Export both API clients
+export { portfolioApiClient, historyApiClient };
+
+// Default export for backward compatibility
 export default portfolioApiClient;

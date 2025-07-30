@@ -183,7 +183,7 @@ export const PortfolioChart: React.FC<PortfolioChartProps> = ({
     return (
       <div className='bg-white rounded-xl shadow-soft p-6 border border-gray-100'>
         <h3 className='text-lg font-semibold text-gray-900 mb-4'>
-          Portfolio Visualization
+          Asset Distribution
         </h3>
         <div className='text-center py-12'>
           <ChartPieIcon className='w-16 h-16 text-gray-300 mx-auto mb-4' />
@@ -201,7 +201,7 @@ export const PortfolioChart: React.FC<PortfolioChartProps> = ({
       {/* Header */}
       <div className='flex items-center justify-between mb-6'>
         <h3 className='text-lg font-semibold text-gray-900'>
-          Portfolio Visualization
+          Asset Distribution
         </h3>
         <div className='flex items-center space-x-2'>
           <button

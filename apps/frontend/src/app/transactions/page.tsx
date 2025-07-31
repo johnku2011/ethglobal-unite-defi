@@ -53,15 +53,68 @@ export default function TransactionsPage() {
     enabled: authenticated && !!walletAddress,
   });
 
+  // DEBUG: 檢查API返回數據結構
+  React.useEffect(() => {
+    if (transactionData) {
+      console.log('🔍 交易數據結構檢查:', transactionData);
+      console.log('🔍 是否有items屬性:', !!transactionData.items);
+      console.log(
+        '🔍 items類型:',
+        Array.isArray(transactionData.items)
+          ? 'Array'
+          : typeof transactionData.items
+      );
+      console.log('🔍 items長度:', transactionData.items?.length);
+      console.log('🔍 total值:', transactionData.total);
+
+      // 檢查第一個交易項目的結構(如果存在)
+      if (transactionData.items && transactionData.items.length > 0) {
+        console.log('🔍 第一個交易結構:', transactionData.items[0]);
+        console.log(
+          '🔍 是否有timeMs屬性:',
+          'timeMs' in transactionData.items[0]
+        );
+        console.log(
+          '🔍 是否有details屬性:',
+          'details' in transactionData.items[0]
+        );
+      }
+    }
+  }, [transactionData]);
+
   // Handle sorting
   const sortedTransactions = useMemo(() => {
-    if (!transactionData?.items) return [];
+    if (!transactionData?.items || !Array.isArray(transactionData.items)) {
+      console.warn('⚠️ 沒有有效的交易數據項目，或者items不是陣列');
+      return [];
+    }
 
-    return [...transactionData.items].sort((a, b) => {
+    // 確保所有交易都有必要的字段
+    const validTransactions = transactionData.items.filter((tx) => {
+      if (!tx || typeof tx !== 'object') {
+        console.warn('⚠️ 發現無效的交易項目:', tx);
+        return false;
+      }
+      // 檢查關鍵屬性
+      if (tx.timeMs === undefined) {
+        console.warn('⚠️ 交易缺少timeMs屬性:', tx);
+      }
+      return true;
+    });
+
+    console.log(
+      `📊 有效交易數量: ${validTransactions.length}/${transactionData.items.length}`
+    );
+
+    return [...validTransactions].sort((a, b) => {
       if (viewSettings.sortBy === 'timeMs') {
+        // 確保使用數字進行比較
+        const aTime = typeof a.timeMs === 'number' ? a.timeMs : 0;
+        const bTime = typeof b.timeMs === 'number' ? b.timeMs : 0;
+
         return viewSettings.sortDirection === 'asc'
-          ? a.timeMs - b.timeMs
-          : b.timeMs - a.timeMs;
+          ? aTime - bTime
+          : bTime - aTime;
       }
 
       return 0; // Default no sorting
@@ -148,59 +201,75 @@ export default function TransactionsPage() {
         )}
 
         {/* Transaction Stats */}
-        {authenticated && sortedTransactions.length > 0 && (
-          <div className='grid grid-cols-1 md:grid-cols-4 gap-4 mb-6'>
-            <div className='bg-white p-4 rounded-lg shadow-sm border border-gray-100'>
-              <div className='text-sm font-medium text-gray-500 mb-1'>
-                Total Transactions
-              </div>
-              <div className='text-2xl font-semibold'>
-                {transactionData?.total || sortedTransactions.length}
-              </div>
+        {/* Transaction Stats - Show with real data or skeleton when loading */}
+        {authenticated &&
+          (isLoading ? (
+            <div className='grid grid-cols-1 md:grid-cols-4 gap-4 mb-6'>
+              {[1, 2, 3, 4].map((i) => (
+                <div
+                  key={i}
+                  className='bg-white p-4 rounded-lg shadow-sm border border-gray-100 animate-pulse'
+                >
+                  <div className='h-4 bg-gray-200 rounded w-28 mb-2'></div>
+                  <div className='h-8 bg-gray-200 rounded w-16'></div>
+                </div>
+              ))}
             </div>
+          ) : (
+            sortedTransactions.length > 0 && (
+              <div className='grid grid-cols-1 md:grid-cols-4 gap-4 mb-6'>
+                <div className='bg-white p-4 rounded-lg shadow-sm border border-gray-100'>
+                  <div className='text-sm font-medium text-gray-500 mb-1'>
+                    Total Transactions
+                  </div>
+                  <div className='text-2xl font-semibold'>
+                    {transactionData?.total || sortedTransactions.length}
+                  </div>
+                </div>
 
-            <div className='bg-white p-4 rounded-lg shadow-sm border border-gray-100'>
-              <div className='text-sm font-medium text-gray-500 mb-1'>
-                Completed
-              </div>
-              <div className='text-2xl font-semibold text-green-600'>
-                {
-                  sortedTransactions.filter(
-                    (tx) =>
-                      tx.details.status === 'success' ||
-                      tx.details.status === 'completed'
-                  ).length
-                }
-              </div>
-            </div>
+                <div className='bg-white p-4 rounded-lg shadow-sm border border-gray-100'>
+                  <div className='text-sm font-medium text-gray-500 mb-1'>
+                    Completed
+                  </div>
+                  <div className='text-2xl font-semibold text-green-600'>
+                    {
+                      sortedTransactions.filter(
+                        (tx) =>
+                          tx.details.status === 'success' ||
+                          tx.details.status === 'completed'
+                      ).length
+                    }
+                  </div>
+                </div>
 
-            <div className='bg-white p-4 rounded-lg shadow-sm border border-gray-100'>
-              <div className='text-sm font-medium text-gray-500 mb-1'>
-                Pending
-              </div>
-              <div className='text-2xl font-semibold text-yellow-600'>
-                {
-                  sortedTransactions.filter(
-                    (tx) => tx.details.status === 'pending'
-                  ).length
-                }
-              </div>
-            </div>
+                <div className='bg-white p-4 rounded-lg shadow-sm border border-gray-100'>
+                  <div className='text-sm font-medium text-gray-500 mb-1'>
+                    Pending
+                  </div>
+                  <div className='text-2xl font-semibold text-yellow-600'>
+                    {
+                      sortedTransactions.filter(
+                        (tx) => tx.details.status === 'pending'
+                      ).length
+                    }
+                  </div>
+                </div>
 
-            <div className='bg-white p-4 rounded-lg shadow-sm border border-gray-100'>
-              <div className='text-sm font-medium text-gray-500 mb-1'>
-                Failed
+                <div className='bg-white p-4 rounded-lg shadow-sm border border-gray-100'>
+                  <div className='text-sm font-medium text-gray-500 mb-1'>
+                    Failed
+                  </div>
+                  <div className='text-2xl font-semibold text-red-600'>
+                    {
+                      sortedTransactions.filter(
+                        (tx) => tx.details.status === 'failed'
+                      ).length
+                    }
+                  </div>
+                </div>
               </div>
-              <div className='text-2xl font-semibold text-red-600'>
-                {
-                  sortedTransactions.filter(
-                    (tx) => tx.details.status === 'failed'
-                  ).length
-                }
-              </div>
-            </div>
-          </div>
-        )}
+            )
+          ))}
 
         {/* Charts */}
         {authenticated && viewSettings.showChart && (

@@ -295,12 +295,34 @@ const TransactionChart: React.FC<TransactionChartProps> = ({
     );
   }, [filteredTransactions, dateRange]);
 
-  // 渲染加載狀態
+  // 渲染加載骨架屏
   if (isLoading) {
     return (
-      <div className='w-full h-80 flex justify-center items-center'>
-        <div className='animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500'></div>
-        <span className='ml-2'>Loading...</span>
+      <div className='bg-white rounded-lg p-6 shadow-md animate-pulse'>
+        {/* 圖表標題和控制項骨架 */}
+        <div className='flex justify-between items-center mb-6'>
+          <div className='h-6 bg-gray-200 rounded w-48'></div>
+          <div className='flex space-x-2'>
+            <div className='h-8 bg-gray-200 rounded w-28'></div>
+            <div className='h-8 bg-gray-200 rounded w-28'></div>
+          </div>
+        </div>
+        {/* 圖表骨架 */}
+        <div className='w-full h-80 flex flex-col justify-center items-center bg-gray-50 rounded-lg'>
+          <div className='w-16 h-16 bg-gray-200 rounded-full mb-4'></div>
+          <div className='h-4 bg-gray-200 rounded w-48 mb-2'></div>
+          <div className='h-3 bg-gray-200 rounded w-32'></div>
+        </div>
+
+        {/* 圖表圖例骨架 */}
+        <div className='flex justify-center mt-4 space-x-6'>
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className='flex items-center'>
+              <div className='w-3 h-3 bg-gray-200 rounded-full mr-2'></div>
+              <div className='h-3 bg-gray-200 rounded w-16'></div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -458,7 +480,6 @@ const TransactionChart: React.FC<TransactionChartProps> = ({
           ) : (
             <PieChart>
               <Pie
-                activeIndex={activeIndex}
                 activeShape={renderActiveShape}
                 data={typeDistribution}
                 cx='50%'
@@ -468,6 +489,8 @@ const TransactionChart: React.FC<TransactionChartProps> = ({
                 dataKey='value'
                 onMouseEnter={onPieEnter}
                 paddingAngle={2}
+                // @ts-expect-error - activeIndex is supported by Recharts but TS definitions are outdated
+                activeIndex={activeIndex}
               >
                 {typeDistribution.map((entry, index) => (
                   <Cell

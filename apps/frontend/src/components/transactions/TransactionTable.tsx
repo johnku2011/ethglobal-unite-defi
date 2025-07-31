@@ -101,12 +101,78 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
     return <span className={`px-2 py-1 rounded ${statusClass}`}>{status}</span>;
   };
 
-  // Render loading state
+  // Render loading state with skeleton
   if (isLoading) {
     return (
-      <div className='w-full flex justify-center items-center py-12'>
-        <div className='animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500'></div>
-        <span className='ml-2'>Loading...</span>
+      <div className='space-y-4'>
+        {/* Skeleton header */}
+        <div className='bg-gray-50 rounded-lg p-3'>
+          <div className='flex justify-between items-center'>
+            <div className='w-40 h-5 bg-gray-200 rounded animate-pulse'></div>
+            <div className='w-32 h-5 bg-gray-200 rounded animate-pulse'></div>
+          </div>
+        </div>
+
+        {/* Skeleton table */}
+        <div className='overflow-x-auto'>
+          <table className='min-w-full divide-y divide-gray-200'>
+            <thead className='bg-gray-50'>
+              <tr>
+                {['Time', 'Hash', 'Type', 'From', 'To', 'Status', 'Chain'].map(
+                  (header) => (
+                    <th
+                      key={header}
+                      className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'
+                    >
+                      {header}
+                    </th>
+                  )
+                )}
+              </tr>
+            </thead>
+            <tbody className='bg-white divide-y divide-gray-200'>
+              {Array(5)
+                .fill(0)
+                .map((_, index) => (
+                  <tr key={index} className='animate-pulse'>
+                    <td className='px-6 py-4 whitespace-nowrap'>
+                      <div className='h-4 bg-gray-200 rounded w-24'></div>
+                    </td>
+                    <td className='px-6 py-4 whitespace-nowrap'>
+                      <div className='h-4 bg-gray-200 rounded w-28'></div>
+                    </td>
+                    <td className='px-6 py-4 whitespace-nowrap'>
+                      <div className='flex items-center'>
+                        <div className='h-4 w-4 bg-gray-200 rounded-full mr-2'></div>
+                        <div className='h-4 bg-gray-200 rounded w-16'></div>
+                      </div>
+                    </td>
+                    <td className='px-6 py-4 whitespace-nowrap'>
+                      <div className='h-4 bg-gray-200 rounded w-24'></div>
+                    </td>
+                    <td className='px-6 py-4 whitespace-nowrap'>
+                      <div className='h-4 bg-gray-200 rounded w-24'></div>
+                    </td>
+                    <td className='px-6 py-4 whitespace-nowrap'>
+                      <div className='h-5 bg-gray-200 rounded w-16'></div>
+                    </td>
+                    <td className='px-6 py-4 whitespace-nowrap'>
+                      <div className='flex items-center'>
+                        <div className='h-4 w-4 bg-gray-200 rounded-full mr-2'></div>
+                        <div className='h-4 bg-gray-200 rounded w-16'></div>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Skeleton pagination */}
+        <div className='px-6 py-3 border-t border-gray-200 flex justify-between items-center bg-gray-50'>
+          <div className='w-48 h-4 bg-gray-200 rounded animate-pulse'></div>
+          <div className='w-24 h-6 bg-gray-200 rounded animate-pulse'></div>
+        </div>
       </div>
     );
   }

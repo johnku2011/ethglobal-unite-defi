@@ -58,7 +58,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
                 {entry.name}:{' '}
                 {entry.payload.isCount
                   ? `${entry.value} transactions`
-                  : `${entry.value.toFixed(2)} USD`}{' '}
+                  : `${entry.value.toFixed(2)} transactions`}{' '}
                 ({((entry.value / total) * 100).toFixed(1)}%)
               </span>
             </div>
@@ -67,7 +67,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
             <span className='font-medium text-gray-900'>
               {payload[0]?.payload?.isCount
                 ? `Total: ${Math.round(total)} transactions`
-                : `Total: ${total.toFixed(2)} USD`}
+                : `Total: ${total.toFixed(2)} transactions`}
             </span>
           </div>
         </div>

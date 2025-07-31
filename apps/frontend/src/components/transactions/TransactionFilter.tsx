@@ -88,7 +88,7 @@ const TransactionFilter: React.FC<TransactionFilterProps> = ({
   return (
     <div className='mb-6'>
       <div className='flex justify-between items-center mb-4'>
-        <h3 className='text-lg font-medium text-gray-900'>
+        <h3 className='text-lg font-medium text-gray-900 mr-4'>
           Transaction History
         </h3>
 

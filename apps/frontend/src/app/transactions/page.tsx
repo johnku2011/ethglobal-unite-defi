@@ -195,7 +195,7 @@ export default function TransactionsPage() {
           {sortedTransactions.length > 0 && (
             <button
               onClick={handleExportCSV}
-              className='px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 flex items-center'
+              className='px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 flex items-center ml-4'
             >
               <ArrowDownTrayIcon className='h-5 w-5 mr-2' />
               Export CSV

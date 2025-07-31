@@ -140,14 +140,31 @@ export class CryptoPriceService {
       const address = this.getTokenAddressBySymbol(symbol);
       if (!address || !data[address]) return;
 
-      const priceInfo = data[address];
+      const priceValue = data[address];
       const token = this.getTokenInfo(symbol);
+
+      // Handle both simple string price and complex object formats
+      let price = 0;
+      let change24h = 0;
+      let lastUpdated = new Date();
+
+      if (typeof priceValue === 'string' || typeof priceValue === 'number') {
+        // Simple format: {"address": "price_value"}
+        price = parseFloat(String(priceValue)) || 0;
+      } else if (typeof priceValue === 'object' && priceValue !== null) {
+        // Complex format: {"address": {"usd": "price", "usd_24h_change": 2.5}}
+        price = parseFloat(priceValue.usd || priceValue.price || '0') || 0;
+        change24h = priceValue.usd_24h_change || priceValue.change24h || 0;
+        lastUpdated = priceValue.last_updated_at
+          ? new Date(priceValue.last_updated_at)
+          : new Date();
+      }
 
       result.push({
         token,
-        price: parseFloat(priceInfo.usd) || 0,
-        change24h: priceInfo.usd_24h_change || 0,
-        lastUpdated: new Date(priceInfo.last_updated_at),
+        price,
+        change24h,
+        lastUpdated,
       });
     });
 

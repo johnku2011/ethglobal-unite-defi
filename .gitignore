@@ -121,3 +121,4 @@ Thumbs.db
 # Test scripts
 test-*.js
 **/test-*.js
+**/test-*.sh

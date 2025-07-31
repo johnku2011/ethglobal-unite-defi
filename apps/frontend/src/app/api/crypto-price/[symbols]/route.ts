@@ -1,17 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// 1inch Spot Price API基礎URL
+// 1inch Spot Price API base URL
 // Back to official format from documentation
 const ONEINCH_API_BASE = 'https://api.1inch.dev/price/v1.1';
 
 /**
- * GET處理程序 - 獲取特定代幣的價格數據
+ * GET handler - Get specific token price data
  *
- * 路由: /api/crypto-price/{symbols}?chainId={chainId}
+ * Route: /api/crypto-price/{symbols}?chainId={chainId}
  *
- * @param request Next.js請求對象
- * @param params 路由參數，包含代幣地址列表（逗號分隔）
- * @returns 價格數據響應
+ * @param request Next.js request object
+ * @param params Route parameters, containing token address list (comma-separated)
+ * @returns Price data response
  */
 export async function GET(
   request: NextRequest,
@@ -44,8 +44,8 @@ export async function GET(
       `🔄 Proxy request: Spot Price data for tokens ${symbols} on chain ${chainId}`
     );
 
-    // Call 1inch Spot Price API
-    const oneinchUrl = `${ONEINCH_API_BASE}/${chainId}/${symbols}`;
+    // Call 1inch Spot Price API with required currency parameter
+    const oneinchUrl = `${ONEINCH_API_BASE}/${chainId}/${symbols}?currency=USD`;
     console.log(`🔍 Accessing 1inch Spot Price API: ${oneinchUrl}`);
 
     const response = await fetch(oneinchUrl, {
@@ -134,7 +134,7 @@ export async function GET(
 }
 
 /**
- * OPTIONS處理程序 - 處理預檢請求 (CORS)
+ * OPTIONS handler - Handle preflight requests (CORS)
  */
 export async function OPTIONS(_request: NextRequest) {
   return new NextResponse(null, {

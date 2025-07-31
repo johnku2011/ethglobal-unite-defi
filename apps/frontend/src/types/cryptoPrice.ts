@@ -21,19 +21,26 @@ export interface CryptoPriceData {
 }
 
 // 1inch Spot Price API raw response type
+// Based on official documentation, the API returns simple key-value pairs
 export interface SpotPriceApiResponse {
-  [tokenAddress: string]: {
-    // ETH price
-    eth: string;
-    // USD price
-    usd: string;
-    // 24-hour change percentage
-    usd_24h_change?: number;
-    // 24-hour trading volume
-    usd_24h_vol?: number;
-    // Last update time (Unix timestamp, milliseconds)
-    last_updated_at: number;
-  };
+  [tokenAddress: string]:
+    | string
+    | number
+    | {
+        // ETH price (fallback for complex format)
+        eth?: string;
+        // USD price (fallback for complex format)
+        usd?: string;
+        // Price value (fallback for complex format)
+        price?: string;
+        // 24-hour change percentage (fallback for complex format)
+        usd_24h_change?: number;
+        change24h?: number;
+        // 24-hour trading volume (fallback for complex format)
+        usd_24h_vol?: number;
+        // Last update time (Unix timestamp, milliseconds)
+        last_updated_at?: number;
+      };
 }
 
 // API request parameters
@@ -111,6 +118,62 @@ export const COMMON_TOKENS: Record<string, CryptoToken> = {
     decimals: 8,
     chainId: '1',
     logoUrl: 'https://cryptologos.cc/logos/bitcoin-btc-logo.png',
+  },
+  BNB: {
+    address: COMMON_TOKEN_ADDRESSES.BNB,
+    symbol: 'BNB',
+    name: 'BNB',
+    decimals: 18,
+    chainId: '56',
+    logoUrl: 'https://cryptologos.cc/logos/bnb-bnb-logo.png',
+  },
+  SOL: {
+    address: COMMON_TOKEN_ADDRESSES.SOL,
+    symbol: 'SOL',
+    name: 'Solana',
+    decimals: 9,
+    chainId: '1',
+    logoUrl: 'https://cryptologos.cc/logos/solana-sol-logo.png',
+  },
+  XRP: {
+    address: COMMON_TOKEN_ADDRESSES.XRP,
+    symbol: 'XRP',
+    name: 'XRP',
+    decimals: 6,
+    chainId: '1',
+    logoUrl: 'https://cryptologos.cc/logos/xrp-xrp-logo.png',
+  },
+  ADA: {
+    address: COMMON_TOKEN_ADDRESSES.ADA,
+    symbol: 'ADA',
+    name: 'Cardano',
+    decimals: 6,
+    chainId: '1',
+    logoUrl: 'https://cryptologos.cc/logos/cardano-ada-logo.png',
+  },
+  DOGE: {
+    address: COMMON_TOKEN_ADDRESSES.DOGE,
+    symbol: 'DOGE',
+    name: 'Dogecoin',
+    decimals: 8,
+    chainId: '1',
+    logoUrl: 'https://cryptologos.cc/logos/dogecoin-doge-logo.png',
+  },
+  AVAX: {
+    address: COMMON_TOKEN_ADDRESSES.AVAX,
+    symbol: 'AVAX',
+    name: 'Avalanche',
+    decimals: 18,
+    chainId: '1',
+    logoUrl: 'https://cryptologos.cc/logos/avalanche-avax-logo.png',
+  },
+  MATIC: {
+    address: COMMON_TOKEN_ADDRESSES.MATIC,
+    symbol: 'MATIC',
+    name: 'Polygon',
+    decimals: 18,
+    chainId: '1',
+    logoUrl: 'https://cryptologos.cc/logos/polygon-matic-logo.png',
   },
   // More token information can be expanded as needed
 };

@@ -10,7 +10,7 @@ use sui::{
     sui::SUI,
     transfer::{Self, transfer}
 };
-use sui_fusion_protocol::{escrow, timelock};
+use sui_fusion_protocol::{constants, escrow, timelock::{Self, src_cancellation}};
 
 // === Structs ===
 
@@ -28,16 +28,17 @@ const EDstEscrowExists: u64 = 4;
 const EInvalidTaker: u64 = 5;
 const EInvalidSecret: u64 = 6;
 const EInvalidTimestamp: u64 = 7;
+const ESafetyDepositTooLow: u64 = 8;
 // === Events ===
 
 public struct EscrowCreated has copy, drop {
     escrow_id: ID,
     order_hash: vector<u8>,
-    hashlock: vector<u8>,
+    // hashlock: vector<u8>,
     maker: address,
     taker: address,
     amount: u64,
-    safety_deposit: u64,
+    // safety_deposit: u64,
 }
 
 public struct EscrowCancelled has copy, drop {
@@ -87,8 +88,7 @@ fun init(ctx: &mut TxContext) {
 //     escrow.destroy();
 // }
 
-#[allow(lint(self_transfer))]
-public fun withdraw<T>(
+public fun withdraw_src<T>(
     self: &mut EscrowFactory,
     order_hash: vector<u8>,
     secret: vector<u8>,
@@ -97,14 +97,12 @@ public fun withdraw<T>(
     ctx: &mut TxContext,
 ) {
     let mut escrow = take_escrow(self, order_hash, is_src);
-    assert!(escrow.is_taker(ctx.sender()), EInvalidTaker);
+    let sender = ctx.sender();
+    assert!(escrow.is_taker(sender), EInvalidTaker);
 
     let now = clock::timestamp_ms(clock);
-    assert!(now >= escrow.timelocks().dst_public_withdrawal(), EInvalidTimestamp);
-    assert!(now < escrow.timelocks().dst_cancellation(), EInvalidTimestamp);
-
-    //  assert time after DstWithdrawal
-    //  assert time before DstCancellation
+    assert!(now >= escrow.timelocks().src_withdrawal(), EInvalidTimestamp);
+    assert!(now < escrow.timelocks().src_cancellation(), EInvalidTimestamp);
     assert!(escrow.verify_secret(secret), EInvalidSecret);
 
     let taker = escrow.taker(); // it's for dst case
@@ -128,11 +126,75 @@ public fun withdraw<T>(
         amount,
         safety_deposit_amount,
     );
-    // let taker = if (is_src) {
-    //     escrow.maker()
-    // } else {
-    //     escrow.taker()
-    // }; let (despoit, safety_deposit) = escrow.withdraw<T>(ctx); transfer::public_transfer(despoit, taker); transfer::public_transfer(safety_deposit, taker); escrow.destroy();
+}
+
+// Source escrow -> resolver, Dst escrow -> user
+public fun withdraw<T>(
+    self: &mut EscrowFactory,
+    order_hash: vector<u8>,
+    secret: vector<u8>,
+    is_src: bool,
+    clock: &Clock,
+    ctx: &mut TxContext,
+) {
+    let mut escrow = take_escrow(self, order_hash, is_src);
+    assert!(escrow.is_taker(ctx.sender()), EInvalidTaker);
+
+    let now = clock::timestamp_ms(clock);
+    assert!(now >= escrow.timelocks().dst_public_withdrawal(), EInvalidTimestamp);
+    assert!(now < escrow.timelocks().dst_cancellation(), EInvalidTimestamp);
+    assert!(escrow.verify_secret(secret), EInvalidSecret);
+
+    let taker = escrow.taker();
+    let maker = escrow.maker();
+    let (despoit, safety_deposit) = escrow.withdraw<T>();
+
+    let amount = despoit.value();
+    let safety_deposit_amount = safety_deposit.value();
+    let escrow_id = object::id(&escrow);
+
+    transfer::public_transfer(despoit.into_coin(ctx), maker);
+    transfer::public_transfer(safety_deposit.into_coin(ctx), taker);
+
+    escrow.destroy();
+
+    self.emit_escrow_withdrawn_event(
+        escrow_id,
+        order_hash,
+        maker,
+        taker,
+        amount,
+        safety_deposit_amount,
+    );
+}
+
+public fun cancel_src<T>(
+    self: &mut EscrowFactory,
+    order_hash: vector<u8>,
+    is_src: bool,
+    clock: &Clock,
+    ctx: &mut TxContext,
+) {
+    let mut escrow = take_escrow(self, order_hash, is_src);
+    assert!(escrow.is_taker(ctx.sender()), EInvalidTaker);
+
+    let now = clock::timestamp_ms(clock);
+    assert!(now >= escrow.timelocks().src_cancellation(), EInvalidTimestamp);
+
+    let escrow_id = object::id(&escrow);
+    // emit cancelled event
+
+    let (deposit, safety_deposit) = escrow.withdraw<T>();
+
+    let taker = escrow.taker(); //
+    let maker = escrow.maker(); //
+
+    transfer::public_transfer(deposit.into_coin(ctx), maker);
+    transfer::public_transfer(safety_deposit.into_coin(ctx), taker);
+
+    escrow.destroy();
+
+    self.emit_escrow_cancelled_event(escrow_id, order_hash);
 }
 
 public fun cancel<T>(
@@ -157,13 +219,84 @@ public fun cancel<T>(
     // let maker = escrow.maker(); // it's for src case
 
     transfer::public_transfer(deposit.into_coin(ctx), taker);
-    transfer::public_transfer(safety_deposit.into_coin(ctx), ctx.sender());
+    transfer::public_transfer(safety_deposit.into_coin(ctx), taker);
 
     escrow.destroy();
 
     self.emit_escrow_cancelled_event(escrow_id, order_hash);
 }
 
+public fun create_src_escrow<Token>(
+    self: &mut EscrowFactory,
+    order_hash: vector<u8>,
+    hashlock: vector<u8>,
+    taker: address,
+    // making_amount: u64,
+    // taking_amount: u64,
+    // remaining_making_amount: u64,
+    deposit: Coin<Token>,
+    safety_deposit: Coin<SUI>,
+    src_withdrawal: u64,
+    src_public_withdrawal: u64,
+    src_cancellation: u64,
+    src_public_cancellation: u64,
+    dst_withdrawal: u64,
+    dst_public_withdrawal: u64,
+    dst_cancellation: u64,
+    clock: &Clock,
+    ctx: &mut TxContext,
+) {
+    assert!(vector::length(&order_hash) == 32, EInvalidOrderHash);
+    assert!(vector::length(&hashlock) == 32, EInvalidHashlock);
+    assert!(self.is_src_escrow_exists(order_hash), EDstEscrowExists);
+
+    let safety_deposit_amount = coin::value(&safety_deposit);
+    assert!(safety_deposit_amount > constants::min_safety_deposit(), ESafetyDepositTooLow);
+
+    let maker = ctx.sender();
+    let timelocks = timelock::create(
+        clock::timestamp_ms(clock),
+        src_withdrawal,
+        src_public_withdrawal,
+        src_cancellation,
+        src_public_cancellation,
+        dst_withdrawal,
+        dst_public_withdrawal,
+        dst_cancellation,
+    );
+    let deposit_amount = coin::value(&deposit);
+
+    assert!(safety_deposit_amount > constants::min_safety_deposit(), ESafetyDepositTooLow);
+
+    let escros = escrow::create<Token>(
+        order_hash,
+        hashlock,
+        maker,
+        taker,
+        deposit,
+        safety_deposit,
+        timelocks,
+        ctx,
+    );
+
+    let escrow_id = object::id(&escros);
+    self.insert_dst_escrow(
+        order_hash,
+        escros,
+    );
+
+    self.emit_escrow_created_event(
+        escrow_id,
+        order_hash,
+        // hashlock,
+        maker,
+        taker,
+        deposit_amount,
+        // safety_deposit_amount,
+    );
+}
+
+// Create a new destination escrow
 public fun create_dst_escrow<Token>(
     self: &mut EscrowFactory,
     order_hash: vector<u8>,
@@ -171,7 +304,6 @@ public fun create_dst_escrow<Token>(
     maker: address,
     deposit: Coin<Token>,
     safety_deposit: Coin<SUI>,
-    // Timelock parameters
     src_withdrawal: u64,
     src_public_withdrawal: u64,
     src_cancellation: u64,
@@ -199,8 +331,12 @@ public fun create_dst_escrow<Token>(
         dst_cancellation,
     );
 
+    assert!(timelocks.dst_cancellation() < src_cancellation, EInvalidCreationTime);
+
     let deposit_amount = coin::value(&deposit);
     let safety_deposit_amount = coin::value(&safety_deposit);
+
+    assert!(safety_deposit_amount > constants::min_safety_deposit(), ESafetyDepositTooLow);
 
     let escros = escrow::create<Token>(
         order_hash,
@@ -209,7 +345,6 @@ public fun create_dst_escrow<Token>(
         taker,
         deposit,
         safety_deposit,
-        // ctx.sender(), // resolver is the sender in this case
         timelocks,
         ctx,
     );
@@ -223,14 +358,12 @@ public fun create_dst_escrow<Token>(
     self.emit_escrow_created_event(
         escrow_id,
         order_hash,
-        hashlock,
+        // hashlock,
         maker,
         taker,
         deposit_amount,
-        safety_deposit_amount,
+        // safety_deposit_amount,
     );
-    // let dst_cancellation_timestamp = get from timelocks
-    // assert!(dst_cancellation_timestamp > src_cancellation_timestamp, 0x1, EInvalidCreationTime);
 }
 
 fun insert_dst_escrow(self: &mut EscrowFactory, order_hash: vector<u8>, escrow: escrow::Escrow) {
@@ -258,20 +391,19 @@ fun emit_escrow_created_event(
     _: &EscrowFactory,
     escrow_id: ID,
     order_hash: vector<u8>,
-    hashlock: vector<u8>,
+    // hashlock: vector<u8>,
     maker: address,
     receiver: address,
-    source_amount: u64,
-    target_amount: u64,
+    amount: u64,
+    // target_amount: u64,
 ) {
     let event = EscrowCreated {
         escrow_id,
         order_hash,
-        hashlock,
+        // hashlock,
         maker,
         taker: receiver,
-        amount: source_amount,
-        safety_deposit: target_amount,
+        amount: amount,
     };
     event::emit(event);
 }

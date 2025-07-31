@@ -8,7 +8,6 @@ use sui::{
     hash,
     object_table::{Self, ObjectTable},
     sui::SUI,
-    transfer::{Self, transfer}
 };
 use sui_fusion_protocol::{constants, escrow, timelock::{Self, src_cancellation}};
 

@@ -11,7 +11,7 @@ public struct Timelocks has copy, drop, store {
     dst_cancellation: u64,
 }
 
-public fun new(): Timelocks {
+public fun empty(): Timelocks {
     Timelocks {
         deployed_at: 0,
         src_withdrawal: 0,

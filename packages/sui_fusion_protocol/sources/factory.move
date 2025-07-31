@@ -7,7 +7,7 @@ use sui::{
     event,
     hash,
     object_table::{Self, ObjectTable},
-    sui::SUI,
+    sui::SUI
 };
 use sui_fusion_protocol::{constants, escrow, timelock::{Self, src_cancellation}};
 
@@ -247,10 +247,10 @@ public fun create_src_escrow<Token>(
 ) {
     assert!(vector::length(&order_hash) == 32, EInvalidOrderHash);
     assert!(vector::length(&hashlock) == 32, EInvalidHashlock);
-    assert!(self.is_src_escrow_exists(order_hash), EDstEscrowExists);
+    assert!(!self.is_src_escrow_exists(order_hash), EDstEscrowExists);
 
     let safety_deposit_amount = coin::value(&safety_deposit);
-    assert!(safety_deposit_amount > constants::min_safety_deposit(), ESafetyDepositTooLow);
+    assert!(safety_deposit_amount >= constants::min_safety_deposit(), ESafetyDepositTooLow);
 
     let maker = ctx.sender();
     let timelocks = timelock::create(
@@ -265,7 +265,7 @@ public fun create_src_escrow<Token>(
     );
     let deposit_amount = coin::value(&deposit);
 
-    assert!(safety_deposit_amount > constants::min_safety_deposit(), ESafetyDepositTooLow);
+    assert!(safety_deposit_amount >= constants::min_safety_deposit(), ESafetyDepositTooLow);
 
     let escros = escrow::create<Token>(
         order_hash,
@@ -315,7 +315,7 @@ public fun create_dst_escrow<Token>(
 ) {
     assert!(vector::length(&order_hash) == 32, EInvalidOrderHash);
     assert!(vector::length(&hashlock) == 32, EInvalidHashlock);
-    assert!(self.is_dst_escrow_exists(order_hash), EDstEscrowExists);
+    assert!(!self.is_dst_escrow_exists(order_hash), EDstEscrowExists);
 
     let taker = ctx.sender();
 

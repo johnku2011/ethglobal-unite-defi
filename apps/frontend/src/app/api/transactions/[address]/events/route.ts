@@ -29,7 +29,7 @@ export async function GET(
       );
     }
 
-    console.log(`📜 代理請求: Transaction events for ${address}`);
+    console.log(`📜 Proxy request: Transaction events for ${address}`);
 
     // 構建1inch History API URL
     const oneinchUrl = new URL(
@@ -41,7 +41,7 @@ export async function GET(
       oneinchUrl.searchParams.append(key, value);
     });
 
-    console.log(`🔍 訪問1inch History API: ${oneinchUrl.toString()}`);
+    console.log(`🔍 Accessing 1inch History API: ${oneinchUrl.toString()}`);
 
     // 調用1inch History API
     const response = await fetch(oneinchUrl.toString(), {

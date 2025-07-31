@@ -62,7 +62,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
           ))}
           <div className='pt-1 mt-1 border-t border-gray-200'>
             <span className='font-medium text-gray-900'>
-              總計: {total.toFixed(2)} USD
+              Total: {total.toFixed(2)} USD
             </span>
           </div>
         </div>

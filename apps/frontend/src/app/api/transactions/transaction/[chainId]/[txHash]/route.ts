@@ -36,12 +36,14 @@ export async function GET(
     }
 
     console.log(
-      `📜 代理請求: Transaction details for ${txHash} on chain ${chainId}`
+      `📜 Proxy request: Transaction details for ${txHash} on chain ${chainId}`
     );
 
     // 構建1inch History API URL
     const oneinchUrl = `${ONEINCH_API_BASE}/v2.0/history/transaction/${chainId}/${txHash}`;
-    console.log(`🔍 訪問1inch History API Transaction Details: ${oneinchUrl}`);
+    console.log(
+      `🔍 Accessing 1inch History API Transaction Details: ${oneinchUrl}`
+    );
 
     // 調用1inch History API
     const response = await fetch(oneinchUrl, {

@@ -9,7 +9,10 @@ import {
   getChainName,
   getChainIcon,
 } from '../../utils/chainUtils';
-import { XMarkIcon } from '@heroicons/react/24/outline';
+import {
+  XMarkIcon,
+  ArrowTopRightOnSquareIcon,
+} from '@heroicons/react/24/outline';
 
 interface TransactionDetailModalProps {
   transaction: Transaction | null;
@@ -25,13 +28,13 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
   const { details } = transaction;
   const typeInfo = getTransactionTypeInfo(details.type);
 
-  // 計算總交易價值
+  // Calculate total transaction value
   const totalValue = details.tokenActions.reduce(
     (sum, action) => sum + (action.priceToUsd || 0),
     0
   );
 
-  // 格式化日期時間
+  // Format date and time
   const formattedDate = format(
     new Date(transaction.timeMs),
     'yyyy-MM-dd HH:mm:ss'
@@ -40,13 +43,13 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
   return (
     <div className='fixed inset-0 bg-black/50 flex justify-center items-center z-50 p-4 md:p-6'>
       <div className='bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto'>
-        {/* 標頭 */}
+        {/* Header */}
         <div className='px-6 py-4 border-b flex justify-between items-center'>
           <h3 className='text-lg font-medium text-gray-900 flex items-center'>
             <div className={`${typeInfo.color} mr-2`}>
-              <span className='material-icons'>{typeInfo.icon}</span>
+              <span className='material-icons text-xl'>{typeInfo.icon}</span>
             </div>
-            <span>交易詳情: {typeInfo.label}</span>
+            <span>Transaction Details: {typeInfo.label}</span>
           </h3>
 
           <button
@@ -57,13 +60,13 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
           </button>
         </div>
 
-        {/* 主要內容 */}
+        {/* Main Content */}
         <div className='px-6 py-4'>
-          {/* 基本信息 */}
+          {/* Basic Information */}
           <div className='grid grid-cols-1 md:grid-cols-2 gap-4 mb-6'>
             <div>
               <h4 className='text-sm font-medium text-gray-500 mb-1'>
-                交易哈希
+                Transaction Hash
               </h4>
               <a
                 href={getTxHashLink(details.chainId, details.txHash)}
@@ -76,12 +79,16 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
             </div>
 
             <div>
-              <h4 className='text-sm font-medium text-gray-500 mb-1'>區塊號</h4>
+              <h4 className='text-sm font-medium text-gray-500 mb-1'>
+                Block Number
+              </h4>
               <p className='text-gray-900'>{details.blockNumber}</p>
             </div>
 
             <div>
-              <h4 className='text-sm font-medium text-gray-500 mb-1'>區塊鏈</h4>
+              <h4 className='text-sm font-medium text-gray-500 mb-1'>
+                Blockchain
+              </h4>
               <div className='flex items-center'>
                 {getChainIcon(details.chainId) && (
                   <img
@@ -95,12 +102,12 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
             </div>
 
             <div>
-              <h4 className='text-sm font-medium text-gray-500 mb-1'>時間</h4>
+              <h4 className='text-sm font-medium text-gray-500 mb-1'>Time</h4>
               <p className='text-gray-900'>{formattedDate}</p>
             </div>
 
             <div>
-              <h4 className='text-sm font-medium text-gray-500 mb-1'>狀態</h4>
+              <h4 className='text-sm font-medium text-gray-500 mb-1'>Status</h4>
               <div className='flex items-center'>
                 <span
                   className={`
@@ -122,13 +129,15 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
 
             <div>
               <h4 className='text-sm font-medium text-gray-500 mb-1'>
-                交易類型
+                Transaction Type
               </h4>
               <p className='text-gray-900'>{typeInfo.label}</p>
             </div>
 
             <div>
-              <h4 className='text-sm font-medium text-gray-500 mb-1'>總價值</h4>
+              <h4 className='text-sm font-medium text-gray-500 mb-1'>
+                Total Value
+              </h4>
               <p className='text-gray-900'>
                 $
                 {totalValue.toLocaleString(undefined, {
@@ -139,7 +148,7 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
 
             <div>
               <h4 className='text-sm font-medium text-gray-500 mb-1'>
-                交易手續費
+                Transaction Fee
               </h4>
               <p className='text-gray-900'>
                 {parseFloat(details.feeInSmallestNative) / 1e18} ETH
@@ -162,10 +171,10 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
             </div>
           </div>
 
-          {/* 發送方/接收方 */}
+          {/* From/To */}
           <div className='grid grid-cols-1 md:grid-cols-2 gap-4 mb-6'>
             <div>
-              <h4 className='text-sm font-medium text-gray-500 mb-1'>發送方</h4>
+              <h4 className='text-sm font-medium text-gray-500 mb-1'>From</h4>
               <a
                 href={getAddressLink(details.chainId, details.fromAddress)}
                 target='_blank'
@@ -177,7 +186,7 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
             </div>
 
             <div>
-              <h4 className='text-sm font-medium text-gray-500 mb-1'>接收方</h4>
+              <h4 className='text-sm font-medium text-gray-500 mb-1'>To</h4>
               <a
                 href={getAddressLink(details.chainId, details.toAddress)}
                 target='_blank'
@@ -189,10 +198,10 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
             </div>
           </div>
 
-          {/* 代幣操作 */}
+          {/* Token Actions */}
           <div>
             <h4 className='text-base font-medium text-gray-900 mb-2'>
-              代幣操作
+              Token Actions
             </h4>
             <div className='bg-gray-50 rounded-lg overflow-hidden'>
               <table className='min-w-full divide-y divide-gray-200'>
@@ -202,25 +211,25 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
                       scope='col'
                       className='px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'
                     >
-                      代幣
+                      Token
                     </th>
                     <th
                       scope='col'
                       className='px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'
                     >
-                      金額
+                      Amount
                     </th>
                     <th
                       scope='col'
                       className='px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'
                     >
-                      價值 (USD)
+                      Value (USD)
                     </th>
                     <th
                       scope='col'
                       className='px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'
                     >
-                      方向
+                      Direction
                     </th>
                   </tr>
                 </thead>
@@ -255,7 +264,7 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
                           ${action.direction === 'in' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}
                         `}
                         >
-                          {action.direction === 'in' ? '收入' : '支出'}
+                          {action.direction === 'in' ? 'In' : 'Out'}
                         </span>
                       </td>
                     </tr>
@@ -266,7 +275,7 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
           </div>
         </div>
 
-        {/* 底部操作 */}
+        {/* Footer Actions */}
         <div className='px-6 py-3 bg-gray-50 flex justify-end'>
           <a
             href={getTxHashLink(details.chainId, details.txHash)}
@@ -274,8 +283,8 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
             rel='noopener noreferrer'
             className='px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 inline-flex items-center'
           >
-            <span>在區塊瀏覽器中查看</span>
-            <span className='material-icons text-sm ml-1'>open_in_new</span>
+            <span>View on Block Explorer</span>
+            <ArrowTopRightOnSquareIcon className='h-4 w-4 ml-1' />
           </a>
         </div>
       </div>

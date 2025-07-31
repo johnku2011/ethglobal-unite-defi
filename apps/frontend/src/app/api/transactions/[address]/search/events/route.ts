@@ -39,11 +39,11 @@ export async function POST(
       );
     }
 
-    console.log(`🔍 代理請求: Search transaction events for ${address}`);
+    console.log(`🔍 Proxy request: Search transaction events for ${address}`);
 
     // 構建1inch History API URL
     const oneinchUrl = `${ONEINCH_API_BASE}/v2.0/history/${address}/search/events`;
-    console.log(`🔍 訪問1inch History API Search: ${oneinchUrl}`);
+    console.log(`🔍 Accessing 1inch History API Search: ${oneinchUrl}`);
 
     // 調用1inch History API
     const response = await fetch(oneinchUrl, {

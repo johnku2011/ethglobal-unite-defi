@@ -126,3 +126,38 @@
 .scrollbar-hide::-webkit-scrollbar {
   display: none; /* Chrome, Safari and Opera */
 }
+
+/* 平滑滾動動畫 */
+.smooth-scroll {
+  scroll-behavior: smooth;
+  will-change: scroll-position;
+}
+
+/* 加密貨幣價格容器優化 */
+.crypto-ticker-container {
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
+/* 價格項目動畫 */
+.crypto-price-item {
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+/* 載入動畫優化 */
+.loading-shimmer {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}

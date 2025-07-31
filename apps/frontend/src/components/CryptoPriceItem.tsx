@@ -70,8 +70,9 @@ export default function CryptoPriceItem({
         ${compact ? 'px-2 py-1' : 'px-3 py-1.5'} 
         whitespace-nowrap
         transition-colors duration-200
-        hover:bg-gray-100 hover:dark:bg-gray-700
+        hover:bg-gray-100
         rounded-md
+        crypto-price-item
       `}
     >
       {/* 代幣圖標 */}
@@ -90,7 +91,7 @@ export default function CryptoPriceItem({
       {/* 代幣符號 */}
       <span
         className={`
-          font-medium text-gray-900 dark:text-gray-100
+          font-medium text-gray-900
           ${compact ? 'text-xs' : 'text-sm'}
         `}
       >
@@ -101,7 +102,7 @@ export default function CryptoPriceItem({
       <span
         ref={priceRef}
         className={`
-          text-gray-700 dark:text-gray-300 
+          text-gray-700
           font-mono
           transition-colors duration-200
           ${compact ? 'text-xs' : 'text-sm'}
@@ -115,11 +116,7 @@ export default function CryptoPriceItem({
         className={`
           flex items-center
           ${compact ? 'text-xs' : 'text-sm'}
-          ${
-            isPositiveChange
-              ? 'text-green-600 dark:text-green-400'
-              : 'text-red-600 dark:text-red-400'
-          }
+          ${isPositiveChange ? 'text-green-600' : 'text-red-600'}
         `}
       >
         {isPositiveChange ? (

@@ -29,27 +29,25 @@ export default function CryptoPriceTicker({
   symbols = ['BTC', 'ETH', 'USDT', 'BNB', 'SOL', 'ADA', 'XRP', 'DOGE'],
   onClose,
 }: CryptoPriceTickerProps) {
-  const {
-    data: prices,
-    isLoading,
-    error,
-    refetch,
-    previousData,
-  } = useCryptoPrices(
+  const queryResult = useCryptoPrices(
     symbols,
     30000 // 30秒刷新間隔
   );
 
+  const { data: prices, isLoading, error, refetch } = queryResult;
+  // @ts-expect-error - TanStack Query v4 previousData access
+  const previousData = queryResult.previousData as typeof prices | undefined;
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isManualScroll, setIsManualScroll] = useState(false);
-  const [scrollPosition, setScrollPosition] = useState(0);
 
-  // 自動滾動效果
+  // 自動滾動效果 - 優化版本
   useEffect(() => {
     if (!autoScroll || !scrollRef.current || isLoading || isManualScroll)
       return;
 
     let animationId: number;
+    let currentScrollPosition = scrollRef.current.scrollLeft;
 
     const scroll = () => {
       if (scrollRef.current) {
@@ -61,14 +59,15 @@ export default function CryptoPriceTicker({
         }
 
         const maxScroll = scrollWidth - clientWidth;
+        const scrollSpeed = 0.3; // 降低滾動速度使其更流暢
 
-        if (scrollPosition >= maxScroll) {
-          setScrollPosition(0);
+        if (currentScrollPosition >= maxScroll) {
+          currentScrollPosition = 0;
         } else {
-          setScrollPosition((prev) => prev + 0.5);
+          currentScrollPosition += scrollSpeed;
         }
 
-        scrollRef.current.scrollLeft = scrollPosition;
+        scrollRef.current.scrollLeft = currentScrollPosition;
         animationId = requestAnimationFrame(scroll);
       }
     };
@@ -76,18 +75,17 @@ export default function CryptoPriceTicker({
     animationId = requestAnimationFrame(scroll);
 
     return () => cancelAnimationFrame(animationId);
-  }, [autoScroll, isLoading, isManualScroll, scrollPosition]);
+  }, [autoScroll, isLoading, isManualScroll, prices]); // 移除 scrollPosition 依賴
 
   // 處理手動滾動
   const handleScroll = () => {
     if (scrollRef.current) {
       setIsManualScroll(true);
-      setScrollPosition(scrollRef.current.scrollLeft);
 
-      // 2秒後恢復自動滾動
+      // 3秒後恢復自動滾動 (增加時間讓用戶更好操作)
       setTimeout(() => {
         setIsManualScroll(false);
-      }, 2000);
+      }, 3000);
     }
   };
 
@@ -113,18 +111,18 @@ export default function CryptoPriceTicker({
     return (
       <div
         className={`
-          bg-gray-50 dark:bg-gray-800 py-2 overflow-hidden 
-          border-b border-gray-200 dark:border-gray-700
+          bg-gray-50 py-2 overflow-hidden 
+          border-b border-gray-200
           ${className}
         `}
       >
         <div className='animate-pulse flex space-x-6 px-4'>
           {[...Array(6)].map((_, i) => (
             <div key={i} className='flex items-center space-x-2'>
-              <div className='rounded-full bg-gray-300 dark:bg-gray-700 h-5 w-5'></div>
-              <div className='h-4 bg-gray-300 dark:bg-gray-700 rounded w-10'></div>
-              <div className='h-4 bg-gray-300 dark:bg-gray-700 rounded w-16'></div>
-              <div className='h-4 bg-gray-300 dark:bg-gray-700 rounded w-12'></div>
+              <div className='rounded-full bg-gray-300 h-5 w-5'></div>
+              <div className='h-4 bg-gray-300 rounded w-10'></div>
+              <div className='h-4 bg-gray-300 rounded w-16'></div>
+              <div className='h-4 bg-gray-300 rounded w-12'></div>
             </div>
           ))}
         </div>
@@ -137,19 +135,19 @@ export default function CryptoPriceTicker({
     return (
       <div
         className={`
-          bg-red-50 dark:bg-red-900/20 py-2 px-4 
-          border-b border-red-200 dark:border-red-800
+          bg-red-50 py-2 px-4 
+          border-b border-red-200
           ${className}
         `}
       >
         <div className='flex items-center justify-between'>
           <div className='flex items-center space-x-2'>
-            <span className='text-red-600 dark:text-red-400 text-sm'>
+            <span className='text-red-600 text-sm'>
               Failed to load price data
             </span>
             <button
               onClick={() => refetch()}
-              className='text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300'
+              className='text-red-600 hover:text-red-800'
             >
               <ArrowPathIcon className='w-4 h-4' />
             </button>
@@ -157,7 +155,7 @@ export default function CryptoPriceTicker({
           {onClose && (
             <button
               onClick={onClose}
-              className='text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300'
+              className='text-red-600 hover:text-red-800'
             >
               <XMarkIcon className='w-4 h-4' />
             </button>
@@ -171,9 +169,9 @@ export default function CryptoPriceTicker({
   return (
     <div
       className={`
-        bg-gray-50 dark:bg-gray-800 py-2 overflow-hidden 
-        border-b border-gray-200 dark:border-gray-700
-        relative group
+        bg-white py-2 overflow-hidden 
+        border-b border-gray-200
+        relative group crypto-ticker-container
         ${className}
       `}
     >
@@ -184,23 +182,23 @@ export default function CryptoPriceTicker({
             onClick={scrollLeft}
             className='
               absolute left-2 top-1/2 transform -translate-y-1/2 z-10
-              bg-white dark:bg-gray-700 rounded-full p-1 shadow-md
+              bg-white rounded-full p-1 shadow-md
               opacity-0 group-hover:opacity-100 transition-opacity
-              hover:bg-gray-100 dark:hover:bg-gray-600
+              hover:bg-gray-100
             '
           >
-            <ChevronLeftIcon className='w-4 h-4 text-gray-600 dark:text-gray-300' />
+            <ChevronLeftIcon className='w-4 h-4 text-gray-600' />
           </button>
           <button
             onClick={scrollRight}
             className='
               absolute right-2 top-1/2 transform -translate-y-1/2 z-10
-              bg-white dark:bg-gray-700 rounded-full p-1 shadow-md
+              bg-white rounded-full p-1 shadow-md
               opacity-0 group-hover:opacity-100 transition-opacity
-              hover:bg-gray-100 dark:hover:bg-gray-600
+              hover:bg-gray-100
             '
           >
-            <ChevronRightIcon className='w-4 h-4 text-gray-600 dark:text-gray-300' />
+            <ChevronRightIcon className='w-4 h-4 text-gray-600' />
           </button>
         </>
       )}
@@ -211,7 +209,7 @@ export default function CryptoPriceTicker({
           onClick={onClose}
           className='
             absolute right-2 top-2 z-10
-            text-gray-400 hover:text-gray-600 dark:hover:text-gray-300
+            text-gray-400 hover:text-gray-600
             opacity-0 group-hover:opacity-100 transition-opacity
           '
         >
@@ -226,20 +224,21 @@ export default function CryptoPriceTicker({
         className='
           flex whitespace-nowrap overflow-x-auto scrollbar-hide
           px-4 space-x-2
-          scroll-smooth
+          smooth-scroll
         '
         style={{
           scrollbarWidth: 'none',
           msOverflowStyle: 'none',
         }}
       >
-        {prices?.map((price) => (
+        {(prices as any)?.map((price: any) => (
           <CryptoPriceItem
             key={price.token.symbol}
             data={price}
             previousPrice={
-              previousData?.find((p) => p.token.symbol === price.token.symbol)
-                ?.price
+              (previousData as any)?.find(
+                (p: any) => p.token.symbol === price.token.symbol
+              )?.price
             }
             compact={false}
           />
@@ -247,8 +246,8 @@ export default function CryptoPriceTicker({
       </div>
 
       {/* 漸變遮罩效果 */}
-      <div className='absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-gray-50 to-transparent dark:from-gray-800 pointer-events-none' />
-      <div className='absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-gray-50 to-transparent dark:from-gray-800 pointer-events-none' />
+      <div className='absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-white to-transparent pointer-events-none' />
+      <div className='absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent pointer-events-none' />
     </div>
   );
 }

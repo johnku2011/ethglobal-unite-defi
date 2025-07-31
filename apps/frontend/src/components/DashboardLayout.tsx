@@ -1,10 +1,15 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useWallet } from '@/providers/WalletProvider';
 import { formatAddress } from '@/utils/format';
+import CryptoPriceTicker from './CryptoPriceTicker';
+import {
+  useCryptoPriceStore,
+  loadCryptoPricePreferences,
+} from '@/stores/cryptoPriceStore';
 import {
   HomeIcon,
   ChartBarIcon,
@@ -16,6 +21,7 @@ import {
   XMarkIcon,
   SunIcon,
   MoonIcon,
+  CurrencyDollarIcon,
 } from '@heroicons/react/24/outline';
 
 interface NavigationItem {
@@ -80,8 +86,16 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const pathname = usePathname();
   const { connectedWallets, isEthereumConnected, isSuiConnected } = useWallet();
 
+  // 加密貨幣價格消息欄狀態
+  const { showTicker, setShowTicker } = useCryptoPriceStore();
+
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
   const toggleTheme = () => setIsDarkMode(!isDarkMode);
+
+  // 加載用戶偏好設置
+  useEffect(() => {
+    loadCryptoPricePreferences();
+  }, []);
 
   return (
     <div className={`min-h-screen bg-gray-50 ${isDarkMode ? 'dark' : ''}`}>
@@ -213,6 +227,22 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 )}
               </div>
 
+              {/* 價格消息欄切換 */}
+              <button
+                onClick={() => setShowTicker(!showTicker)}
+                className={`
+                  p-2 rounded-lg transition-colors
+                  ${
+                    showTicker
+                      ? 'text-blue-600 bg-blue-50 hover:bg-blue-100'
+                      : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                  }
+                `}
+                title={showTicker ? '隱藏價格消息欄' : '顯示價格消息欄'}
+              >
+                <CurrencyDollarIcon className='w-5 h-5' />
+              </button>
+
               {/* Theme toggle */}
               <button
                 onClick={toggleTheme}
@@ -239,6 +269,28 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             </div>
           </div>
         </header>
+
+        {/* 加密貨幣價格消息欄 */}
+        {showTicker && (
+          <CryptoPriceTicker
+            className='transition-all duration-300'
+            autoScroll={true}
+            showControls={true}
+            symbols={[
+              'BTC',
+              'ETH',
+              'USDT',
+              'BNB',
+              'SOL',
+              'ADA',
+              'XRP',
+              'DOGE',
+              'AVAX',
+              'MATIC',
+            ]}
+            onClose={() => setShowTicker(false)}
+          />
+        )}
 
         {/* Page content */}
         <main className='flex-1 p-4 sm:p-6 lg:p-8'>

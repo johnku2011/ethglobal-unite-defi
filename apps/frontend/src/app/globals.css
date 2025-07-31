@@ -97,3 +97,32 @@
     opacity: 1;
   }
 }
+
+/* 加密貨幣價格消息欄樣式 */
+@keyframes priceFlash {
+  0% {
+    background-color: rgba(59, 130, 246, 0.5);
+  }
+  50% {
+    background-color: rgba(59, 130, 246, 0.3);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.price-flash {
+  background-color: rgba(59, 130, 246, 0.3);
+  border-radius: 4px;
+  animation: priceFlash 1s ease-out;
+}
+
+/* 隱藏滾動條 */
+.scrollbar-hide {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
+}

@@ -14,7 +14,7 @@ import {
   Sector,
 } from 'recharts';
 import { Transaction } from '../../types/transaction';
-import { format, subDays, subWeeks, subMonths, startOfDay } from 'date-fns';
+import { format, subDays, subMonths } from 'date-fns';
 import { getTransactionTypeInfo } from '../../constants/transactionTypes';
 
 interface TransactionChartProps {

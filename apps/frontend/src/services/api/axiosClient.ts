@@ -17,9 +17,9 @@ const PORTFOLIO_API_CONFIG = {
   },
 } as const;
 
-// 1inch History API configuration (direct calls)
+// 1inch History API configuration (proxied through Next.js API routes)
 const HISTORY_API_CONFIG = {
-  baseURL: 'https://api.1inch.dev/history', // Direct connection to 1inch History API
+  baseURL: '/api/transactions', // Proxied through Next.js API route
   timeout: 30000, // 30 second timeout
   headers: {
     'Content-Type': 'application/json',
@@ -38,16 +38,10 @@ const portfolioApiClient: AxiosInstance = axios.create(PORTFOLIO_API_CONFIG);
 const historyApiClient: AxiosInstance = axios.create(HISTORY_API_CONFIG);
 
 /**
- * Request interceptor for History API - adds authorization and logging
+ * Request interceptor for History API - adds logging
  */
 historyApiClient.interceptors.request.use(
   (config) => {
-    // Add API key (if available)
-    const apiKey = process.env.NEXT_PUBLIC_1INCH_API_KEY;
-    if (apiKey && config.headers) {
-      config.headers['Authorization'] = `Bearer ${apiKey}`;
-    }
-
     // Log requests in development
     if (process.env.NODE_ENV === 'development') {
       console.log(

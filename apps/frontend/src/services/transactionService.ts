@@ -50,9 +50,9 @@ export class TransactionService {
         params.types = options.types.join(',');
       }
 
-      // Use GET request with the proper 1inch history API endpoint
+      // Use GET request with the Next.js API route for History API
       const response = await historyApiClient.get<TransactionHistory>(
-        `/v2.0/history/${address.toLowerCase()}/events`,
+        `/${address.toLowerCase()}/events`,
         { params }
       );
 
@@ -136,9 +136,9 @@ export class TransactionService {
     txHash: string
   ): Promise<Transaction | null> {
     try {
-      // Using History API for transaction details
+      // Using History API through Next.js API route
       const response = await historyApiClient.get<Transaction>(
-        `/v2.0/history/transaction/${chainId}/${txHash}`
+        `/transaction/${chainId}/${txHash}`
       );
 
       return response.data;
@@ -221,9 +221,9 @@ export class TransactionService {
         params.toTimestampMs = options.toTimestampMs;
       }
 
-      // Use dedicated swaps endpoint for better performance with GET
+      // Use dedicated swaps endpoint through Next.js API route
       const response = await historyApiClient.get<TransactionHistory>(
-        `/v2.0/history/${address.toLowerCase()}/events/swaps`,
+        `/${address.toLowerCase()}/events/swaps`,
         { params }
       );
 
@@ -245,10 +245,10 @@ export class TransactionService {
     searchParams: Record<string, any>
   ): Promise<TransactionHistory> {
     try {
-      // Using post with search endpoint for advanced queries
+      // Using post with search endpoint through Next.js API route
       // Note: This specific endpoint actually uses POST according to 1inch docs
       const response = await historyApiClient.post<TransactionHistory>(
-        `/v2.0/history/${address.toLowerCase()}/search/events`,
+        `/${address.toLowerCase()}/search/events`,
         searchParams
       );
 

@@ -5,6 +5,7 @@ use sui::{
     clock::{Self, Clock},
     coin::{Self, Coin},
     event,
+    hash,
     object_table::{Self, ObjectTable},
     sui::SUI,
     transfer::{Self, transfer}
@@ -24,6 +25,9 @@ const EInvalidCreationTime: u64 = 1;
 const EInvalidOrderHash: u64 = 2;
 const EInvalidHashlock: u64 = 3;
 const EDstEscrowExists: u64 = 4;
+const EInvalidTaker: u64 = 5;
+const EInvalidSecret: u64 = 6;
+const EInvalidTimestamp: u64 = 7;
 // === Events ===
 
 public struct EscrowCreated has copy, drop {
@@ -34,8 +38,23 @@ public struct EscrowCreated has copy, drop {
     taker: address,
     amount: u64,
     safety_deposit: u64,
-    resolver: address,
 }
+
+public struct EscrowCancelled has copy, drop {
+    escrow_id: ID,
+    order_hash: vector<u8>,
+}
+
+public struct EscrowWithdrawn has copy, drop {
+    escrow_id: ID,
+    order_hash: vector<u8>,
+    maker: address,
+    taker: address,
+    amount: u64,
+    safety_deposit: u64,
+}
+
+// === Functions ===
 
 fun init(ctx: &mut TxContext) {
     let factory = EscrowFactory {
@@ -45,6 +64,104 @@ fun init(ctx: &mut TxContext) {
     };
 
     transfer::share_object(factory);
+}
+
+// refund after time expired to user
+// public fun refund<T>(
+//     self: &mut EscrowFactory,
+//     order_hash: vector<u8>,
+//     clock: &Clock,
+//     ctx: &mut TxContext,
+// ) {
+//     assert!(self.is_src_escrow_exists(order_hash), EInvalidOrderHash);
+//     let mut escrow = self.escrow_srcs.remove(order_hash);
+
+//     let now = clock::timestamp_ms(clock);
+//     // check expired
+//     let taker = escrow.taker();
+//     let (deposit, safety_deposit) = escrow.withdraw<T>();
+
+//     // transfer::public_transfer(deposit, taker);
+//     // transfer::public_transfer(safety_deposit, taker);
+
+//     escrow.destroy();
+// }
+
+#[allow(lint(self_transfer))]
+public fun withdraw<T>(
+    self: &mut EscrowFactory,
+    order_hash: vector<u8>,
+    secret: vector<u8>,
+    is_src: bool,
+    clock: &Clock,
+    ctx: &mut TxContext,
+) {
+    let mut escrow = take_escrow(self, order_hash, is_src);
+    assert!(escrow.is_taker(ctx.sender()), EInvalidTaker);
+
+    let now = clock::timestamp_ms(clock);
+    assert!(now >= escrow.timelocks().dst_public_withdrawal(), EInvalidTimestamp);
+    assert!(now < escrow.timelocks().dst_cancellation(), EInvalidTimestamp);
+
+    //  assert time after DstWithdrawal
+    //  assert time before DstCancellation
+    assert!(escrow.verify_secret(secret), EInvalidSecret);
+
+    let taker = escrow.taker(); // it's for dst case
+    let maker = escrow.maker(); // it's for src case
+    let (despoit, safety_deposit) = escrow.withdraw<T>();
+
+    let amount = despoit.value();
+    let safety_deposit_amount = safety_deposit.value();
+    let escrow_id = object::id(&escrow);
+
+    transfer::public_transfer(despoit.into_coin(ctx), maker);
+    transfer::public_transfer(safety_deposit.into_coin(ctx), taker);
+
+    escrow.destroy();
+
+    self.emit_escrow_withdrawn_event(
+        escrow_id,
+        order_hash,
+        maker,
+        taker,
+        amount,
+        safety_deposit_amount,
+    );
+    // let taker = if (is_src) {
+    //     escrow.maker()
+    // } else {
+    //     escrow.taker()
+    // }; let (despoit, safety_deposit) = escrow.withdraw<T>(ctx); transfer::public_transfer(despoit, taker); transfer::public_transfer(safety_deposit, taker); escrow.destroy();
+}
+
+public fun cancel<T>(
+    self: &mut EscrowFactory,
+    order_hash: vector<u8>,
+    is_src: bool,
+    clock: &Clock,
+    ctx: &mut TxContext,
+) {
+    let mut escrow = take_escrow(self, order_hash, is_src);
+    assert!(escrow.is_taker(ctx.sender()), EInvalidTaker);
+
+    let now = clock::timestamp_ms(clock);
+    assert!(now >= escrow.timelocks().dst_cancellation(), EInvalidTimestamp);
+
+    let escrow_id = object::id(&escrow);
+    // emit cancelled event
+
+    let (deposit, safety_deposit) = escrow.withdraw<T>();
+
+    let taker = escrow.taker(); // it's for dst case
+    // let maker = escrow.maker(); // it's for src case
+
+    transfer::public_transfer(deposit.into_coin(ctx), taker);
+    transfer::public_transfer(safety_deposit.into_coin(ctx), ctx.sender());
+
+    escrow.destroy();
+
+    self.emit_escrow_cancelled_event(escrow_id, order_hash);
 }
 
 public fun create_dst_escrow<Token>(
@@ -92,7 +209,7 @@ public fun create_dst_escrow<Token>(
         taker,
         deposit,
         safety_deposit,
-        ctx.sender(), // resolver is the sender in this case
+        // ctx.sender(), // resolver is the sender in this case
         timelocks,
         ctx,
     );
@@ -111,18 +228,30 @@ public fun create_dst_escrow<Token>(
         taker,
         deposit_amount,
         safety_deposit_amount,
-        maker,
     );
     // let dst_cancellation_timestamp = get from timelocks
     // assert!(dst_cancellation_timestamp > src_cancellation_timestamp, 0x1, EInvalidCreationTime);
 }
 
 fun insert_dst_escrow(self: &mut EscrowFactory, order_hash: vector<u8>, escrow: escrow::Escrow) {
+    // self.escrow_srcs.add(hash::keccak256(&order_hash), escrow);
     self.escrow_srcs.add(order_hash, escrow);
 }
 
 fun is_dst_escrow_exists(self: &EscrowFactory, order_hash: vector<u8>): bool {
     self.escrow_dsts.contains(order_hash)
+}
+
+fun is_src_escrow_exists(self: &EscrowFactory, order_hash: vector<u8>): bool {
+    self.escrow_srcs.contains(hash::keccak256(&order_hash))
+}
+
+fun emit_escrow_cancelled_event(_: &EscrowFactory, escrow_id: ID, order_hash: vector<u8>) {
+    let event = EscrowCancelled {
+        escrow_id,
+        order_hash,
+    };
+    event::emit(event);
 }
 
 fun emit_escrow_created_event(
@@ -134,7 +263,6 @@ fun emit_escrow_created_event(
     receiver: address,
     source_amount: u64,
     target_amount: u64,
-    resolver: address,
 ) {
     let event = EscrowCreated {
         escrow_id,
@@ -144,9 +272,38 @@ fun emit_escrow_created_event(
         taker: receiver,
         amount: source_amount,
         safety_deposit: target_amount,
-        resolver,
     };
     event::emit(event);
+}
+
+fun emit_escrow_withdrawn_event(
+    _: &EscrowFactory,
+    escrow_id: ID,
+    order_hash: vector<u8>,
+    maker: address,
+    taker: address,
+    amount: u64,
+    safety_deposit: u64,
+) {
+    let event = EscrowWithdrawn {
+        escrow_id,
+        order_hash,
+        maker,
+        taker,
+        amount,
+        safety_deposit,
+    };
+    event::emit(event);
+}
+
+fun take_escrow(self: &mut EscrowFactory, order_hash: vector<u8>, is_src: bool): escrow::Escrow {
+    if (is_src) {
+        assert!(self.escrow_srcs.contains(order_hash), EInvalidOrderHash);
+        self.escrow_srcs.remove(order_hash)
+    } else {
+        assert!(self.escrow_dsts.contains(order_hash), EInvalidOrderHash);
+        self.escrow_dsts.remove(order_hash)
+    }
 }
 
 #[test_only]

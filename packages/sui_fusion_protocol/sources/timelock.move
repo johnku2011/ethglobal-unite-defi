@@ -77,3 +77,35 @@ public fun set_dst_public_withdrawal(self: &mut Timelocks, dst_public_withdrawal
 public fun set_dst_cancellation(self: &mut Timelocks, dst_cancellation: u64) {
     self.dst_cancellation = dst_cancellation;
 }
+
+public fun dst_withdrawal(self: &Timelocks): u64 {
+    self.dst_withdrawal
+}
+
+public fun dst_public_withdrawal(self: &Timelocks): u64 {
+    self.dst_public_withdrawal
+}
+
+public fun dst_cancellation(self: &Timelocks): u64 {
+    self.dst_cancellation
+}
+
+public fun src_withdrawal(self: &Timelocks): u64 {
+    self.src_withdrawal
+}
+
+public fun src_public_withdrawal(self: &Timelocks): u64 {
+    self.src_public_withdrawal
+}
+
+public fun src_cancellation(self: &Timelocks): u64 {
+    self.src_cancellation
+}
+
+public fun src_public_cancellation(self: &Timelocks): u64 {
+    self.src_public_cancellation
+}
+
+public fun deployed_at(self: &Timelocks): u64 {
+    self.deployed_at
+}

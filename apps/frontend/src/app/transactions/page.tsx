@@ -53,6 +53,18 @@ export default function TransactionsPage() {
     enabled: authenticated && !!walletAddress,
   });
 
+  // 調試原始API數據
+  React.useEffect(() => {
+    if (transactionData) {
+      console.log('🔍 原始交易數據:', {
+        總條目數: transactionData.items?.length || 0,
+        總交易量: transactionData.total,
+        數據類型: typeof transactionData,
+        第一筆交易樣本: transactionData.items?.[0],
+      });
+    }
+  }, [transactionData]);
+
   // DEBUG: 檢查API返回數據結構
   React.useEffect(() => {
     if (transactionData) {

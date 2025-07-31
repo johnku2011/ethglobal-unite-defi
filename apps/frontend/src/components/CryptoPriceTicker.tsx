@@ -145,7 +145,7 @@ export default function CryptoPriceTicker({
         <div className='flex items-center justify-between'>
           <div className='flex items-center space-x-2'>
             <span className='text-red-600 dark:text-red-400 text-sm'>
-              價格數據加載失敗
+              Failed to load price data
             </span>
             <button
               onClick={() => refetch()}

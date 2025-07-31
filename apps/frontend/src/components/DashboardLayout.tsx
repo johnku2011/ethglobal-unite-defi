@@ -238,7 +238,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                       : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
                   }
                 `}
-                title={showTicker ? '隱藏價格消息欄' : '顯示價格消息欄'}
+                title={showTicker ? 'Hide price ticker' : 'Show price ticker'}
               >
                 <CurrencyDollarIcon className='w-5 h-5' />
               </button>

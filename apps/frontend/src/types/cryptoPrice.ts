@@ -1,8 +1,8 @@
 /**
- * 加密貨幣價格相關類型定義
+ * Cryptocurrency price related type definitions
  */
 
-// 基本代幣信息
+// Basic token information
 export interface CryptoToken {
   address: string;
   symbol: string;
@@ -12,60 +12,60 @@ export interface CryptoToken {
   logoUrl?: string;
 }
 
-// 加密貨幣價格數據
+// Cryptocurrency price data
 export interface CryptoPriceData {
   token: CryptoToken;
-  price: number; // 當前USD價格
-  change24h: number; // 24小時變化百分比
-  lastUpdated: Date; // 最後更新時間
+  price: number; // Current USD price
+  change24h: number; // 24-hour change percentage
+  lastUpdated: Date; // Last update time
 }
 
-// 1inch Spot Price API 原始響應類型
+// 1inch Spot Price API raw response type
 export interface SpotPriceApiResponse {
   [tokenAddress: string]: {
-    // 以太幣計價
+    // ETH price
     eth: string;
-    // 美元計價
+    // USD price
     usd: string;
-    // 24小時變化百分比
+    // 24-hour change percentage
     usd_24h_change?: number;
-    // 24小時交易量
+    // 24-hour trading volume
     usd_24h_vol?: number;
-    // 最後更新時間（Unix時間戳，毫秒）
+    // Last update time (Unix timestamp, milliseconds)
     last_updated_at: number;
   };
 }
 
-// API請求參數
+// API request parameters
 export interface CryptoPriceParams {
-  symbols?: string[]; // 代幣符號列表
-  addresses?: string[]; // 代幣地址列表
-  chainId?: string; // 區塊鏈ID
-  includeChange?: boolean; // 是否包含24小時變化數據
+  symbols?: string[]; // Token symbol list
+  addresses?: string[]; // Token address list
+  chainId?: string; // Blockchain ID
+  includeChange?: boolean; // Whether to include 24-hour change data
 }
 
-// API錯誤類型
+// API error type
 export interface CryptoPriceError extends Error {
   code: string;
   retryable: boolean;
   details?: any;
 }
 
-// 代幣地址映射表
+// Token address mapping table
 export interface TokenAddressMap {
   [symbol: string]: string;
 }
 
-// 常用代幣地址列表
+// Common token addresses list
 export const COMMON_TOKEN_ADDRESSES: TokenAddressMap = {
-  // 以太坊原生代幣 (ETH)
+  // Ethereum native token (ETH)
   ETH: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
-  // 主要穩定幣
+  // Major stablecoins
   USDT: '0xdac17f958d2ee523a2206206994597c13d831ec7',
   USDC: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
   DAI: '0x6b175474e89094c44da98b954eedeac495271d0f',
-  // 熱門加密貨幣
-  WBTC: '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599',
+  // Popular cryptocurrencies
+  BTC: '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599', // WBTC (Wrapped Bitcoin)
   BNB: '0xB8c77482e45F1F44dE1745F52C74426C631bDD52',
   XRP: '0x1d2f0da169ceb9fc7b3144628db156f3f6c60dbe',
   ADA: '0x3ee2200efb3400fabb9aacf31297cbdd1d435d47',
@@ -75,10 +75,10 @@ export const COMMON_TOKEN_ADDRESSES: TokenAddressMap = {
   MATIC: '0x7d1afa7b718fb893db30a3abc0cfc608aacfebb0',
   LINK: '0x514910771af9ca656af840dff83e8264ecf986ca',
   UNI: '0x1f9840a85d5af5bf1d1762f925bdaddc4201f984',
-  // 可根據需要添加更多代幣
+  // More tokens can be added as needed
 };
 
-// 常用代幣信息
+// Common token information
 export const COMMON_TOKENS: Record<string, CryptoToken> = {
   ETH: {
     address: COMMON_TOKEN_ADDRESSES.ETH,
@@ -105,12 +105,12 @@ export const COMMON_TOKENS: Record<string, CryptoToken> = {
     logoUrl: 'https://cryptologos.cc/logos/usd-coin-usdc-logo.png',
   },
   BTC: {
-    address: COMMON_TOKEN_ADDRESSES.WBTC,
+    address: COMMON_TOKEN_ADDRESSES.BTC,
     symbol: 'BTC',
     name: 'Bitcoin (Wrapped)',
     decimals: 8,
     chainId: '1',
     logoUrl: 'https://cryptologos.cc/logos/bitcoin-btc-logo.png',
   },
-  // 可根據需要擴展更多代幣信息
+  // More token information can be expanded as needed
 };

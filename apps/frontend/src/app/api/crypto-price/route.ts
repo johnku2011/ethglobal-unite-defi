@@ -2,15 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { COMMON_TOKEN_ADDRESSES } from '@/types/cryptoPrice';
 
 // 1inch Spot Price API基礎URL
-const ONEINCH_API_BASE = 'https://api.1inch.dev/spot-price/v1.1';
+// Back to official format from documentation
+const ONEINCH_API_BASE = 'https://api.1inch.dev/price/v1.1';
 
 /**
  * 獲取默認流行加密貨幣價格數據
  * 路由: /api/crypto-price
  */
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
-    const searchParams = request.nextUrl.searchParams;
+    const searchParams = _request.nextUrl.searchParams;
     const chainId = searchParams.get('chainId') || '1'; // 默認使用以太坊主網
 
     // 默認獲取熱門代幣的價格
@@ -101,7 +102,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function OPTIONS(request: NextRequest) {
+export async function OPTIONS(_request: NextRequest) {
   return new NextResponse(null, {
     status: 200,
     headers: {

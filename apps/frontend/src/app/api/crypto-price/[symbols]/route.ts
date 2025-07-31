@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 // 1inch Spot Price API基礎URL
-const ONEINCH_API_BASE = 'https://api.1inch.dev/spot-price/v1.1';
+// Back to official format from documentation
+const ONEINCH_API_BASE = 'https://api.1inch.dev/price/v1.1';
 
 /**
  * GET處理程序 - 獲取特定代幣的價格數據
@@ -40,12 +41,12 @@ export async function GET(
     }
 
     console.log(
-      `🔄 代理請求: Spot Price data for tokens ${symbols} on chain ${chainId}`
+      `🔄 Proxy request: Spot Price data for tokens ${symbols} on chain ${chainId}`
     );
 
-    // 調用1inch Spot Price API
+    // Call 1inch Spot Price API
     const oneinchUrl = `${ONEINCH_API_BASE}/${chainId}/${symbols}`;
-    console.log(`🔍 訪問1inch Spot Price API: ${oneinchUrl}`);
+    console.log(`🔍 Accessing 1inch Spot Price API: ${oneinchUrl}`);
 
     const response = await fetch(oneinchUrl, {
       method: 'GET',
@@ -55,16 +56,18 @@ export async function GET(
         'Content-Type': 'application/json',
         'User-Agent': 'UniPortfolio/1.0',
       },
-      // 設置10秒超時
+      // Set 10 second timeout
       signal: AbortSignal.timeout(10000),
     });
 
-    // 記錄響應狀態
-    console.log(`📊 1inch API響應: ${response.status} ${response.statusText}`);
+    // Log response status
+    console.log(
+      `📊 1inch API response: ${response.status} ${response.statusText}`
+    );
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`❌ 1inch API錯誤 (${response.status}):`, errorText);
+      console.error(`❌ 1inch API error (${response.status}):`, errorText);
 
       // 返回適當的錯誤響應
       let errorMessage = 'API request failed';
@@ -86,14 +89,14 @@ export async function GET(
       );
     }
 
-    // 解析並返回數據
+    // Parse and return data
     const data = await response.json();
 
-    // 打印信息
+    // Print information
     const tokenCount = Object.keys(data).length;
-    console.log(`✅ 價格數據獲取成功: ${tokenCount}個代幣`);
+    console.log(`✅ Price data fetched successfully: ${tokenCount} tokens`);
 
-    // 返回代理響應，添加CORS頭部和緩存控制
+    // Return proxy response with CORS headers and cache control
     return NextResponse.json(data, {
       status: 200,
       headers: {
@@ -133,7 +136,7 @@ export async function GET(
 /**
  * OPTIONS處理程序 - 處理預檢請求 (CORS)
  */
-export async function OPTIONS(request: NextRequest) {
+export async function OPTIONS(_request: NextRequest) {
   return new NextResponse(null, {
     status: 200,
     headers: {

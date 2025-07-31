@@ -4,58 +4,63 @@ import type {
   CryptoPriceParams,
   CryptoPriceError,
   SpotPriceApiResponse,
-  COMMON_TOKEN_ADDRESSES,
-  COMMON_TOKENS,
   CryptoToken,
 } from '@/types/cryptoPrice';
+import { COMMON_TOKEN_ADDRESSES, COMMON_TOKENS } from '@/types/cryptoPrice';
 
 /**
- * 加密貨幣價格服務
- * 基於1inch Spot Price API實現
+ * Cryptocurrency Price Service
+ * Based on 1inch Spot Price API implementation
  */
 export class CryptoPriceService {
   /**
-   * 獲取多種加密貨幣的價格數據
-   * @param symbols 代幣符號數組，如 ['BTC', 'ETH', 'BNB']
-   * @param chainId 區塊鏈ID，默認為1（以太坊主網）
-   * @returns 代幣價格數據數組
+   * Get price data for multiple cryptocurrencies
+   * @param symbols Token symbol array, e.g. ['BTC', 'ETH', 'BNB']
+   * @param chainId Blockchain ID, default is 1 (Ethereum mainnet)
+   * @returns Array of token price data
    */
   static async getPrices(
     symbols: string[] = ['BTC', 'ETH', 'USDT'],
     chainId: string = '1'
   ): Promise<CryptoPriceData[]> {
     try {
-      console.log(`🚀 CryptoPriceService: 獲取加密貨幣價格數據`, {
+      console.log(`🚀 CryptoPriceService: Fetching cryptocurrency price data`, {
         symbols,
         chainId,
       });
 
-      // 將符號轉換為地址
+      // Convert symbols to addresses
       const addresses = this.symbolsToAddresses(symbols);
       if (addresses.length === 0) {
-        throw this.createError('INVALID_PARAMS', '未提供有效的代幣符號', false);
+        throw this.createError(
+          'INVALID_PARAMS',
+          'No valid token symbols provided',
+          false
+        );
       }
 
-      // 調用API
+      // Call API
       const addressesStr = addresses.join(',');
       const response = await this.fetchPriceData(addressesStr, chainId);
 
-      // 處理響應數據
+      // Process response data
       const processedData = this.transformPriceData(response, symbols);
 
-      console.log(`✅ 價格數據獲取成功: ${processedData.length}個代幣`);
+      console.log(
+        `✅ Price data fetched successfully: ${processedData.length} tokens`
+      );
       return processedData;
     } catch (error) {
-      console.error('❌ 加密貨幣價格數據獲取失敗', error);
+      console.error('❌ Failed to fetch cryptocurrency price data', error);
       throw this.handleError(error);
     }
   }
 
   /**
-   * 獲取單個加密貨幣的價格數據
-   * @param symbol 代幣符號，如 'BTC'
-   * @param chainId 區塊鏈ID，默認為1（以太坊主網）
-   * @returns 代幣價格數據
+   * Get price data for a single cryptocurrency
+   * @param symbol Token symbol, e.g. 'BTC'
+   * @param chainId Blockchain ID, default is 1 (Ethereum mainnet)
+   * @returns Token price data
    */
   static async getPrice(
     symbol: string,
@@ -65,7 +70,7 @@ export class CryptoPriceService {
     if (prices.length === 0) {
       throw this.createError(
         'NOT_FOUND',
-        `未找到代幣 ${symbol} 的價格數據`,
+        `Price data not found for token ${symbol}`,
         false
       );
     }
@@ -73,10 +78,10 @@ export class CryptoPriceService {
   }
 
   /**
-   * 調用API獲取原始價格數據
-   * @param addresses 代幣地址，逗號分隔
-   * @param chainId 區塊鏈ID
-   * @returns 原始API響應數據
+   * Call API to fetch raw price data
+   * @param addresses Token addresses, comma-separated
+   * @param chainId Blockchain ID
+   * @returns Raw API response data
    */
   private static async fetchPriceData(
     addresses: string,
@@ -84,7 +89,7 @@ export class CryptoPriceService {
   ): Promise<SpotPriceApiResponse> {
     return retryRequest(
       async () => {
-        // 使用Next.js API路由代理請求
+        // Use Next.js API route proxy request
         const apiUrl = `/api/crypto-price/${addresses}?chainId=${chainId}`;
 
         const response = await fetch(apiUrl, {
@@ -93,27 +98,29 @@ export class CryptoPriceService {
             'Content-Type': 'application/json',
             Accept: 'application/json',
           },
-          // 設置5秒超時
+          // Set 5 second timeout
           signal: AbortSignal.timeout(5000),
         });
 
         if (!response.ok) {
           const errorText = await response.text();
-          throw new Error(`API請求失敗 (${response.status}): ${errorText}`);
+          throw new Error(
+            `API request failed (${response.status}): ${errorText}`
+          );
         }
 
         return await response.json();
       },
-      3, // 最大重試次數
-      1000 // 重試延遲（毫秒）
+      3, // Maximum retry count
+      1000 // Retry delay (milliseconds)
     );
   }
 
   /**
-   * 將API響應數據轉換為應用數據格式
-   * @param data 原始API響應數據
-   * @param symbols 原始請求的符號列表（用於保持順序）
-   * @returns 處理後的價格數據數組
+   * Transform API response data to application data format
+   * @param data Raw API response data
+   * @param symbols Original request symbol list (to maintain order)
+   * @returns Processed price data array
    */
   private static transformPriceData(
     data: SpotPriceApiResponse,
@@ -125,10 +132,10 @@ export class CryptoPriceService {
 
     const addressToSymbol = this.createAddressToSymbolMap(symbols);
 
-    // 轉換數據
+    // Convert data
     const result: CryptoPriceData[] = [];
 
-    // 按原始符號順序處理數據
+    // Process data in original symbol order
     symbols.forEach((symbol) => {
       const address = this.getTokenAddressBySymbol(symbol);
       if (!address || !data[address]) return;
@@ -148,7 +155,7 @@ export class CryptoPriceService {
   }
 
   /**
-   * 創建地址到符號的映射
+   * Create address to symbol mapping
    */
   private static createAddressToSymbolMap(
     symbols: string[]
@@ -164,24 +171,24 @@ export class CryptoPriceService {
   }
 
   /**
-   * 根據符號獲取代幣地址
+   * Get token address by symbol
    */
   private static getTokenAddressBySymbol(symbol: string): string | undefined {
     const upperSymbol = symbol.toUpperCase();
-    // 從COMMON_TOKEN_ADDRESSES中獲取地址
+    // Get address from COMMON_TOKEN_ADDRESSES
     return (COMMON_TOKEN_ADDRESSES as any)[upperSymbol];
   }
 
   /**
-   * 獲取代幣基本信息
+   * Get token basic information
    */
   private static getTokenInfo(symbol: string): CryptoToken {
     const upperSymbol = symbol.toUpperCase();
 
-    // 從預定義代幣中獲取信息
+    // Get information from predefined tokens
     const token = (COMMON_TOKENS as any)[upperSymbol];
 
-    // 如果找不到預定義的代幣信息，創建一個基本的
+    // If predefined token information is not found, create a basic one
     if (!token) {
       const address =
         this.getTokenAddressBySymbol(upperSymbol) ||
@@ -190,7 +197,7 @@ export class CryptoPriceService {
         symbol: upperSymbol,
         name: upperSymbol,
         address,
-        decimals: 18, // 假設標準ERC20小數點
+        decimals: 18, // Assume standard ERC20 decimals
         chainId: '1',
       };
     }
@@ -199,7 +206,7 @@ export class CryptoPriceService {
   }
 
   /**
-   * 將代幣符號數組轉換為地址數組
+   * Convert token symbol array to address array
    */
   private static symbolsToAddresses(symbols: string[]): string[] {
     if (!symbols || symbols.length === 0) return [];
@@ -210,7 +217,7 @@ export class CryptoPriceService {
   }
 
   /**
-   * 處理錯誤
+   * Handle errors
    */
   private static handleError(error: any): CryptoPriceError {
     if (error.code && error.retryable !== undefined) {
@@ -218,23 +225,23 @@ export class CryptoPriceService {
     }
 
     let code = 'UNKNOWN_ERROR';
-    let message = '未知錯誤';
+    let message = 'Unknown error';
     let retryable = false;
 
     if (error instanceof Error) {
       message = error.message;
 
-      // 網絡相關錯誤通常可以重試
+      // Network-related errors are usually retryable
       if (error.name === 'AbortError') {
         code = 'TIMEOUT';
-        message = '請求超時';
+        message = 'Request timeout';
         retryable = true;
       } else if (
         error.message.includes('fetch') ||
         error.message.includes('network')
       ) {
         code = 'NETWORK_ERROR';
-        message = '網絡連接失敗';
+        message = 'Network connection failed';
         retryable = true;
       }
     }
@@ -243,7 +250,7 @@ export class CryptoPriceService {
   }
 
   /**
-   * 創建錯誤對象
+   * Create error object
    */
   private static createError(
     code: string,

@@ -76,7 +76,9 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
 
   // 渲染交易類型
   const renderTransactionType = (type: string) => {
-    const typeInfo = getTransactionTypeInfo(type);
+    // 確保type存在且為字符串
+    const safeType = typeof type === 'string' ? type.toLowerCase() : 'unknown';
+    const typeInfo = getTransactionTypeInfo(safeType);
 
     return (
       <div className={`flex items-center gap-2 ${typeInfo.color}`}>

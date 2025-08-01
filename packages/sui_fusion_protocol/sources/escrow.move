@@ -1,15 +1,7 @@
 module sui_fusion_protocol::escrow;
 
-use std::{type_name::{Self, TypeName}, vector};
-use sui::{
-    balance::{Self, Balance, destroy_zero},
-    clock::Clock,
-    coin::{Self, Coin},
-    dynamic_field,
-    hash,
-    object_table::ObjectTable,
-    sui::SUI
-};
+use std::type_name::{Self, TypeName};
+use sui::{balance::Balance, coin::{Self, Coin}, dynamic_field, hash, sui::SUI};
 use sui_fusion_protocol::timelock::Timelocks;
 
 public struct Escrow has key, store {
@@ -86,6 +78,14 @@ public(package) fun withdraw<T>(self: &mut Escrow): (Balance<T>, Balance<SUI>) {
     );
 
     (deposit, safety_deposit)
+}
+
+public fun amount(self: &Escrow): u64 {
+    self.amount
+}
+
+public fun safety_deposit_amount(self: &Escrow): u64 {
+    self.safety_deposit_amount
 }
 
 public fun maker(self: &Escrow): address {

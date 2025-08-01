@@ -249,7 +249,7 @@ public fun create_src_escrow<Token>(
     dst_cancellation: u64,
     clock: &Clock,
     ctx: &mut TxContext,
-) {
+): ID {
     assert!(vector::length(&order_hash) == 32, EInvalidOrderHash);
     assert!(vector::length(&hashlock) == 32, EInvalidHashlock);
     assert!(!self.is_src_escrow_exists(order_hash), EDstEscrowExists);
@@ -294,6 +294,7 @@ public fun create_src_escrow<Token>(
         taker,
         source_amount,
     );
+    escrow_id
 }
 
 // Create a new destination escrow
@@ -314,7 +315,7 @@ public fun create_dst_escrow<Token>(
     dst_cancellation: u64,
     clock: &Clock,
     ctx: &mut TxContext,
-) {
+): ID {
     assert!(vector::length(&order_hash) == 32, EInvalidOrderHash);
     assert!(vector::length(&hashlock) == 32, EInvalidHashlock);
     assert!(!self.is_dst_escrow_exists(order_hash), EDstEscrowExists);
@@ -337,7 +338,7 @@ public fun create_dst_escrow<Token>(
     let deposit_amount = coin::value(&deposit);
     let safety_deposit_amount = coin::value(&safety_deposit);
 
-    assert!(safety_deposit_amount > constants::min_safety_deposit(), ESafetyDepositTooLow);
+    assert!(safety_deposit_amount >= constants::min_safety_deposit(), ESafetyDepositTooLow);
 
     let escros = escrow::create<Token>(
         order_hash,
@@ -365,6 +366,8 @@ public fun create_dst_escrow<Token>(
         deposit_amount,
         // safety_deposit_amount,
     );
+
+    escrow_id
 }
 
 fun insert_dst_escrow(self: &mut EscrowFactory, order_hash: vector<u8>, escrow: escrow::Escrow) {
@@ -451,4 +454,19 @@ fun take_escrow(self: &mut EscrowFactory, order_hash: vector<u8>, is_src: bool):
 #[test_only]
 public fun init_for_testing(ctx: &mut TxContext) {
     init(ctx);
+}
+
+#[test_only]
+public fun find_escrow_for_testing(
+    self: &EscrowFactory,
+    order_hash: vector<u8>,
+    is_src: bool,
+): &escrow::Escrow {
+    if (is_src) {
+        assert!(self.escrow_srcs.contains(order_hash), EInvalidOrderHash);
+        self.escrow_srcs.borrow(order_hash)
+    } else {
+        assert!(self.escrow_dsts.contains(order_hash), EInvalidOrderHash);
+        self.escrow_dsts.borrow(order_hash)
+    }
 }

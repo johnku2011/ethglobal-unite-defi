@@ -173,23 +173,71 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           })}
         </nav>
 
-        {/* Sidebar footer - Wallet info */}
+        {/* Sidebar footer - Multi-Wallet info */}
         <div className='border-t border-gray-200 p-4'>
-          <div className='space-y-2'>
+          <div className='space-y-3'>
+            <div className='flex items-center justify-between'>
+              <span className='text-xs font-medium text-gray-700'>
+                Connected Wallets
+              </span>
+              <span className='text-xs text-gray-500'>
+                {connectedWallets.length}/2
+              </span>
+            </div>
+
             {connectedWallets.map((wallet, index) => (
-              <div key={index} className='flex items-center space-x-2 text-sm'>
-                <div
-                  className={`w-2 h-2 rounded-full ${
-                    wallet.type === 'ethereum' ? 'bg-blue-500' : 'bg-purple-500'
-                  }`}
-                />
-                <span className='text-gray-600 font-mono text-xs'>
-                  {formatAddress(wallet.address)}
-                </span>
+              <div key={index} className='bg-gray-50 rounded-lg p-2'>
+                <div className='flex items-center space-x-2'>
+                  <div className='flex items-center space-x-1'>
+                    <div
+                      className={`w-2 h-2 rounded-full ${
+                        wallet.type === 'ethereum'
+                          ? 'bg-blue-500'
+                          : 'bg-purple-500'
+                      }`}
+                    />
+                    <span className='text-xs font-medium text-gray-700'>
+                      {wallet.type === 'ethereum' ? 'ETH' : 'SUI'}
+                    </span>
+                  </div>
+                  <span className='text-xs text-gray-600'>
+                    {wallet.provider}
+                  </span>
+                </div>
+                <div className='mt-1'>
+                  <span className='text-xs text-gray-500 font-mono'>
+                    {formatAddress(wallet.address)}
+                  </span>
+                </div>
+                {wallet.type === 'ethereum' && wallet.chainId && (
+                  <div className='mt-1'>
+                    <span className='text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded'>
+                      {wallet.chainId === 1
+                        ? 'Ethereum'
+                        : wallet.chainId === 137
+                          ? 'Polygon'
+                          : wallet.chainId === 56
+                            ? 'BSC'
+                            : `Chain ${wallet.chainId}`}
+                    </span>
+                  </div>
+                )}
               </div>
             ))}
+
+            {connectedWallets.length === 2 && (
+              <div className='text-center'>
+                <div className='inline-flex items-center space-x-1 text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full'>
+                  <LinkIcon className='w-3 h-3' />
+                  <span>Cross-chain Ready</span>
+                </div>
+              </div>
+            )}
+
             {connectedWallets.length === 0 && (
-              <div className='text-xs text-gray-500'>No wallets connected</div>
+              <div className='text-center text-xs text-gray-500 py-2'>
+                No wallets connected
+              </div>
             )}
           </div>
         </div>

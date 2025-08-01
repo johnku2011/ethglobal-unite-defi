@@ -12,6 +12,7 @@ import {
   useTransactionHistory,
 } from '@/hooks/api/usePortfolioQuery';
 import NetworkStatusBanner from '@/components/NetworkStatusBanner';
+import { CompactDualWalletDisplay } from '@/components/DualWalletDisplay';
 import {
   BanknotesIcon,
   ArrowTrendingUpIcon,
@@ -126,13 +127,20 @@ export default function Home() {
         {/* Welcome Section */}
         <div className='bg-gradient-to-r from-primary-500 to-accent-500 rounded-2xl p-8 text-white'>
           <div className='flex items-center justify-between'>
-            <div>
+            <div className='flex-1'>
               <h1 className='text-3xl font-bold mb-2'>
                 Welcome to UniPortfolio
               </h1>
-              <p className='text-primary-100 text-lg'>
+              <p className='text-primary-100 text-lg mb-4'>
                 Unified DeFi portfolio management across multiple blockchains
               </p>
+              {/* Multi-Chain Wallet Status */}
+              <div className='bg-white bg-opacity-20 rounded-lg p-4 inline-block border border-white border-opacity-30'>
+                <h3 className='text-sm font-medium text-white mb-3'>
+                  Connected Wallets
+                </h3>
+                <CompactDualWalletDisplay variant='light' />
+              </div>
             </div>
             <div className='hidden md:block'>
               <div className='w-32 h-32 bg-white bg-opacity-10 rounded-full flex items-center justify-center'>

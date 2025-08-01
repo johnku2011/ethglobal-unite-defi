@@ -10,6 +10,7 @@ import {
   useValueChart,
 } from '@/hooks/api/usePortfolioQuery';
 import NetworkStatusBanner from '@/components/NetworkStatusBanner';
+import { CompactDualWalletDisplay } from '@/components/DualWalletDisplay';
 import AssetList from '@/components/portfolio/AssetList';
 import PortfolioChart from '@/components/portfolio/PortfolioChart';
 import SimpleValueChart from '@/components/portfolio/SimpleValueChart';
@@ -213,18 +214,32 @@ export default function Portfolio() {
         {/* Portfolio Header */}
         <div className='bg-white rounded-xl shadow-soft p-6 border border-gray-100'>
           <div className='flex items-center justify-between mb-6'>
-            <div>
+            <div className='flex-1'>
               <h2 className='text-2xl font-bold text-gray-900'>
                 Portfolio Overview
               </h2>
-              <p className='text-gray-600'>
+              <p className='text-gray-600 mb-3'>
                 Track your assets across all connected chains
               </p>
-              {walletAddress && (
-                <p className='text-sm text-gray-500 font-mono mt-1'>
-                  {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
-                </p>
-              )}
+              {/* Multi-Wallet Status */}
+              <div className='flex items-center space-x-4'>
+                <div>
+                  <p className='text-xs text-gray-500 mb-1'>
+                    Connected Wallets:
+                  </p>
+                  <CompactDualWalletDisplay />
+                </div>
+                {walletAddress && (
+                  <div>
+                    <p className='text-xs text-gray-500 mb-1'>
+                      Active Address:
+                    </p>
+                    <p className='text-sm text-gray-600 font-mono bg-gray-50 px-2 py-1 rounded'>
+                      {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
             <button
               onClick={handleRefresh}

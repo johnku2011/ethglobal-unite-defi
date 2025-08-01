@@ -1,13 +1,18 @@
 #[test_only]
 module sui_fusion_protocol::factory_tests;
 
-use sui::{clock::{Self, Clock}, coin, hash, sui::SUI, test_scenario::{Self, take_shared, Scenario}};
-use sui_fusion_protocol::factory;
+use sui::{
+    clock::{Self, Clock},
+    coin,
+    hash,
+    sui::SUI,
+    test_scenario::{Self, take_shared, Scenario},
+    test_utils::{Self, destroy}
+};
+use sui_fusion_protocol::{factory, resolver};
 
 const MAKER: address = @0xAA;
-// const TAKER: address = @0xBA;
 const RESOLVER: address = @0xCA;
-// const OTHER_RESOLVER: address = @0xDA;
 const WITHDRAWAL_SRC_TIMELOCK: u64 = 300;
 const PUBLIC_WITHDRAWAL_SRC_TIMELOCK: u64 = 600;
 const CANCELLATION_SRC_TIMELOCK: u64 = 900;
@@ -28,34 +33,30 @@ fun setup_test(): (Scenario, vector<u8>, vector<u8>, vector<u8>, Clock) {
     (test, secret, order_hash, hashlock, clock)
 }
 
-// #[test_only]
-// fun mint_sui_for_testing(
-//     sender: address,
-//     amount: u64,
-//     test: &mut Scenario,
-// ): (
-//     coin::Coin<sui_fusion_protocol::sui::TEST_SUI>,
-//     coin::CoinMetadata<sui_fusion_protocol::sui::TEST_SUI>,
-// ) {
-//     test.next_tx(sender);
-//     {
-//         let (mut treasury_cap, coin_metadata) = sui::create_currency(test.ctx());
-//         let coins = coin::mint(&mut treasury_cap, amount, test.ctx());
+#[test_only]
+fun setup_resolvers(test: &mut Scenario): (factory::ResolverOwnerCap) {
+    test.next_tx(RESOLVER);
 
-//         transfer::public_transfer(treasury_cap, sender);
+    let mut escrow_factory = test.take_shared<factory::EscrowFactory>();
+    // let resolver = resolver::create_resolver_for_testing(object::id(&escrow_factory), test.ctx());
 
-//         (coins, coin_metadata)
-//     }
-// }
+    let cap = factory::regsiter_resolver(&mut escrow_factory, test.ctx());
+    test_scenario::return_shared(escrow_factory);
+
+    (cap)
+}
 
 #[test]
 fun test_create_src_escrow() {
-    let (mut test, secret, order_hash, hashlock, clock) = setup_test();
+    let (mut test, _secret, order_hash, hashlock, clock) = setup_test();
 
     factory::init_for_testing(test.ctx());
 
+    let cap = setup_resolvers(&mut test);
+
     let (sui) = create_src_escrow_for_testing(
         &mut test,
+        &cap,
         order_hash,
         hashlock,
         &clock,
@@ -63,6 +64,7 @@ fun test_create_src_escrow() {
 
     clock::destroy_for_testing(clock);
     sui.burn_for_testing();
+    test_utils::destroy(cap);
     test_scenario::end(test);
 }
 
@@ -72,8 +74,11 @@ fun test_withdraw_dst_escrow() {
 
     factory::init_for_testing(test.ctx());
 
+    let cap = setup_resolvers(&mut test);
+
     let sui = create_dst_escrow_for_testing(
         &mut test,
+        &cap,
         order_hash,
         hashlock,
         &clock,
@@ -84,29 +89,32 @@ fun test_withdraw_dst_escrow() {
     let mut escrow_factory = test.take_shared<factory::EscrowFactory>();
     clock::set_for_testing(&mut clock, PUBLIC_WITHDRAWAL_DST_TIMELOCK + 100);
 
-    factory::withdraw<SUI>(
+    factory::withdraw_dst<SUI>(
         &mut escrow_factory,
         order_hash,
         secret,
-        false,
         &clock,
         test.ctx(),
     );
 
     sui.burn_for_testing();
     clock::destroy_for_testing(clock);
-    test_scenario::end(test);
+    test_utils::destroy(cap);
     test_scenario::return_shared(escrow_factory);
+    test_scenario::end(test);
 }
 
 #[test]
 fun test_create_dst_escrow() {
-    let (mut test, secret, order_hash, hashlock, clock) = setup_test();
+    let (mut test, _secret, order_hash, hashlock, clock) = setup_test();
 
     factory::init_for_testing(test.ctx());
 
+    let cap = setup_resolvers(&mut test);
+
     let (sui) = create_dst_escrow_for_testing(
         &mut test,
+        &cap,
         order_hash,
         hashlock,
         &clock,
@@ -114,6 +122,7 @@ fun test_create_dst_escrow() {
 
     clock::destroy_for_testing(clock);
     sui.burn_for_testing();
+    test_utils::destroy(cap);
     test_scenario::end(test);
 }
 
@@ -123,8 +132,11 @@ fun test_cancel_dst_escrow() {
 
     factory::init_for_testing(test.ctx());
 
+    let cap = setup_resolvers(&mut test);
+
     let sui = create_dst_escrow_for_testing(
         &mut test,
+        &cap,
         order_hash,
         hashlock,
         &clock,
@@ -135,16 +147,16 @@ fun test_cancel_dst_escrow() {
     let mut escrow_factory = test.take_shared<factory::EscrowFactory>();
     clock::set_for_testing(&mut clock, CANCELLATION_DST_TIMELOCK + 100);
 
-    factory::cancel<SUI>(
+    factory::cancel_dst<SUI>(
         &mut escrow_factory,
         order_hash,
-        false,
         &clock,
         test.ctx(),
     );
 
     sui.burn_for_testing();
     clock::destroy_for_testing(clock);
+    test_utils::destroy(cap);
     test_scenario::end(test);
     test_scenario::return_shared(escrow_factory);
 }
@@ -155,8 +167,11 @@ fun test_withdraw_src_escrow() {
 
     factory::init_for_testing(test.ctx());
 
+    let cap = setup_resolvers(&mut test);
+
     let sui = create_src_escrow_for_testing(
         &mut test,
+        &cap,
         order_hash,
         hashlock,
         &clock,
@@ -171,25 +186,27 @@ fun test_withdraw_src_escrow() {
         &mut escrow_factory,
         order_hash,
         secret,
-        true,
         &clock,
         test.ctx(),
     );
 
     sui.burn_for_testing();
     clock::destroy_for_testing(clock);
-    test_scenario::end(test);
+    test_utils::destroy(cap);
     test_scenario::return_shared(escrow_factory);
+    test_scenario::end(test);
 }
 
 #[test]
 fun test_cancel_src_escrow() {
-    let (mut test, secret, order_hash, hashlock, mut clock) = setup_test();
+    let (mut test, _secret, order_hash, hashlock, mut clock) = setup_test();
 
     factory::init_for_testing(test.ctx());
 
+    let cap = setup_resolvers(&mut test);
     let sui = create_src_escrow_for_testing(
         &mut test,
+        &cap,
         order_hash,
         hashlock,
         &clock,
@@ -203,24 +220,24 @@ fun test_cancel_src_escrow() {
     factory::cancel_src<SUI>(
         &mut escrow_factory,
         order_hash,
-        true,
         &clock,
         test.ctx(),
     );
 
     sui.burn_for_testing();
     clock::destroy_for_testing(clock);
-    test_scenario::end(test);
+    test_utils::destroy(cap);
     test_scenario::return_shared(escrow_factory);
+    test_scenario::end(test);
 }
 
 #[test_only]
 fun create_dst_escrow_for_testing(
     test: &mut Scenario,
+    cap: &factory::ResolverOwnerCap,
     order_hash: vector<u8>,
     hashlock: vector<u8>,
     clock: &Clock,
-    // ctx: &mut Scenario,
 ): (coin::Coin<SUI>) {
     test.next_tx(RESOLVER);
 
@@ -252,6 +269,7 @@ fun create_dst_escrow_for_testing(
     // Call the create_dst_escrow function
     factory::create_dst_escrow<SUI>(
         &mut escrow_factory,
+        cap,
         order_hash,
         hashlock,
         maker,
@@ -275,6 +293,7 @@ fun create_dst_escrow_for_testing(
 #[test_only]
 fun create_src_escrow_for_testing(
     test: &mut Scenario,
+    resolver_owner_cap: &factory::ResolverOwnerCap,
     order_hash: vector<u8>,
     hashlock: vector<u8>,
     clock: &Clock,
@@ -309,6 +328,7 @@ fun create_src_escrow_for_testing(
     // Call the create_dst_escrow function
     factory::create_src_escrow<SUI>(
         &mut escrow_factory,
+        resolver_owner_cap,
         order_hash,
         hashlock,
         taker,

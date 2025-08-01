@@ -10,8 +10,8 @@ import {
 } from '@heroicons/react/24/outline';
 
 /**
- * 網絡狀態橫幅組件
- * 顯示當前網絡狀態和相關警告/信息
+ * Network Status Banner Component
+ * Displays current network status and related warnings/information
  */
 
 export default function NetworkStatusBanner() {
@@ -23,7 +23,7 @@ export default function NetworkStatusBanner() {
     return null;
   }
 
-  // Testnet 警告
+  // Testnet warning
   if (shouldShowTestnetWarning) {
     return (
       <div className='bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6'>
@@ -31,40 +31,43 @@ export default function NetworkStatusBanner() {
           <ExclamationTriangleIcon className='h-5 w-5 text-yellow-400 mt-0.5 mr-3 flex-shrink-0' />
           <div className='flex-1'>
             <h3 className='text-sm font-medium text-yellow-800'>
-              測試網絡模式
+              Testnet Mode
             </h3>
             <div className='mt-2 text-sm text-yellow-700'>
               <p>
-                您當前連接到 <strong>{chain.shortName}</strong> 測試網絡。 1inch
-                API 不支持測試網絡的投資組合和交易功能。
+                You are currently connected to{' '}
+                <strong>{chain.shortName}</strong> testnet. 1inch API does not
+                support portfolio and trading features on testnets.
               </p>
               <div className='mt-3'>
-                <p className='font-medium'>建議的開發策略：</p>
+                <p className='font-medium'>Recommended development strategy:</p>
                 <ul className='mt-1 list-disc list-inside space-y-1'>
                   <li>
-                    使用 <strong>Polygon</strong> 或 <strong>BSC</strong>{' '}
-                    進行低成本的主網測試
+                    Use <strong>Polygon</strong> or <strong>BSC</strong> for
+                    low-cost mainnet testing
                   </li>
-                  <li>在測試網上測試錢包連接和網絡切換功能</li>
-                  <li>切換到主網查看完整的 DeFi 功能</li>
+                  <li>
+                    Test wallet connection and network switching on testnets
+                  </li>
+                  <li>Switch to mainnet to access full DeFi features</li>
                 </ul>
               </div>
             </div>
 
-            {/* 快速切換到主網按鈕 */}
+            {/* Quick switch to mainnet buttons */}
             <div className='mt-4 flex space-x-3'>
               <button
                 onClick={() => switchToChain(1)}
                 className='inline-flex items-center px-3 py-2 border border-yellow-300 shadow-sm text-sm leading-4 font-medium rounded-md text-yellow-700 bg-yellow-100 hover:bg-yellow-200 focus:outline-none focus:ring-2 focus:ring-yellow-500'
               >
-                切換到 Ethereum
+                Switch to Ethereum
                 <ChevronRightIcon className='ml-1 h-3 w-3' />
               </button>
               <button
                 onClick={() => switchToChain(137)}
                 className='inline-flex items-center px-3 py-2 border border-yellow-300 shadow-sm text-sm leading-4 font-medium rounded-md text-yellow-700 bg-yellow-100 hover:bg-yellow-200 focus:outline-none focus:ring-2 focus:ring-yellow-500'
               >
-                切換到 Polygon
+                Switch to Polygon
                 <ChevronRightIcon className='ml-1 h-3 w-3' />
               </button>
             </div>
@@ -74,22 +77,25 @@ export default function NetworkStatusBanner() {
     );
   }
 
-  // 不支持的網絡警告
+  // Unsupported network warning
   if (!canUse1inch && !shouldShowTestnetWarning) {
     return (
       <div className='bg-red-50 border border-red-200 rounded-lg p-4 mb-6'>
         <div className='flex items-start'>
           <ExclamationTriangleIcon className='h-5 w-5 text-red-400 mt-0.5 mr-3 flex-shrink-0' />
           <div className='flex-1'>
-            <h3 className='text-sm font-medium text-red-800'>不支持的網絡</h3>
+            <h3 className='text-sm font-medium text-red-800'>
+              Unsupported Network
+            </h3>
             <div className='mt-2 text-sm text-red-700'>
               <p>
-                <strong>{chain.shortName}</strong> 不支持 1inch API 功能。
-                請切換到支持的網絡以使用完整的 DeFi 功能。
+                <strong>{chain.shortName}</strong> does not support 1inch API
+                features. Please switch to a supported network to use full DeFi
+                functionality.
               </p>
             </div>
 
-            {/* 支持的網絡列表 */}
+            {/* Supported networks list */}
             <div className='mt-4 flex flex-wrap gap-2'>
               {ChainService.getMainnetChains().map((supportedChain) => (
                 <button
@@ -97,7 +103,7 @@ export default function NetworkStatusBanner() {
                   onClick={() => switchToChain(supportedChain.id)}
                   className='inline-flex items-center px-3 py-2 border border-red-300 shadow-sm text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500'
                 >
-                  切換到 {supportedChain.shortName}
+                  Switch to {supportedChain.shortName}
                   <ChevronRightIcon className='ml-1 h-3 w-3' />
                 </button>
               ))}
@@ -108,14 +114,16 @@ export default function NetworkStatusBanner() {
     );
   }
 
-  // 正常主網連接 - 簡潔的狀態顯示
+  // Normal mainnet connection - clean status display
   return (
     <div className='bg-green-50 border border-green-200 rounded-lg p-3 mb-4'>
       <div className='flex items-center'>
         <InformationCircleIcon className='h-4 w-4 text-green-400 mr-2 flex-shrink-0' />
         <div className='text-sm text-green-700'>
-          <span className='font-medium'>已連接到 {chain.shortName}</span>
-          <span className='ml-2 text-green-600'>• 所有 DeFi 功能可用</span>
+          <span className='font-medium'>Connected to {chain.shortName}</span>
+          <span className='ml-2 text-green-600'>
+            • All DeFi features available
+          </span>
         </div>
       </div>
     </div>
@@ -123,7 +131,7 @@ export default function NetworkStatusBanner() {
 }
 
 /**
- * 簡化版的網絡狀態指示器 - 用於在其他組件中顯示
+ * Simplified network status indicator - for display in other components
  */
 export function NetworkStatusIndicator() {
   const { chain, canUse1inch, shouldShowTestnetWarning } =
@@ -132,7 +140,7 @@ export function NetworkStatusIndicator() {
   if (!chain) {
     return (
       <span className='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800'>
-        未連接
+        Not Connected
       </span>
     );
   }
@@ -141,7 +149,7 @@ export function NetworkStatusIndicator() {
     return (
       <span className='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800'>
         <ExclamationTriangleIcon className='h-3 w-3 mr-1' />
-        測試網
+        Testnet
       </span>
     );
   }
@@ -150,7 +158,7 @@ export function NetworkStatusIndicator() {
     return (
       <span className='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800'>
         <ExclamationTriangleIcon className='h-3 w-3 mr-1' />
-        不支持
+        Unsupported
       </span>
     );
   }

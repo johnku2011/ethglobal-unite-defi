@@ -3,11 +3,13 @@
 import React, { useMemo, useState } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import { useWallet } from '@/providers/WalletProvider';
+import { useCurrentWalletChain } from '@/providers/ChainProvider';
 import {
   usePortfolio,
   useRefreshPortfolio,
   useValueChart,
 } from '@/hooks/api/usePortfolioQuery';
+import NetworkStatusBanner from '@/components/NetworkStatusBanner';
 import AssetList from '@/components/portfolio/AssetList';
 import PortfolioChart from '@/components/portfolio/PortfolioChart';
 import SimpleValueChart from '@/components/portfolio/SimpleValueChart';
@@ -24,13 +26,14 @@ import type { Protocol } from '@/services/api/oneinchAPI';
 
 export default function Portfolio() {
   const { connectedWallets } = useWallet();
+  const { wallet: currentWallet, canUse1inch } = useCurrentWalletChain();
   const [chartView, setChartView] = useState<'pie' | 'trend'>('pie');
 
   // Get the first connected Ethereum wallet address
   const ethereumWallet = connectedWallets.find(
     (wallet) => wallet.type === 'ethereum'
   );
-  const walletAddress = ethereumWallet?.address;
+  const walletAddress = currentWallet?.address || ethereumWallet?.address;
 
   // Fetch portfolio data using our custom hook
   const {
@@ -204,6 +207,9 @@ export default function Portfolio() {
   return (
     <DashboardLayout>
       <div className='space-y-6'>
+        {/* Network Status Banner */}
+        <NetworkStatusBanner />
+
         {/* Portfolio Header */}
         <div className='bg-white rounded-xl shadow-soft p-6 border border-gray-100'>
           <div className='flex items-center justify-between mb-6'>

@@ -6,13 +6,17 @@ import {
   Transaction,
 } from '@/services/api/oneinchAPI';
 import { queryKeys } from '@/providers/QueryProvider';
+import { useCurrentWalletChain } from '@/providers/ChainProvider';
 import { toast } from 'react-hot-toast';
 
 /**
- * Portfolio 數據查詢 Hook
- * 包含完整的觸發→輪詢流程
+ * Portfolio 數據查詢 Hook（使用鏈狀態管理）
+ * 包含完整的觸發→輪詢流程，並根據當前鏈狀態決定是否查詢
  */
-export const usePortfolio = (address: string | undefined) => {
+export const usePortfolio = (address?: string) => {
+  const { canUse1inch, shouldShowTestnetWarning, chain } =
+    useCurrentWalletChain();
+
   return useQuery({
     queryKey: queryKeys.portfolio.byAddress(address || ''),
     queryFn: async () => {
@@ -20,8 +24,17 @@ export const usePortfolio = (address: string | undefined) => {
         throw new Error('無效的錢包地址');
       }
 
+      if (!canUse1inch) {
+        if (shouldShowTestnetWarning) {
+          throw new Error(
+            '1inch Portfolio API 不支持測試網絡，請切換到主網查看投資組合數據'
+          );
+        }
+        throw new Error('當前網絡不支持 1inch API');
+      }
+
       console.log(
-        `🚀 開始獲取Portfolio數據: ${OneInchPortfolioAPI.formatAddress(address)}`
+        `🚀 開始獲取Portfolio數據: ${OneInchPortfolioAPI.formatAddress(address)} (Chain: ${chain?.shortName})`
       );
 
       // 執行完整的Portfolio數據獲取流程
@@ -34,10 +47,20 @@ export const usePortfolio = (address: string | undefined) => {
 
       return result;
     },
-    enabled: !!address && OneInchPortfolioAPI.isValidEthereumAddress(address),
+    enabled:
+      !!address &&
+      OneInchPortfolioAPI.isValidEthereumAddress(address) &&
+      canUse1inch,
     staleTime: 5 * 60 * 1000, // 5分鐘
     gcTime: 10 * 60 * 1000, // 10分鐘
     retry: (failureCount, error: any) => {
+      // 對於網絡不支持的錯誤，不進行重試
+      if (
+        error?.message?.includes('不支持') ||
+        error?.message?.includes('測試網絡')
+      ) {
+        return false;
+      }
       // 對於無效地址等不可重試的錯誤，不進行重試
       if (error?.message?.includes('無效') || error?.code === 'BAD_REQUEST') {
         return false;
@@ -56,9 +79,12 @@ export const usePortfolio = (address: string | undefined) => {
 export type TimeRange = '1day' | '1week' | '1month' | '1year' | '3years';
 
 export const useValueChart = (
-  address: string | undefined,
+  address?: string,
   timerange: TimeRange = '1month'
 ) => {
+  const { canUse1inch, shouldShowTestnetWarning, chain } =
+    useCurrentWalletChain();
+
   return useQuery({
     queryKey: queryKeys.portfolio.valueChart(address || '', timerange),
     queryFn: async () => {
@@ -66,8 +92,17 @@ export const useValueChart = (
         throw new Error('無效的錢包地址');
       }
 
+      if (!canUse1inch) {
+        if (shouldShowTestnetWarning) {
+          throw new Error(
+            '1inch Portfolio API 不支持測試網絡，請切換到主網查看價值圖表'
+          );
+        }
+        throw new Error('當前網絡不支持 1inch API');
+      }
+
       console.log(
-        `📈 獲取價值圖表: ${OneInchPortfolioAPI.formatAddress(address)} (${timerange})`
+        `📈 獲取價值圖表: ${OneInchPortfolioAPI.formatAddress(address)} (${timerange}) [Chain: ${chain?.shortName}]`
       );
 
       // 添加隨機延遲避免API限制
@@ -75,9 +110,21 @@ export const useValueChart = (
 
       return OneInchPortfolioAPI.getValueChart(address, timerange);
     },
-    enabled: !!address && OneInchPortfolioAPI.isValidEthereumAddress(address),
+    enabled:
+      !!address &&
+      OneInchPortfolioAPI.isValidEthereumAddress(address) &&
+      canUse1inch,
     staleTime: 5 * 60 * 1000, // 5分鐘
-    retry: 3,
+    retry: (failureCount, error: any) => {
+      // 對於網絡不支持的錯誤，不進行重試
+      if (
+        error?.message?.includes('不支持') ||
+        error?.message?.includes('測試網絡')
+      ) {
+        return false;
+      }
+      return failureCount < 3;
+    },
     retryDelay: (attemptIndex) =>
       Math.min(1000 * Math.pow(2, attemptIndex), 5000),
   });

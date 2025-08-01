@@ -6,10 +6,12 @@ import DashboardLayout from '@/components/DashboardLayout';
 import WalletConnect from '@/components/WalletConnect';
 import WalletDisconnectButton from '@/components/WalletDisconnectButton';
 import { useWallet } from '@/providers/WalletProvider';
+import { useCurrentWalletChain } from '@/providers/ChainProvider';
 import {
   usePortfolio,
   useTransactionHistory,
 } from '@/hooks/api/usePortfolioQuery';
+import NetworkStatusBanner from '@/components/NetworkStatusBanner';
 import {
   BanknotesIcon,
   ArrowTrendingUpIcon,
@@ -37,12 +39,13 @@ function getChainName(chainId: number): string {
 
 export default function Home() {
   const { connectedWallets } = useWallet();
+  const { wallet: currentWallet, canUse1inch } = useCurrentWalletChain();
 
   // 獲取第一個連接的以太坊錢包地址
   const ethereumWallet = connectedWallets.find(
     (wallet) => wallet.type === 'ethereum'
   );
-  const walletAddress = ethereumWallet?.address;
+  const walletAddress = currentWallet?.address || ethereumWallet?.address;
 
   // 使用現有的hooks獲取數據
   const { data: portfolioData, isLoading: isPortfolioLoading } =
@@ -140,6 +143,9 @@ export default function Home() {
             </div>
           </div>
         </div>
+
+        {/* Network Status Banner */}
+        <NetworkStatusBanner />
 
         {/* Quick Stats */}
         <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>

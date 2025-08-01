@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { WalletProvider } from '@/providers/WalletProvider';
+import { ChainProvider } from '@/providers/ChainProvider';
 import { QueryProvider } from '@/providers/QueryProvider';
 import { Toaster } from 'react-hot-toast';
 import './globals.css';
@@ -28,7 +29,7 @@ export default function RootLayout({
       <body className={inter.className}>
         <QueryProvider>
           <WalletProvider>
-            {children}
+            <ChainProvider>{children}</ChainProvider>
             <Toaster
               position='top-right'
               toastOptions={{

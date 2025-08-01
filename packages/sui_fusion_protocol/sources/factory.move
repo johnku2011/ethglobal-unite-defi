@@ -1,6 +1,5 @@
 module sui_fusion_protocol::factory;
 
-use std::{type_name::{Self, TypeName}, vector};
 use sui::{
     clock::{Self, Clock},
     coin::{Self, Coin},
@@ -17,12 +16,11 @@ use sui_fusion_protocol::{
 };
 
 // === Structs ===
-
 public struct EscrowFactory has key, store {
     id: UID,
     escrow_dsts: ObjectTable<vector<u8>, escrow::Escrow>,
     escrow_srcs: ObjectTable<vector<u8>, escrow::Escrow>,
-    resolvers: ObjectTable<address, Resolver>,
+    resolvers: ObjectTable<ID, Resolver>,
 }
 
 public struct ResolverOwnerCap has key, store {
@@ -39,10 +37,10 @@ const EInvalidTaker: u64 = 5;
 const EInvalidSecret: u64 = 6;
 const EInvalidTimestamp: u64 = 7;
 const ESafetyDepositTooLow: u64 = 8;
-const EResolverAlreadyRegistered: u64 = 9;
+// const EResolverAlreadyRegistered: u64 = 9;
 const EResolverNotFound: u64 = 10;
-// === Events ===
 
+// === Events ===
 public struct EscrowCreated has copy, drop {
     escrow_id: ID,
     order_hash: vector<u8>,
@@ -80,9 +78,8 @@ fun init(ctx: &mut TxContext) {
     transfer::share_object(factory);
 }
 
-public fun regsiter_resolver(self: &mut EscrowFactory, ctx: &mut TxContext) {
-    assert!(!self.resolvers.contains(ctx.sender()), EResolverAlreadyRegistered);
-
+// === Public Functions ===
+public fun regsiter_resolver(self: &mut EscrowFactory, ctx: &mut TxContext): ResolverOwnerCap {
     let escrow_factory_id = object::id(self);
     let resolver = resolver::create_resolver(escrow_factory_id, ctx);
 
@@ -93,20 +90,21 @@ public fun regsiter_resolver(self: &mut EscrowFactory, ctx: &mut TxContext) {
 
     let resolver_id = object::id(&resolver);
 
-    self.resolvers.add(ctx.sender(), resolver);
+    self.resolvers.add(resolver_id, resolver);
 
-    transfer::public_transfer(cap, ctx.sender())
+    cap
+    // transfer::public_transfer(cap, ctx.sender())
 }
 
 public fun withdraw_src<T>(
     self: &mut EscrowFactory,
     order_hash: vector<u8>,
     secret: vector<u8>,
-    is_src: bool,
+    // is_src: bool,
     clock: &Clock,
     ctx: &mut TxContext,
 ) {
-    let mut escrow = take_escrow(self, order_hash, is_src);
+    let mut escrow = take_escrow(self, order_hash, true);
     let sender = ctx.sender();
     assert!(escrow.is_taker(sender), EInvalidTaker);
 
@@ -115,15 +113,15 @@ public fun withdraw_src<T>(
     assert!(now < escrow.timelocks().src_cancellation(), EInvalidTimestamp);
     assert!(escrow.verify_secret(secret), EInvalidSecret);
 
-    let taker = escrow.taker(); // it's for dst case
-    let maker = escrow.maker(); // it's for src case
+    let taker = escrow.taker(); // resolver
+    let maker = escrow.maker(); // user
     let (despoit, safety_deposit) = escrow.withdraw<T>();
 
     let amount = despoit.value();
     let safety_deposit_amount = safety_deposit.value();
     let escrow_id = object::id(&escrow);
 
-    transfer::public_transfer(despoit.into_coin(ctx), maker);
+    transfer::public_transfer(despoit.into_coin(ctx), taker);
     transfer::public_transfer(safety_deposit.into_coin(ctx), taker);
 
     escrow.destroy();
@@ -138,16 +136,15 @@ public fun withdraw_src<T>(
     );
 }
 
-// Source escrow -> resolver, Dst escrow -> user
-public fun withdraw<T>(
+public fun withdraw_dst<T>(
     self: &mut EscrowFactory,
     order_hash: vector<u8>,
     secret: vector<u8>,
-    is_src: bool,
+    // is_src: bool,
     clock: &Clock,
     ctx: &mut TxContext,
 ) {
-    let mut escrow = take_escrow(self, order_hash, is_src);
+    let mut escrow = take_escrow(self, order_hash, false);
     assert!(escrow.is_taker(ctx.sender()), EInvalidTaker);
 
     let now = clock::timestamp_ms(clock);
@@ -163,8 +160,8 @@ public fun withdraw<T>(
     let safety_deposit_amount = safety_deposit.value();
     let escrow_id = object::id(&escrow);
 
-    transfer::public_transfer(despoit.into_coin(ctx), maker);
-    transfer::public_transfer(safety_deposit.into_coin(ctx), taker);
+    transfer::public_transfer(despoit.into_coin(ctx), maker); // transfer to user
+    transfer::public_transfer(safety_deposit.into_coin(ctx), taker); // transfer to resolver
 
     escrow.destroy();
 
@@ -181,11 +178,11 @@ public fun withdraw<T>(
 public fun cancel_src<T>(
     self: &mut EscrowFactory,
     order_hash: vector<u8>,
-    is_src: bool,
+    // is_src: bool,
     clock: &Clock,
     ctx: &mut TxContext,
 ) {
-    let mut escrow = take_escrow(self, order_hash, is_src);
+    let mut escrow = take_escrow(self, order_hash, true);
     assert!(escrow.is_taker(ctx.sender()), EInvalidTaker);
 
     let now = clock::timestamp_ms(clock);
@@ -207,14 +204,13 @@ public fun cancel_src<T>(
     self.emit_escrow_cancelled_event(escrow_id, order_hash);
 }
 
-public fun cancel<T>(
+public fun cancel_dst<T>(
     self: &mut EscrowFactory,
     order_hash: vector<u8>,
-    is_src: bool,
     clock: &Clock,
     ctx: &mut TxContext,
 ) {
-    let mut escrow = take_escrow(self, order_hash, is_src);
+    let mut escrow = take_escrow(self, order_hash, false);
     assert!(escrow.is_taker(ctx.sender()), EInvalidTaker);
 
     let now = clock::timestamp_ms(clock);
@@ -238,13 +234,11 @@ public fun cancel<T>(
 
 public fun create_src_escrow<Token>(
     self: &mut EscrowFactory,
+    resolver_owner_cap: &ResolverOwnerCap,
     order_hash: vector<u8>,
     hashlock: vector<u8>,
-    taker: address,
-    // making_amount: u64,
-    // taking_amount: u64,
-    // remaining_making_amount: u64,
-    deposit: Coin<Token>,
+    maker: address,
+    source_coin: Coin<Token>,
     safety_deposit: Coin<SUI>,
     src_withdrawal: u64,
     src_public_withdrawal: u64,
@@ -263,7 +257,8 @@ public fun create_src_escrow<Token>(
     let safety_deposit_amount = coin::value(&safety_deposit);
     assert!(safety_deposit_amount >= constants::min_safety_deposit(), ESafetyDepositTooLow);
 
-    let maker = ctx.sender();
+    let resolver = find_resolver(self, resolver_owner_cap);
+    let taker = resolver.maker();
     let timelocks = timelock::create(
         clock::timestamp_ms(clock),
         src_withdrawal,
@@ -274,16 +269,13 @@ public fun create_src_escrow<Token>(
         dst_public_withdrawal,
         dst_cancellation,
     );
-    let deposit_amount = coin::value(&deposit);
-
-    assert!(safety_deposit_amount >= constants::min_safety_deposit(), ESafetyDepositTooLow);
-
+    let source_amount = coin::value(&source_coin);
     let escros = escrow::create<Token>(
         order_hash,
         hashlock,
         maker,
         taker,
-        deposit,
+        source_coin,
         safety_deposit,
         timelocks,
         ctx,
@@ -298,20 +290,19 @@ public fun create_src_escrow<Token>(
     self.emit_escrow_created_event(
         escrow_id,
         order_hash,
-        // hashlock,
         maker,
         taker,
-        deposit_amount,
-        // safety_deposit_amount,
+        source_amount,
     );
 }
 
 // Create a new destination escrow
 public fun create_dst_escrow<Token>(
     self: &mut EscrowFactory,
+    resolver_owner_cap: &ResolverOwnerCap,
     order_hash: vector<u8>,
     hashlock: vector<u8>,
-    maker: address,
+    maker: address, // user address
     deposit: Coin<Token>,
     safety_deposit: Coin<SUI>,
     src_withdrawal: u64,
@@ -328,8 +319,6 @@ public fun create_dst_escrow<Token>(
     assert!(vector::length(&hashlock) == 32, EInvalidHashlock);
     assert!(!self.is_dst_escrow_exists(order_hash), EDstEscrowExists);
 
-    let taker = ctx.sender();
-
     let timelocks = timelock::create(
         clock::timestamp_ms(clock),
         src_withdrawal,
@@ -343,6 +332,8 @@ public fun create_dst_escrow<Token>(
 
     assert!(timelocks.dst_cancellation() < src_cancellation, EInvalidCreationTime);
 
+    let resolver = find_resolver(self, resolver_owner_cap);
+    let taker = resolver.maker();
     let deposit_amount = coin::value(&deposit);
     let safety_deposit_amount = coin::value(&safety_deposit);
 
@@ -439,6 +430,12 @@ fun emit_escrow_withdrawn_event(
         safety_deposit,
     };
     event::emit(event);
+}
+
+fun find_resolver(self: &EscrowFactory, resolver_owner_cap: &ResolverOwnerCap): &Resolver {
+    let resolver_id = resolver_owner_cap.resolver_id;
+    assert!(self.resolvers.contains(resolver_id), EResolverNotFound);
+    self.resolvers.borrow(resolver_id)
 }
 
 fun take_escrow(self: &mut EscrowFactory, order_hash: vector<u8>, is_src: bool): escrow::Escrow {

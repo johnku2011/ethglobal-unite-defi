@@ -3,8 +3,7 @@
 import React, { useMemo } from 'react';
 import Link from 'next/link';
 import DashboardLayout from '@/components/DashboardLayout';
-import WalletConnect from '@/components/WalletConnect';
-import WalletDisconnectButton from '@/components/WalletDisconnectButton';
+
 import { useWallet } from '@/providers/WalletProvider';
 import { useCurrentWalletChain } from '@/providers/ChainProvider';
 import {
@@ -13,9 +12,11 @@ import {
 } from '@/hooks/api/usePortfolioQuery';
 import NetworkStatusBanner from '@/components/NetworkStatusBanner';
 import { CompactDualWalletDisplay } from '@/components/DualWalletDisplay';
+import ConnectedWalletsSection from '@/components/ConnectedWalletsSection';
 import {
   BanknotesIcon,
   ArrowTrendingUpIcon,
+  ArrowTrendingDownIcon,
   ArrowsRightLeftIcon,
   LinkIcon,
   ClockIcon,
@@ -40,7 +41,7 @@ function getChainName(chainId: number): string {
 
 export default function Home() {
   const { connectedWallets } = useWallet();
-  const { wallet: currentWallet, canUse1inch } = useCurrentWalletChain();
+  const { wallet: currentWallet } = useCurrentWalletChain();
 
   // 獲取第一個連接的以太坊錢包地址
   const ethereumWallet = connectedWallets.find(
@@ -49,8 +50,7 @@ export default function Home() {
   const walletAddress = currentWallet?.address || ethereumWallet?.address;
 
   // 使用現有的hooks獲取數據
-  const { data: portfolioData, isLoading: isPortfolioLoading } =
-    usePortfolio(walletAddress);
+  const { data: portfolioData } = usePortfolio(walletAddress);
 
   // 獲取交易歷史
   const { data: transactionsData, isLoading: isTransactionsLoading } =
@@ -58,7 +58,7 @@ export default function Home() {
 
   // 計算投資組合統計信息
   const portfolioStats = useMemo(() => {
-    if (!portfolioData || !portfolioData.result) {
+    if (!portfolioData) {
       return {
         totalValue: '$0.00',
         changeType: 'neutral' as const,
@@ -67,8 +67,8 @@ export default function Home() {
       };
     }
 
-    const totalValue = portfolioData.result.total;
-    const chainCount = portfolioData.result.by_chain?.length || 0;
+    const totalValue = (portfolioData as any)?.total || 0;
+    const chainCount = (portfolioData as any)?.by_chain?.length || 0;
     const assetCount = 0; // 實際應從API數據計算
 
     return {
@@ -180,68 +180,8 @@ export default function Home() {
           ))}
         </div>
 
-        {/* Connected Wallets */}
-        {connectedWallets.length > 0 ? (
-          <div className='bg-white rounded-xl shadow-soft p-6 border border-gray-100'>
-            <h3 className='text-lg font-semibold text-gray-900 mb-4'>
-              Connected Wallets
-            </h3>
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-              {connectedWallets.map((wallet, index) => (
-                <div
-                  key={index}
-                  className='flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200'
-                >
-                  <div className='flex items-center space-x-3'>
-                    <div className='text-2xl'>
-                      {wallet.type === 'ethereum' ? '🔷' : '🔵'}
-                    </div>
-                    <div>
-                      <div className='font-medium text-gray-900'>
-                        {wallet.type === 'ethereum' ? 'Ethereum' : 'Sui'} Wallet
-                      </div>
-                      <div className='text-sm text-gray-500 font-mono'>
-                        {wallet.address}
-                      </div>
-                    </div>
-                  </div>
-                  <div className='flex items-center gap-3'>
-                    <div className='text-right'>
-                      <div className='text-sm font-medium text-gray-900'>
-                        {wallet.provider}
-                      </div>
-                      {wallet.chainId && (
-                        <div className='text-xs text-gray-500'>
-                          Chain ID: {wallet.chainId}
-                        </div>
-                      )}
-                    </div>
-                    <WalletDisconnectButton
-                      walletAddress={wallet.address}
-                      variant='icon'
-                      size='sm'
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : (
-          /* Getting Started - No Wallets Connected */
-          <div className='bg-white rounded-xl shadow-soft p-8 border border-gray-100 text-center'>
-            <div className='w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4'>
-              <BanknotesIcon className='w-8 h-8 text-primary-600' />
-            </div>
-            <h3 className='text-xl font-semibold text-gray-900 mb-2'>
-              Get Started with UniPortfolio
-            </h3>
-            <p className='text-gray-600 mb-6 max-w-md mx-auto'>
-              Connect your Ethereum and Sui wallets to start managing your DeFi
-              portfolio across multiple chains.
-            </p>
-            <WalletConnect />
-          </div>
-        )}
+        {/* Connected Wallets - Premium UI/UX */}
+        <ConnectedWalletsSection />
 
         {/* Quick Actions */}
         <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
@@ -339,8 +279,7 @@ export default function Home() {
                     </div>
                     <div>
                       <div className='font-medium'>
-                        {tx.direction === 'in' ? 'Received' : 'Sent'}{' '}
-                        {tx.details.tokenActions[0]?.symbol || 'Tokens'}
+                        {tx.direction === 'in' ? 'Received' : 'Sent'} Tokens
                       </div>
                       <div className='text-xs text-gray-500'>
                         {new Date(tx.timeMs).toLocaleString()}

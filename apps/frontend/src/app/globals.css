@@ -2,6 +2,23 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Custom styles for ConnectedWalletsSection */
+.bg-grid-pattern {
+  background-image:
+    linear-gradient(rgba(59, 130, 246, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(59, 130, 246, 0.03) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* Additional color utilities for wallet cards */
+.bg-blue-25 {
+  background-color: rgb(248 250 252);
+}
+
+.bg-purple-25 {
+  background-color: rgb(252 248 255);
+}
+
 @layer base {
   html {
     font-family: 'Inter', system-ui, sans-serif;

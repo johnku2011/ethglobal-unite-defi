@@ -39,9 +39,12 @@ export interface UnderlyingToken {
 }
 
 export interface PortfolioResponse {
-  chains: Chain[];
-  positions: Protocol[];
-  totalValueUsd: number;
+  result: {
+    total: number;
+    by_chain: any[];
+    by_category: any;
+    [key: string]: any;
+  };
 }
 
 export interface BalanceHistoryAPIResponse {

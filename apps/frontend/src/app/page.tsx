@@ -33,7 +33,7 @@ export default function Home() {
 
   // 計算投資組合統計信息
   const portfolioStats = useMemo(() => {
-    if (!portfolioData) {
+    if (!portfolioData || !(portfolioData as any).result) {
       return {
         totalValue: '$0.00',
         changeType: 'neutral' as const,
@@ -42,9 +42,10 @@ export default function Home() {
       };
     }
 
-    const totalValue = (portfolioData as any)?.total || 0;
-    const chainCount = (portfolioData as any)?.by_chain?.length || 0;
-    const assetCount = 0; // 實際應從API數據計算
+    // 使用正確的 API v5 響應結構 (與 portfolio 頁面一致)
+    const totalValue = (portfolioData as any).result.total || 0;
+    const chainCount = (portfolioData as any).result.by_chain?.length || 0;
+    const assetCount = 1; // 暫時設為 1，實際應該從資產數據計算
 
     return {
       totalValue:

@@ -7,9 +7,9 @@ use sui::{
     hash,
     sui::SUI,
     test_scenario::{Self, take_shared, Scenario},
-    test_utils::{Self, destroy}
+    test_utils
 };
-use sui_fusion_protocol::{factory, resolver};
+use sui_fusion_protocol::factory;
 
 const MAKER: address = @0xAA;
 const RESOLVER: address = @0xCA;
@@ -62,6 +62,18 @@ fun test_create_src_escrow() {
         &clock,
     );
 
+    test.next_tx(MAKER);
+
+    let escrow_factory = test.take_shared<factory::EscrowFactory>();
+    let escrow = factory::find_escrow_for_testing(
+        &escrow_factory,
+        order_hash,
+        true,
+    );
+    assert!(escrow.amount() == 100_000_000, 1);
+    assert!(escrow.safety_deposit_amount() == 10_000_000, 1);
+    test_scenario::return_shared(escrow_factory);
+
     clock::destroy_for_testing(clock);
     sui.burn_for_testing();
     test_utils::destroy(cap);
@@ -87,6 +99,14 @@ fun test_withdraw_dst_escrow() {
     test.next_tx(RESOLVER);
 
     let mut escrow_factory = test.take_shared<factory::EscrowFactory>();
+    let escrow = factory::find_escrow_for_testing(
+        &escrow_factory,
+        order_hash,
+        false,
+    );
+    assert!(escrow.amount() == 100_000_000, 1);
+    assert!(escrow.safety_deposit_amount() == 10_000_000, 1);
+
     clock::set_for_testing(&mut clock, PUBLIC_WITHDRAWAL_DST_TIMELOCK + 100);
 
     factory::withdraw_dst<SUI>(
@@ -97,8 +117,17 @@ fun test_withdraw_dst_escrow() {
         test.ctx(),
     );
 
+    test.next_tx(RESOLVER);
+    let sui_coins_maker = test.take_from_address<coin::Coin<SUI>>(MAKER);
+    let sui_coins_resolver = test.take_from_address<coin::Coin<SUI>>(RESOLVER);
+
+    assert!(coin::value(&sui_coins_maker) == 100_000_000, 1);
+    assert!(coin::value(&sui_coins_resolver) == 10_000_000, 1);
+
     sui.burn_for_testing();
     clock::destroy_for_testing(clock);
+    test_scenario::return_to_address(MAKER, sui_coins_maker);
+    test_scenario::return_to_address(RESOLVER, sui_coins_resolver);
     test_utils::destroy(cap);
     test_scenario::return_shared(escrow_factory);
     test_scenario::end(test);
@@ -126,9 +155,11 @@ fun test_create_dst_escrow() {
     test_scenario::end(test);
 }
 
+#[test_only]
+use std::debug;
 #[test]
 fun test_cancel_dst_escrow() {
-    let (mut test, secret, order_hash, hashlock, mut clock) = setup_test();
+    let (mut test, _secret, order_hash, hashlock, mut clock) = setup_test();
 
     factory::init_for_testing(test.ctx());
 
@@ -154,8 +185,18 @@ fun test_cancel_dst_escrow() {
         test.ctx(),
     );
 
+    test.next_tx(RESOLVER);
+    let sui_coins_1 = test.take_from_address<coin::Coin<SUI>>(RESOLVER);
+    let sui_coins_2 = test.take_from_address<coin::Coin<SUI>>(RESOLVER);
+
+    let total_value = coin::value(&sui_coins_1) + coin::value(&sui_coins_2);
+
+    assert!(total_value == 110_000_000, 1);
+
     sui.burn_for_testing();
     clock::destroy_for_testing(clock);
+    test_scenario::return_to_address(RESOLVER, sui_coins_1);
+    test_scenario::return_to_address(RESOLVER, sui_coins_2);
     test_utils::destroy(cap);
     test_scenario::end(test);
     test_scenario::return_shared(escrow_factory);
@@ -169,7 +210,7 @@ fun test_withdraw_src_escrow() {
 
     let cap = setup_resolvers(&mut test);
 
-    let sui = create_src_escrow_for_testing(
+    let (sui) = create_src_escrow_for_testing(
         &mut test,
         &cap,
         order_hash,
@@ -190,8 +231,16 @@ fun test_withdraw_src_escrow() {
         test.ctx(),
     );
 
+    test.next_tx(RESOLVER);
+    let sui_coins_1 = test.take_from_address<coin::Coin<SUI>>(RESOLVER);
+    let sui_coins_2 = test.take_from_address<coin::Coin<SUI>>(RESOLVER);
+    let total_value = coin::value(&sui_coins_1) + coin::value(&sui_coins_2);
+    assert!(total_value== 110_000_000, 1);
+
     sui.burn_for_testing();
     clock::destroy_for_testing(clock);
+    test_scenario::return_to_address(RESOLVER, sui_coins_1);
+    test_scenario::return_to_address(RESOLVER, sui_coins_2);
     test_utils::destroy(cap);
     test_scenario::return_shared(escrow_factory);
     test_scenario::end(test);
@@ -204,7 +253,7 @@ fun test_cancel_src_escrow() {
     factory::init_for_testing(test.ctx());
 
     let cap = setup_resolvers(&mut test);
-    let sui = create_src_escrow_for_testing(
+    let (sui) = create_src_escrow_for_testing(
         &mut test,
         &cap,
         order_hash,
@@ -224,8 +273,17 @@ fun test_cancel_src_escrow() {
         test.ctx(),
     );
 
+    test.next_tx(RESOLVER);
+    let sui_coins_maker = test.take_from_address<coin::Coin<SUI>>(MAKER);
+    let sui_coins_resolver = test.take_from_address<coin::Coin<SUI>>(RESOLVER);
+
+    assert!(coin::value(&sui_coins_maker) == 100_000_000, 1);
+    assert!(coin::value(&sui_coins_resolver) == 10_000_000, 1);
+
     sui.burn_for_testing();
     clock::destroy_for_testing(clock);
+    test_scenario::return_to_address(MAKER, sui_coins_maker);
+    test_scenario::return_to_address(RESOLVER, sui_coins_resolver);
     test_utils::destroy(cap);
     test_scenario::return_shared(escrow_factory);
     test_scenario::end(test);
@@ -252,7 +310,7 @@ fun create_dst_escrow_for_testing(
     );
 
     let safety_deposit = sui.split(
-        100_000_000,
+        10_000_000,
         test.ctx(),
     );
 
@@ -303,7 +361,7 @@ fun create_src_escrow_for_testing(
     let mut sui = coin::mint_for_testing<SUI>(10_000_000_000, test.ctx());
 
     // let maker = MAKER; // equals deployer
-    let taker = RESOLVER;
+    // let taker = RESOLVER;
 
     let deposit = sui.split(
         100_000_000,
@@ -311,7 +369,7 @@ fun create_src_escrow_for_testing(
     );
 
     let safety_deposit = sui.split(
-        100_000_000,
+        10_000_000,
         test.ctx(),
     );
 
@@ -331,7 +389,7 @@ fun create_src_escrow_for_testing(
         resolver_owner_cap,
         order_hash,
         hashlock,
-        taker,
+        MAKER,
         deposit,
         safety_deposit,
         src_withdrawal,

@@ -9,7 +9,12 @@ use sui::{
     object_table::{Self, ObjectTable},
     sui::SUI
 };
-use sui_fusion_protocol::{constants, escrow, timelock::{Self, src_cancellation}};
+use sui_fusion_protocol::{
+    constants,
+    escrow,
+    resolver::{Self, Resolver},
+    timelock::{Self, src_cancellation}
+};
 
 // === Structs ===
 
@@ -17,6 +22,12 @@ public struct EscrowFactory has key, store {
     id: UID,
     escrow_dsts: ObjectTable<vector<u8>, escrow::Escrow>,
     escrow_srcs: ObjectTable<vector<u8>, escrow::Escrow>,
+    resolvers: ObjectTable<address, Resolver>,
+}
+
+public struct ResolverOwnerCap has key, store {
+    id: UID,
+    resolver_id: ID,
 }
 
 // === Errors ===
@@ -28,6 +39,8 @@ const EInvalidTaker: u64 = 5;
 const EInvalidSecret: u64 = 6;
 const EInvalidTimestamp: u64 = 7;
 const ESafetyDepositTooLow: u64 = 8;
+const EResolverAlreadyRegistered: u64 = 9;
+const EResolverNotFound: u64 = 10;
 // === Events ===
 
 public struct EscrowCreated has copy, drop {
@@ -61,31 +74,29 @@ fun init(ctx: &mut TxContext) {
         id: object::new(ctx),
         escrow_dsts: object_table::new(ctx),
         escrow_srcs: object_table::new(ctx),
+        resolvers: object_table::new(ctx),
     };
 
     transfer::share_object(factory);
 }
 
-// refund after time expired to user
-// public fun refund<T>(
-//     self: &mut EscrowFactory,
-//     order_hash: vector<u8>,
-//     clock: &Clock,
-//     ctx: &mut TxContext,
-// ) {
-//     assert!(self.is_src_escrow_exists(order_hash), EInvalidOrderHash);
-//     let mut escrow = self.escrow_srcs.remove(order_hash);
+public fun regsiter_resolver(self: &mut EscrowFactory, ctx: &mut TxContext) {
+    assert!(!self.resolvers.contains(ctx.sender()), EResolverAlreadyRegistered);
 
-//     let now = clock::timestamp_ms(clock);
-//     // check expired
-//     let taker = escrow.taker();
-//     let (deposit, safety_deposit) = escrow.withdraw<T>();
+    let escrow_factory_id = object::id(self);
+    let resolver = resolver::create_resolver(escrow_factory_id, ctx);
 
-//     // transfer::public_transfer(deposit, taker);
-//     // transfer::public_transfer(safety_deposit, taker);
+    let cap = ResolverOwnerCap {
+        id: object::new(ctx),
+        resolver_id: object::id(&resolver),
+    };
 
-//     escrow.destroy();
-// }
+    let resolver_id = object::id(&resolver);
+
+    self.resolvers.add(ctx.sender(), resolver);
+
+    transfer::public_transfer(cap, ctx.sender())
+}
 
 public fun withdraw_src<T>(
     self: &mut EscrowFactory,

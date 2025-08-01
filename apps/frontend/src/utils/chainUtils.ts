@@ -18,6 +18,7 @@ export interface ChainInfo {
  * 支持的區塊鏈信息
  */
 export const SUPPORTED_CHAINS: ChainInfo[] = [
+  // Mainnet chains
   {
     id: 1,
     name: 'Ethereum',
@@ -30,17 +31,6 @@ export const SUPPORTED_CHAINS: ChainInfo[] = [
     },
   },
   {
-    id: 56,
-    name: 'BSC',
-    icon: 'https://app.1inch.io/assets/images/network-logos/bsc_2.svg',
-    explorerUrl: 'https://bscscan.com',
-    nativeCurrency: {
-      name: 'Binance Coin',
-      symbol: 'BNB',
-      decimals: 18,
-    },
-  },
-  {
     id: 137,
     name: 'Polygon',
     icon: 'https://app.1inch.io/assets/images/network-logos/polygon_1.svg',
@@ -48,6 +38,17 @@ export const SUPPORTED_CHAINS: ChainInfo[] = [
     nativeCurrency: {
       name: 'Polygon',
       symbol: 'MATIC',
+      decimals: 18,
+    },
+  },
+  {
+    id: 56,
+    name: 'BSC',
+    icon: 'https://app.1inch.io/assets/images/network-logos/bsc_2.svg',
+    explorerUrl: 'https://bscscan.com',
+    nativeCurrency: {
+      name: 'Binance Coin',
+      symbol: 'BNB',
       decimals: 18,
     },
   },
@@ -78,6 +79,40 @@ export const SUPPORTED_CHAINS: ChainInfo[] = [
     name: 'Base',
     icon: 'https://app.1inch.io/assets/images/network-logos/base.svg',
     explorerUrl: 'https://basescan.org',
+    nativeCurrency: {
+      name: 'Ethereum',
+      symbol: 'ETH',
+      decimals: 18,
+    },
+  },
+  // Testnet chains
+  {
+    id: 11155111,
+    name: 'Sepolia',
+    icon: 'https://app.1inch.io/assets/images/network-logos/ethereum.svg',
+    explorerUrl: 'https://sepolia.etherscan.io',
+    nativeCurrency: {
+      name: 'Ethereum',
+      symbol: 'ETH',
+      decimals: 18,
+    },
+  },
+  {
+    id: 84532,
+    name: 'Base Sepolia',
+    icon: 'https://app.1inch.io/assets/images/network-logos/base.svg',
+    explorerUrl: 'https://sepolia.basescan.org',
+    nativeCurrency: {
+      name: 'Ethereum',
+      symbol: 'ETH',
+      decimals: 18,
+    },
+  },
+  {
+    id: 421614,
+    name: 'Arbitrum Sepolia',
+    icon: 'https://app.1inch.io/assets/images/network-logos/arbitrum_2.svg',
+    explorerUrl: 'https://sepolia.arbiscan.io',
     nativeCurrency: {
       name: 'Ethereum',
       symbol: 'ETH',

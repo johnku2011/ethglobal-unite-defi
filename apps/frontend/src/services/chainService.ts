@@ -15,6 +15,7 @@ export interface SupportedChain {
 }
 
 export const SUPPORTED_CHAINS: SupportedChain[] = [
+  // Mainnet chains
   {
     id: 1,
     name: 'Ethereum Mainnet',
@@ -27,19 +28,6 @@ export const SUPPORTED_CHAINS: SupportedChain[] = [
     rpcUrls: ['https://eth.llamarpc.com'],
     blockExplorerUrls: ['https://etherscan.io'],
     testnet: false,
-  },
-  {
-    id: 11155111,
-    name: 'Sepolia Testnet',
-    shortName: 'Sepolia',
-    nativeCurrency: {
-      name: 'Ethereum',
-      symbol: 'ETH',
-      decimals: 18,
-    },
-    rpcUrls: ['https://sepolia.drpc.org'],
-    blockExplorerUrls: ['https://sepolia.etherscan.io'],
-    testnet: true,
   },
   {
     id: 137,
@@ -92,6 +80,59 @@ export const SUPPORTED_CHAINS: SupportedChain[] = [
     rpcUrls: ['https://optimism.llamarpc.com'],
     blockExplorerUrls: ['https://optimistic.etherscan.io'],
     testnet: false,
+  },
+  {
+    id: 8453,
+    name: 'Base',
+    shortName: 'Base',
+    nativeCurrency: {
+      name: 'Ethereum',
+      symbol: 'ETH',
+      decimals: 18,
+    },
+    rpcUrls: ['https://mainnet.base.org'],
+    blockExplorerUrls: ['https://basescan.org'],
+    testnet: false,
+  },
+  // Testnet chains
+  {
+    id: 11155111,
+    name: 'Sepolia Testnet',
+    shortName: 'Sepolia',
+    nativeCurrency: {
+      name: 'Ethereum',
+      symbol: 'ETH',
+      decimals: 18,
+    },
+    rpcUrls: ['https://sepolia.drpc.org'],
+    blockExplorerUrls: ['https://sepolia.etherscan.io'],
+    testnet: true,
+  },
+  {
+    id: 84532,
+    name: 'Base Sepolia',
+    shortName: 'Base Sepolia',
+    nativeCurrency: {
+      name: 'Ethereum',
+      symbol: 'ETH',
+      decimals: 18,
+    },
+    rpcUrls: ['https://sepolia.base.org'],
+    blockExplorerUrls: ['https://sepolia.basescan.org'],
+    testnet: true,
+  },
+  {
+    id: 421614,
+    name: 'Arbitrum Sepolia',
+    shortName: 'Arbitrum Sepolia',
+    nativeCurrency: {
+      name: 'Ethereum',
+      symbol: 'ETH',
+      decimals: 18,
+    },
+    rpcUrls: ['https://sepolia-rollup.arbitrum.io/rpc'],
+    blockExplorerUrls: ['https://sepolia.arbiscan.io'],
+    testnet: true,
   },
 ];
 

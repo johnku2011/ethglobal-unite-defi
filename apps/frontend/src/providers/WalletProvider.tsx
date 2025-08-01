@@ -5,7 +5,17 @@ import { PrivyProvider, usePrivy } from '@privy-io/react-auth';
 import { WagmiProvider } from '@privy-io/wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createConfig, http } from 'wagmi';
-import { mainnet, polygon, sepolia } from 'wagmi/chains';
+import {
+  mainnet,
+  polygon,
+  sepolia,
+  bsc,
+  arbitrum,
+  optimism,
+  base,
+  baseSepolia,
+  arbitrumSepolia,
+} from 'wagmi/chains';
 import { privyConfig } from '@/lib/privy';
 import {
   connectSuiWallet,
@@ -21,11 +31,29 @@ import toast from 'react-hot-toast';
 
 // Wagmi configuration for Privy
 const wagmiConfig = createConfig({
-  chains: [mainnet, polygon, sepolia],
+  chains: [
+    // Mainnet chains
+    mainnet,
+    polygon,
+    bsc,
+    arbitrum,
+    optimism,
+    base,
+    // Testnet chains
+    sepolia,
+    baseSepolia,
+    arbitrumSepolia,
+  ],
   transports: {
     [mainnet.id]: http(),
     [polygon.id]: http(),
+    [bsc.id]: http(),
+    [arbitrum.id]: http(),
+    [optimism.id]: http(),
+    [base.id]: http(),
     [sepolia.id]: http(),
+    [baseSepolia.id]: http(),
+    [arbitrumSepolia.id]: http(),
   },
 });
 

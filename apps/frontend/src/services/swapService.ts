@@ -61,8 +61,8 @@ export class SwapService implements ISwapService {
     try {
       const { fromToken, toToken, amount, slippage = 1, fromAddress } = params;
       
-      // Get chain ID from the wallet or default to Ethereum
-      const chainId = 1; // Default to Ethereum mainnet
+      // Use chain ID from the token (should be set by the UI)
+      const chainId = parseInt(fromToken.chainId) || 1;
       
       const queryParams = new URLSearchParams({
         src: fromToken.address,
@@ -143,7 +143,7 @@ export class SwapService implements ISwapService {
     wallet: ConnectedWallet
   ): Promise<SwapTransaction> {
     try {
-      const chainId = 1; // Default to Ethereum mainnet
+      const chainId = parseInt(quote.fromToken.chainId) || 1;
       
       const queryParams = new URLSearchParams({
         src: quote.fromToken.address,
@@ -247,36 +247,7 @@ export class SwapService implements ISwapService {
     }
   }
 
-  /**
-   * Get supported tokens for swapping on a chain
-   */
-  async getSupportedTokens(chainId: string): Promise<Token[]> {
-    try {
-      const response = await axios.get(
-        `${this.baseUrl}/swap/v6.0/${chainId}/tokens`,
-        {
-          headers: {
-            'Authorization': `Bearer ${this.apiKey}`,
-            'accept': 'application/json',
-          },
-        }
-      );
-
-      const tokensData = response.data.tokens;
-      
-      return Object.values(tokensData).map((token: any) => ({
-        address: token.address,
-        symbol: token.symbol,
-        name: token.name,
-        decimals: token.decimals,
-        logoUri: token.logoURI,
-        chainId,
-      }));
-    } catch (error) {
-      console.error('Error fetching supported tokens:', error);
-      return [];
-    }
-  }
+  // Note: getSupportedTokens() moved to OneInchBalanceService to avoid duplication
 }
 
 // Export a singleton instance

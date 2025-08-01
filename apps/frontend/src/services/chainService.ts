@@ -37,7 +37,7 @@ export const SUPPORTED_CHAINS: SupportedChain[] = [
       symbol: 'ETH',
       decimals: 18,
     },
-    rpcUrls: ['https://ethereum-sepolia.publicnode.com'],
+    rpcUrls: ['https://sepolia.drpc.org'],
     blockExplorerUrls: ['https://sepolia.etherscan.io'],
     testnet: true,
   },

@@ -113,10 +113,7 @@ export interface ISwapService {
    */
   cancelSwap(transactionId: string): Promise<boolean>;
 
-  /**
-   * Get supported tokens for swapping on a chain
-   */
-  getSupportedTokens(chainId: string): Promise<Token[]>;
+  // Note: getSupportedTokens() moved to OneInchBalanceService to avoid duplication
 }
 
 // Bridge Service Interface

@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type { SwapState, SwapQuoteParams, SwapQuote, Token } from '@/types';
 import { swapService } from '@/services/swapService';
-import { useWallet } from '@/providers/WalletProvider';
+import { oneInchBalanceService } from '@/services/oneinchBalanceService';
 
 // Enhanced swap store with real implementation
 interface SwapStoreState extends SwapState {
@@ -83,7 +83,7 @@ const useSwapStore = create<SwapStoreState>((set, get) => ({
 
   getSupportedTokens: async (chainId: string) => {
     try {
-      return await swapService.getSupportedTokens(chainId);
+      return await oneInchBalanceService.getSupportedTokens(parseInt(chainId));
     } catch (error) {
       console.error('Error fetching supported tokens:', error);
       return [];

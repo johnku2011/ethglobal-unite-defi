@@ -6,6 +6,7 @@ import { useWallet } from '@/providers/WalletProvider';
 import useSwapStore from '@/stores/swapStore';
 import { oneInchBalanceService } from '@/services/oneinchBalanceService';
 import { ChainService, SUPPORTED_CHAINS } from '@/services/chainService';
+import WalletDebugInfo from '@/components/WalletDebugInfo';
 import type { ConnectedWallet } from '@/providers/WalletProvider';
 import type { Token } from '@/types';
 import {
@@ -216,6 +217,9 @@ export default function Swap() {
 
   return (
     <DashboardLayout>
+      {/* Debug Info - Remove this after fixing */}
+      <WalletDebugInfo />
+      
       <div className='max-w-md mx-auto space-y-6'>
         {/* Header */}
         <div className='text-center'>

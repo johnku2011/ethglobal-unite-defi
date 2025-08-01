@@ -82,6 +82,7 @@ function WalletProviderInternal({ children }: { children: React.ReactNode }) {
 
   // General state
   const [isConnecting, setIsConnecting] = useState(false);
+  const [currentChainId, setCurrentChainId] = useState<number | null>(null);
 
   // Check wallet availability
   const [availableWallets, setAvailableWallets] = useState({
@@ -113,6 +114,33 @@ function WalletProviderInternal({ children }: { children: React.ReactNode }) {
     };
 
     detectWallets();
+  }, []);
+
+  // Listen for chain changes
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.ethereum) {
+      const handleChainChanged = (chainId: string) => {
+        const newChainId = parseInt(chainId, 16);
+        setCurrentChainId(newChainId);
+        console.log('Chain changed to:', newChainId);
+        
+        // Force re-render by triggering a state change
+        window.location.reload(); // Temporary solution
+      };
+
+      window.ethereum.on('chainChanged', handleChainChanged);
+      
+      // Get initial chain ID
+      window.ethereum.request({ method: 'eth_chainId' })
+        .then((chainId: string) => {
+          setCurrentChainId(parseInt(chainId, 16));
+        })
+        .catch(console.error);
+
+      return () => {
+        window.ethereum?.removeListener('chainChanged', handleChainChanged);
+      };
+    }
   }, []);
 
   // Ethereum wallet info from Privy
@@ -191,11 +219,15 @@ function WalletProviderInternal({ children }: { children: React.ReactNode }) {
   const connectedWallets: ConnectedWallet[] = [];
 
   if (isEthereumConnected && ethereumAddress) {
+    // Use current chain ID from ethereum provider if available, fallback to Privy data
+    const detectedChainId = currentChainId || 
+      (user?.wallet?.chainId ? parseInt(user.wallet.chainId, 16) : 1);
+    
     connectedWallets.push({
       address: ethereumAddress,
       type: 'ethereum',
       provider: 'Privy',
-      chainId: user?.wallet?.chainId ? parseInt(user.wallet.chainId, 16) : 1,
+      chainId: detectedChainId,
     });
   }
 

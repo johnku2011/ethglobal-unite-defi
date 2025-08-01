@@ -81,6 +81,50 @@ export interface TokenAction {
 }
 
 /**
+ * Portfolio Position (實際API返回的資產持倉數據結構)
+ */
+export interface PortfolioPosition {
+  index: string;
+  chain: number;
+  contract_address: string;
+  token_id: number;
+  address: string;
+  block_number_created: number;
+  block_number: number | null;
+  timestamp: number | null;
+  protocol_type: string;
+  protocol_handler_id: string;
+  protocol_group_id: string;
+  protocol_group_name: string;
+  protocol_group_icon: string;
+  protocol_sub_group_id: string | null;
+  protocol_sub_group_name: string | null;
+  contract_name: string;
+  contract_symbol: string;
+  asset_sign: number;
+  status: number;
+  underlying_tokens: UnderlyingPositionToken[];
+  reward_tokens: any[];
+  value_usd: number;
+  locked: boolean;
+}
+
+export interface UnderlyingPositionToken {
+  chain_id: number;
+  address: string;
+  decimals: number;
+  symbol: string;
+  name: string;
+  amount: number;
+  price_usd: number;
+  value_usd: number;
+}
+
+export interface PortfolioHistoryResponse {
+  result: PortfolioPosition[];
+}
+
+/**
  * 1inch Portfolio API 服務類
  */
 export class OneInchPortfolioAPI {
@@ -234,6 +278,41 @@ export class OneInchPortfolioAPI {
         );
 
         return response.data.items;
+      },
+      3,
+      2000
+    );
+  }
+
+  /**
+   * 獲取資產持倉歷史 (實際API返回結構)
+   */
+  static async getPortfolioHistory(
+    address: string,
+    limit: number = 5
+  ): Promise<PortfolioPosition[]> {
+    console.log(`📊 獲取資產持倉數據: ${address} (limit: ${limit})`);
+
+    if (!this.isValidEthereumAddress(address)) {
+      throw new Error(`無效的以太坊地址: ${address}`);
+    }
+
+    return retryRequest(
+      async () => {
+        const response = await portfolioApiClient.get<PortfolioHistoryResponse>(
+          `/portfolio/${address}/history`,
+          {
+            params: { limit },
+            headers: {
+              Accept: 'application/json',
+              ...(process.env.NEXT_PUBLIC_1INCH_API_KEY && {
+                Authorization: `Bearer ${process.env.NEXT_PUBLIC_1INCH_API_KEY}`,
+              }),
+            },
+          }
+        );
+
+        return response.data.result || [];
       },
       3,
       2000

@@ -6,38 +6,17 @@ import DashboardLayout from '@/components/DashboardLayout';
 
 import { useWallet } from '@/providers/WalletProvider';
 import { useCurrentWalletChain } from '@/providers/ChainProvider';
-import {
-  usePortfolio,
-  useTransactionHistory,
-} from '@/hooks/api/usePortfolioQuery';
+import { usePortfolio } from '@/hooks/api/usePortfolioQuery';
 import NetworkStatusBanner from '@/components/NetworkStatusBanner';
 import { CompactDualWalletDisplay } from '@/components/DualWalletDisplay';
 import ConnectedWalletsSection from '@/components/ConnectedWalletsSection';
+import RecentActivity from '@/components/RecentActivity';
 import {
   BanknotesIcon,
   ArrowTrendingUpIcon,
-  ArrowTrendingDownIcon,
   ArrowsRightLeftIcon,
   LinkIcon,
-  ClockIcon,
 } from '@heroicons/react/24/outline';
-
-// 輔助函數：獲取鏈名稱
-function getChainName(chainId: number): string {
-  const chainNames: { [key: number]: string } = {
-    1: 'Ethereum',
-    56: 'BNB Chain',
-    137: 'Polygon',
-    42161: 'Arbitrum',
-    10: 'Optimism',
-    43114: 'Avalanche',
-    8453: 'Base',
-    324: 'zkSync Era',
-    59144: 'Linea',
-    100: 'Gnosis',
-  };
-  return chainNames[chainId] || `Chain ${chainId}`;
-}
 
 export default function Home() {
   const { connectedWallets } = useWallet();
@@ -51,10 +30,6 @@ export default function Home() {
 
   // 使用現有的hooks獲取數據
   const { data: portfolioData } = usePortfolio(walletAddress);
-
-  // 獲取交易歷史
-  const { data: transactionsData, isLoading: isTransactionsLoading } =
-    useTransactionHistory(walletAddress, 5); // 限制為5個最新交易
 
   // 計算投資組合統計信息
   const portfolioStats = useMemo(() => {
@@ -241,88 +216,8 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Recent Activity */}
-        <div className='bg-white rounded-xl shadow-soft p-6 border border-gray-100'>
-          <h3 className='text-lg font-semibold text-gray-900 mb-4'>
-            Recent Activity
-          </h3>
-
-          {isTransactionsLoading ? (
-            <div className='animate-pulse py-8'>
-              <div className='h-12 bg-gray-200 rounded-lg mb-3'></div>
-              <div className='h-12 bg-gray-200 rounded-lg mb-3'></div>
-              <div className='h-12 bg-gray-200 rounded-lg'></div>
-            </div>
-          ) : !walletAddress ? (
-            <div className='text-center py-8'>
-              <div className='w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4'>
-                <BanknotesIcon className='w-8 h-8 text-gray-400' />
-              </div>
-              <p className='text-gray-500'>
-                No recent activity. Connect your wallet to get started.
-              </p>
-            </div>
-          ) : transactionsData && transactionsData.length > 0 ? (
-            <div className='divide-y divide-gray-100'>
-              {transactionsData.slice(0, 3).map((tx) => (
-                <div
-                  key={tx.details.txHash}
-                  className='py-3 flex items-center justify-between'
-                >
-                  <div className='flex items-center'>
-                    <div className='p-2 bg-gray-100 rounded-lg mr-3'>
-                      {tx.direction === 'in' ? (
-                        <ArrowTrendingUpIcon className='w-5 h-5 text-green-500' />
-                      ) : (
-                        <ArrowTrendingDownIcon className='w-5 h-5 text-red-500' />
-                      )}
-                    </div>
-                    <div>
-                      <div className='font-medium'>
-                        {tx.direction === 'in' ? 'Received' : 'Sent'} Tokens
-                      </div>
-                      <div className='text-xs text-gray-500'>
-                        {new Date(tx.timeMs).toLocaleString()}
-                      </div>
-                    </div>
-                  </div>
-                  <div className='text-right'>
-                    <div
-                      className={`font-medium ${tx.direction === 'in' ? 'text-green-600' : 'text-red-600'}`}
-                    >
-                      {tx.direction === 'in' ? '+' : '-'}
-                      {(
-                        parseFloat(tx.details.tokenActions[0]?.amount || '0') ||
-                        0
-                      ).toFixed(4)}
-                    </div>
-                    <div className='text-xs text-gray-500'>
-                      Chain: {getChainName(tx.details.chainId)}
-                    </div>
-                  </div>
-                </div>
-              ))}
-              <div className='pt-3'>
-                <Link
-                  href='/transactions'
-                  className='text-primary-600 hover:text-primary-700 text-sm font-medium flex items-center'
-                >
-                  <span>View all transactions</span>
-                  <ClockIcon className='w-4 h-4 ml-1' />
-                </Link>
-              </div>
-            </div>
-          ) : (
-            <div className='text-center py-8'>
-              <div className='w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4'>
-                <BanknotesIcon className='w-8 h-8 text-gray-400' />
-              </div>
-              <p className='text-gray-500'>
-                No transactions found for this wallet.
-              </p>
-            </div>
-          )}
-        </div>
+        {/* Recent Activity - Professional Portfolio Positions */}
+        <RecentActivity walletAddress={walletAddress} />
       </div>
     </DashboardLayout>
   );

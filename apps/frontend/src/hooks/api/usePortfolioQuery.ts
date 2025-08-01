@@ -1,5 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { OneInchPortfolioAPI } from '@/services/api/oneinchAPI';
+import {
+  OneInchPortfolioAPI,
+  type PortfolioPosition,
+} from '@/services/api/oneinchAPI';
 import { queryKeys } from '@/providers/QueryProvider';
 import { useCurrentWalletChain } from '@/providers/ChainProvider';
 import { toast } from 'react-hot-toast';
@@ -357,4 +360,63 @@ export const usePortfolioStatus = (address: string | undefined) => {
       valueChartRefetching: valueChartQuery.isRefetching,
     },
   };
+};
+
+/**
+ * Portfolio History Hook - 獲取資產持倉數據
+ */
+export const usePortfolioHistory = (
+  address: string | undefined,
+  limit: number = 5
+) => {
+  const { canUse1inch, shouldShowTestnetWarning, chain } =
+    useCurrentWalletChain();
+
+  return useQuery({
+    queryKey: ['portfolio', 'history', address, limit],
+    queryFn: async () => {
+      if (!address || !OneInchPortfolioAPI.isValidEthereumAddress(address)) {
+        throw new Error('Invalid wallet address');
+      }
+
+      if (!canUse1inch) {
+        if (shouldShowTestnetWarning) {
+          throw new Error(
+            '1inch Portfolio API does not support testnets. Please switch to mainnet to view portfolio data.'
+          );
+        }
+        throw new Error('Current network does not support 1inch API');
+      }
+
+      console.log(
+        `📊 Fetching portfolio history: ${OneInchPortfolioAPI.formatAddress(address)} (Chain: ${chain?.shortName})`
+      );
+
+      const result = await OneInchPortfolioAPI.getPortfolioHistory(
+        address,
+        limit
+      );
+      return result;
+    },
+    enabled:
+      !!address &&
+      OneInchPortfolioAPI.isValidEthereumAddress(address) &&
+      canUse1inch,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: (failureCount, error: any) => {
+      if (
+        error?.message?.includes('does not support') ||
+        error?.message?.includes('testnets')
+      ) {
+        return false;
+      }
+      if (
+        error?.message?.includes('Invalid') ||
+        error?.code === 'BAD_REQUEST'
+      ) {
+        return false;
+      }
+      return failureCount < 3;
+    },
+  });
 };

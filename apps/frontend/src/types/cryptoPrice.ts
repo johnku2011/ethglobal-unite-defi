@@ -177,3 +177,34 @@ export const COMMON_TOKENS: Record<string, CryptoToken> = {
   },
   // More token information can be expanded as needed
 };
+
+/**
+ * Mapping from token symbols to CoinGecko API IDs
+ * Used for fetching price data with 24h changes from CoinGecko
+ */
+export const COINGECKO_ID_MAPPING: Record<string, string> = {
+  BTC: 'bitcoin',
+  ETH: 'ethereum',
+  USDT: 'tether',
+  USDC: 'usd-coin',
+  BNB: 'binancecoin',
+  SOL: 'solana',
+  XRP: 'ripple',
+  ADA: 'cardano',
+  DOGE: 'dogecoin',
+  AVAX: 'avalanche-2',
+  MATIC: 'polygon',
+};
+
+/**
+ * CoinGecko API response interface for simple price endpoint
+ * Used for price data with 24h changes
+ */
+export interface CoinGeckoApiResponse {
+  [coinId: string]: {
+    usd: number;
+    usd_24h_change?: number;
+    usd_24h_vol?: number;
+    last_updated_at?: number;
+  };
+}

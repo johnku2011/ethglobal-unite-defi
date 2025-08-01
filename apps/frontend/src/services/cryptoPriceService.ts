@@ -5,8 +5,13 @@ import type {
   CryptoPriceError,
   SpotPriceApiResponse,
   CryptoToken,
+  CoinGeckoApiResponse,
 } from '@/types/cryptoPrice';
-import { COMMON_TOKEN_ADDRESSES, COMMON_TOKENS } from '@/types/cryptoPrice';
+import {
+  COMMON_TOKEN_ADDRESSES,
+  COMMON_TOKENS,
+  COINGECKO_ID_MAPPING,
+} from '@/types/cryptoPrice';
 
 /**
  * Cryptocurrency Price Service
@@ -280,5 +285,135 @@ export class CryptoPriceService {
     error.retryable = retryable;
     error.details = details;
     return error;
+  }
+
+  /**
+   * Get price data with 24h changes from CoinGecko API
+   * @param symbols Token symbol array, e.g. ['BTC', 'ETH', 'USDT']
+   * @returns Array of token price data with real 24h changes
+   */
+  static async getPricesWithChanges(
+    symbols: string[] = ['BTC', 'ETH', 'USDT']
+  ): Promise<CryptoPriceData[]> {
+    try {
+      console.log(
+        `🚀 CryptoPriceService: Fetching price data with 24h changes from CoinGecko`,
+        {
+          symbols,
+        }
+      );
+
+      // Convert symbols to CoinGecko IDs
+      const coinGeckoIds = this.symbolsToCoinGeckoIds(symbols);
+      if (coinGeckoIds.length === 0) {
+        throw this.createError(
+          'INVALID_PARAMS',
+          'No valid token symbols provided',
+          false
+        );
+      }
+
+      // Call CoinGecko API
+      const idsStr = coinGeckoIds.join(',');
+      const response = await this.fetchCoinGeckoData(idsStr);
+
+      // Process response data
+      const processedData = this.transformCoinGeckoData(response, symbols);
+
+      console.log(
+        `✅ CoinGecko price data fetched successfully: ${processedData.length} tokens with 24h changes`
+      );
+      return processedData;
+    } catch (error) {
+      console.error(`❌ Failed to fetch CoinGecko price data`, error);
+      throw this.handleError(error);
+    }
+  }
+
+  /**
+   * Convert token symbols to CoinGecko IDs
+   */
+  private static symbolsToCoinGeckoIds(symbols: string[]): string[] {
+    return symbols
+      .map((symbol) => COINGECKO_ID_MAPPING[symbol.toUpperCase()])
+      .filter(Boolean);
+  }
+
+  /**
+   * Fetch price data from CoinGecko API
+   */
+  private static async fetchCoinGeckoData(
+    ids: string
+  ): Promise<CoinGeckoApiResponse> {
+    const coinGeckoUrl = `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true&include_24hr_vol=true&include_last_updated_at=true`;
+
+    console.log(`🔍 Accessing CoinGecko API: ${coinGeckoUrl}`);
+
+    return await retryRequest(
+      async () => {
+        const response = await fetch(coinGeckoUrl, {
+          method: 'GET',
+          headers: {
+            Accept: 'application/json',
+            'User-Agent': 'UniPortfolio/1.0',
+          },
+          // Set 10 second timeout for CoinGecko
+          signal: AbortSignal.timeout(10000),
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(
+            `CoinGecko API request failed (${response.status}): ${errorText}`
+          );
+        }
+
+        return await response.json();
+      },
+      3, // Maximum retry count
+      1000 // Retry delay (milliseconds)
+    );
+  }
+
+  /**
+   * Transform CoinGecko API response data to application data format
+   */
+  private static transformCoinGeckoData(
+    data: CoinGeckoApiResponse,
+    symbols: string[]
+  ): CryptoPriceData[] {
+    if (!data || Object.keys(data).length === 0) {
+      return [];
+    }
+
+    const result: CryptoPriceData[] = [];
+
+    // Process data in original symbol order
+    symbols.forEach((symbol) => {
+      const coinGeckoId = COINGECKO_ID_MAPPING[symbol.toUpperCase()];
+      if (!coinGeckoId || !data[coinGeckoId]) return;
+
+      const priceData = data[coinGeckoId];
+      const token = this.getTokenInfo(symbol);
+
+      const price = priceData.usd || 0;
+      const change24h = priceData.usd_24h_change || 0;
+      const lastUpdated = priceData.last_updated_at
+        ? new Date(priceData.last_updated_at * 1000)
+        : new Date();
+
+      result.push({
+        token,
+        price,
+        change24h,
+        lastUpdated,
+      });
+
+      console.log(
+        `📊 ${symbol}: $${price.toFixed(2)}, 24h: ${change24h.toFixed(2)}%`
+      );
+    });
+
+    return result;
   }
 }

@@ -20,15 +20,15 @@ export function useCryptoPrices(
   enabled: boolean = true
 ) {
   return useQuery<CryptoPriceData[], Error>({
-    queryKey: ['cryptoPrices', symbols.join(','), chainId],
-    queryFn: () => CryptoPriceService.getPrices(symbols, chainId),
+    queryKey: ['cryptoPrices', symbols.join(','), 'coingecko'],
+    queryFn: () => CryptoPriceService.getPricesWithChanges(symbols),
     refetchInterval,
-    staleTime: 15000, // 15秒後數據變為過時
+    staleTime: 15000, // 15 seconds until data becomes stale
     refetchOnWindowFocus: true,
-    keepPreviousData: true, // 保存上一次的數據，用於對比變化
+    keepPreviousData: true, // Keep previous data for change comparison
     enabled,
     retry: 3,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // 指數退避策略
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff strategy
   });
 }
 

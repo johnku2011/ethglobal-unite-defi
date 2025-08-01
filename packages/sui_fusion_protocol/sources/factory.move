@@ -279,7 +279,7 @@ public fun create_src_escrow<Token>(
     );
 
     let escrow_id = object::id(&escros);
-    self.insert_dst_escrow(
+    self.insert_src_escrow(
         order_hash,
         escros,
     );
@@ -366,8 +366,11 @@ public fun create_dst_escrow<Token>(
 }
 
 fun insert_dst_escrow(self: &mut EscrowFactory, order_hash: vector<u8>, escrow: escrow::Escrow) {
-    // self.escrow_srcs.add(hash::keccak256(&order_hash), escrow);
     self.escrow_dsts.add(order_hash, escrow);
+}
+
+fun insert_src_escrow(self: &mut EscrowFactory, order_hash: vector<u8>, escrow: escrow::Escrow) {
+    self.escrow_srcs.add(order_hash, escrow);
 }
 
 fun is_dst_escrow_exists(self: &EscrowFactory, order_hash: vector<u8>): bool {

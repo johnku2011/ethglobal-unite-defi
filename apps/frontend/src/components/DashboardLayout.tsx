@@ -17,6 +17,7 @@ import {
   LinkIcon,
   ClockIcon,
   Cog6ToothIcon,
+  WalletIcon,
   Bars3Icon,
   XMarkIcon,
   SunIcon,
@@ -73,6 +74,12 @@ const navigation: NavigationItem[] = [
     href: '/settings',
     icon: Cog6ToothIcon,
     description: 'Preferences',
+  },
+  {
+    name: 'Wallet Demo',
+    href: '/wallet-demo',
+    icon: WalletIcon,
+    description: 'Disconnect Functions',
   },
 ];
 
@@ -263,7 +270,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                   }`}
                 />
                 <span className='text-sm text-gray-600'>
-                  {connectedWallets.length > 0 ? 'Connected' : 'Disconnected'}
+                  {connectedWallets.length > 0 
+                    ? `${connectedWallets.length} Wallet${connectedWallets.length > 1 ? 's' : ''} Connected` 
+                    : 'Disconnected'}
                 </span>
               </div>
             </div>

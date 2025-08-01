@@ -4,6 +4,7 @@ import React, { useMemo } from 'react';
 import Link from 'next/link';
 import DashboardLayout from '@/components/DashboardLayout';
 import WalletConnect from '@/components/WalletConnect';
+import WalletDisconnectButton from '@/components/WalletDisconnectButton';
 import { useWallet } from '@/providers/WalletProvider';
 import {
   usePortfolio,
@@ -190,15 +191,22 @@ export default function Home() {
                       </div>
                     </div>
                   </div>
-                  <div className='text-right'>
-                    <div className='text-sm font-medium text-gray-900'>
-                      {wallet.provider}
-                    </div>
-                    {wallet.chainId && (
-                      <div className='text-xs text-gray-500'>
-                        Chain ID: {wallet.chainId}
+                  <div className='flex items-center gap-3'>
+                    <div className='text-right'>
+                      <div className='text-sm font-medium text-gray-900'>
+                        {wallet.provider}
                       </div>
-                    )}
+                      {wallet.chainId && (
+                        <div className='text-xs text-gray-500'>
+                          Chain ID: {wallet.chainId}
+                        </div>
+                      )}
+                    </div>
+                    <WalletDisconnectButton 
+                      walletAddress={wallet.address}
+                      variant="icon"
+                      size="sm"
+                    />
                   </div>
                 </div>
               ))}

@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useWallet } from '@/providers/WalletProvider';
 import { formatAddress } from '@/utils/format';
+import WalletDisconnectButton from './WalletDisconnectButton';
 
 export default function WalletConnect() {
   const {
@@ -57,17 +58,25 @@ export default function WalletConnect() {
               <span className='text-xs text-green-600'>
                 ({wallet.provider})
               </span>
+              {/* Individual disconnect button */}
+              <WalletDisconnectButton 
+                walletAddress={wallet.address}
+                variant="icon" 
+                size="sm"
+                className="ml-1 hover:bg-red-100"
+              />
             </div>
           ))}
         </div>
 
-        {/* Disconnect button */}
-        <button
-          onClick={handleDisconnectAll}
-          className='text-gray-500 hover:text-gray-700 text-sm font-medium'
+        {/* Disconnect all button */}
+        <WalletDisconnectButton 
+          variant="text" 
+          size="sm"
+          className="text-gray-500 hover:text-red-600"
         >
           Disconnect All
-        </button>
+        </WalletDisconnectButton>
       </div>
     );
   }

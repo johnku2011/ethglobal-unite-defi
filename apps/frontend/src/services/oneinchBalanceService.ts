@@ -67,20 +67,22 @@ export class OneInchBalanceService {
         `${this.baseUrl}/swap/v6.0/${chainId}/tokens`,
         {
           headers: {
-            'Authorization': `Bearer ${this.apiKey}`,
-            'accept': 'application/json',
+            Authorization: `Bearer ${this.apiKey}`,
+            accept: 'application/json',
           },
         }
       );
 
-      const tokens = Object.values(response.data.tokens).map((token): Token => ({
-        address: token.address,
-        symbol: token.symbol,
-        name: token.name,
-        decimals: token.decimals,
-        chainId: chainId.toString(),
-        logoUrl: token.logoURI,
-      }));
+      const tokens = Object.values(response.data.tokens).map(
+        (token): Token => ({
+          address: token.address,
+          symbol: token.symbol,
+          name: token.name,
+          decimals: token.decimals,
+          chainId: chainId.toString(),
+          logoUrl: token.logoURI,
+        })
+      );
 
       return tokens;
     } catch (error) {
@@ -134,7 +136,9 @@ export class OneInchBalanceService {
   /**
    * Get wallet balances using 1inch Balance API
    */
-  async getWalletBalances(wallet: ConnectedWallet): Promise<Record<string, string>> {
+  async getWalletBalances(
+    wallet: ConnectedWallet
+  ): Promise<Record<string, string>> {
     try {
       if (wallet.type !== 'ethereum') {
         console.log('Balance API only supports Ethereum-compatible wallets');
@@ -142,25 +146,27 @@ export class OneInchBalanceService {
       }
 
       const chainId = this.getChainId(wallet);
-      
+
       const response = await axios.get<OneInchBalanceResponse>(
         `${this.baseUrl}/balance/v1.2/${chainId}/${wallet.address}`,
         {
           headers: {
-            'Authorization': `Bearer ${this.apiKey}`,
-            'accept': 'application/json',
+            Authorization: `Bearer ${this.apiKey}`,
+            accept: 'application/json',
           },
         }
       );
 
       // Convert balances from wei to human readable format
       const balances: Record<string, string> = {};
-      
+
       for (const [tokenAddress, balance] of Object.entries(response.data)) {
         // Get token info to determine decimals
         const tokens = await this.getSupportedTokens(chainId);
-        const token = tokens.find(t => t.address.toLowerCase() === tokenAddress.toLowerCase());
-        
+        const token = tokens.find(
+          (t) => t.address.toLowerCase() === tokenAddress.toLowerCase()
+        );
+
         if (token) {
           const decimals = token.decimals;
           const humanReadable = this.formatTokenBalance(balance, decimals);
@@ -178,7 +184,10 @@ export class OneInchBalanceService {
   /**
    * Get balance for a specific token
    */
-  async getTokenBalance(wallet: ConnectedWallet, token: Token): Promise<string> {
+  async getTokenBalance(
+    wallet: ConnectedWallet,
+    token: Token
+  ): Promise<string> {
     try {
       const allBalances = await this.getWalletBalances(wallet);
       return allBalances[token.symbol] || '0.0';
@@ -197,14 +206,14 @@ export class OneInchBalanceService {
       const divisor = BigInt(10 ** decimals);
       const wholePart = balanceBigInt / divisor;
       const fractionalPart = balanceBigInt % divisor;
-      
+
       const fractionalStr = fractionalPart.toString().padStart(decimals, '0');
       const trimmedFractional = fractionalStr.replace(/0+$/, '');
-      
+
       if (trimmedFractional === '') {
         return wholePart.toString();
       }
-      
+
       return `${wholePart}.${trimmedFractional}`;
     } catch (error) {
       console.error('Error formatting balance:', error);
@@ -270,4 +279,4 @@ export class OneInchBalanceService {
 }
 
 // Export singleton instance
-export const oneInchBalanceService = new OneInchBalanceService(); 
+export const oneInchBalanceService = new OneInchBalanceService();

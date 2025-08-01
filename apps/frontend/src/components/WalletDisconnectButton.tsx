@@ -17,7 +17,8 @@ export default function WalletDisconnectButton({
   className = '',
   children,
 }: WalletDisconnectButtonProps) {
-  const { disconnectWallet, disconnectAllWallets, getWalletInfo } = useWalletActions();
+  const { disconnectWallet, disconnectAllWallets, getWalletInfo } =
+    useWalletActions();
 
   const handleDisconnect = () => {
     if (walletAddress) {
@@ -28,8 +29,8 @@ export default function WalletDisconnectButton({
   };
 
   const walletInfo = walletAddress ? getWalletInfo(walletAddress) : null;
-  const buttonText = walletAddress 
-    ? `Disconnect ${walletInfo?.provider || 'Wallet'}` 
+  const buttonText = walletAddress
+    ? `Disconnect ${walletInfo?.provider || 'Wallet'}`
     : 'Disconnect All';
 
   // Size classes
@@ -95,4 +96,4 @@ export default function WalletDisconnectButton({
       {children || buttonText}
     </button>
   );
-} 
+}

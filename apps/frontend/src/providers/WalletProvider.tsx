@@ -123,15 +123,16 @@ function WalletProviderInternal({ children }: { children: React.ReactNode }) {
         const newChainId = parseInt(chainId, 16);
         setCurrentChainId(newChainId);
         console.log('Chain changed to:', newChainId);
-        
+
         // Force re-render by triggering a state change
         window.location.reload(); // Temporary solution
       };
 
       window.ethereum.on('chainChanged', handleChainChanged);
-      
+
       // Get initial chain ID
-      window.ethereum.request({ method: 'eth_chainId' })
+      window.ethereum
+        .request({ method: 'eth_chainId' })
         .then((chainId: string) => {
           setCurrentChainId(parseInt(chainId, 16));
         })
@@ -220,9 +221,10 @@ function WalletProviderInternal({ children }: { children: React.ReactNode }) {
 
   if (isEthereumConnected && ethereumAddress) {
     // Use current chain ID from ethereum provider if available, fallback to Privy data
-    const detectedChainId = currentChainId || 
+    const detectedChainId =
+      currentChainId ||
       (user?.wallet?.chainId ? parseInt(user.wallet.chainId, 16) : 1);
-    
+
     connectedWallets.push({
       address: ethereumAddress,
       type: 'ethereum',

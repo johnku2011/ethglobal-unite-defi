@@ -100,7 +100,7 @@ export class ChainService {
    * Get chain information by ID
    */
   static getChainById(chainId: number): SupportedChain | undefined {
-    return SUPPORTED_CHAINS.find(chain => chain.id === chainId);
+    return SUPPORTED_CHAINS.find((chain) => chain.id === chainId);
   }
 
   /**
@@ -114,21 +114,21 @@ export class ChainService {
    * Get mainnet chains only
    */
   static getMainnetChains(): SupportedChain[] {
-    return SUPPORTED_CHAINS.filter(chain => !chain.testnet);
+    return SUPPORTED_CHAINS.filter((chain) => !chain.testnet);
   }
 
   /**
    * Get testnet chains only
    */
   static getTestnetChains(): SupportedChain[] {
-    return SUPPORTED_CHAINS.filter(chain => chain.testnet);
+    return SUPPORTED_CHAINS.filter((chain) => chain.testnet);
   }
 
   /**
    * Check if chain is supported for swaps
    */
   static isChainSupported(chainId: number): boolean {
-    return SUPPORTED_CHAINS.some(chain => chain.id === chainId);
+    return SUPPORTED_CHAINS.some((chain) => chain.id === chainId);
   }
 
   /**
@@ -205,7 +205,7 @@ export class ChainService {
     isTestnet: boolean;
   } {
     const chain = this.getChainById(chainId);
-    
+
     if (!chain) {
       return {
         color: 'gray',
@@ -220,4 +220,4 @@ export class ChainService {
       isTestnet: chain.testnet,
     };
   }
-} 
+}

@@ -59,21 +59,21 @@ export default function WalletConnect() {
                 ({wallet.provider})
               </span>
               {/* Individual disconnect button */}
-              <WalletDisconnectButton 
+              <WalletDisconnectButton
                 walletAddress={wallet.address}
-                variant="icon" 
-                size="sm"
-                className="ml-1 hover:bg-red-100"
+                variant='icon'
+                size='sm'
+                className='ml-1 hover:bg-red-100'
               />
             </div>
           ))}
         </div>
 
         {/* Disconnect all button */}
-        <WalletDisconnectButton 
-          variant="text" 
-          size="sm"
-          className="text-gray-500 hover:text-red-600"
+        <WalletDisconnectButton
+          variant='text'
+          size='sm'
+          className='text-gray-500 hover:text-red-600'
         >
           Disconnect All
         </WalletDisconnectButton>

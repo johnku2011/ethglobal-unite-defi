@@ -202,10 +202,10 @@ export default function Home() {
                         </div>
                       )}
                     </div>
-                    <WalletDisconnectButton 
+                    <WalletDisconnectButton
                       walletAddress={wallet.address}
-                      variant="icon"
-                      size="sm"
+                      variant='icon'
+                      size='sm'
                     />
                   </div>
                 </div>

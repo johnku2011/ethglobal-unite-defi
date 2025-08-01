@@ -18,14 +18,17 @@ import {
 
 export default function Swap() {
   const { connectedWallets } = useWallet();
-  const { getQuote, executeSwap, quote, isLoadingQuote, quoteError } = useSwapStore();
-  
+  const { getQuote, executeSwap, quote, isLoadingQuote, quoteError } =
+    useSwapStore();
+
   // State
   const [fromAmount, setFromAmount] = useState('');
   const [toAmount, setToAmount] = useState('');
   const [slippage, setSlippage] = useState('0.5');
   const [showSettings, setShowSettings] = useState(false);
-  const [selectedWallet, setSelectedWallet] = useState<ConnectedWallet | null>(null);
+  const [selectedWallet, setSelectedWallet] = useState<ConnectedWallet | null>(
+    null
+  );
   const [selectedChainId, setSelectedChainId] = useState<number | null>(null);
   const [availableTokens, setAvailableTokens] = useState<Token[]>([]);
   const [balances, setBalances] = useState<Record<string, string>>({});
@@ -39,7 +42,9 @@ export default function Swap() {
   // Initialize selected wallet and chain
   useEffect(() => {
     if (connectedWallets.length > 0 && !selectedWallet) {
-      const ethereumWallet = connectedWallets.find(w => w.type === 'ethereum');
+      const ethereumWallet = connectedWallets.find(
+        (w) => w.type === 'ethereum'
+      );
       if (ethereumWallet) {
         setSelectedWallet(ethereumWallet);
         setSelectedChainId(ethereumWallet.chainId || 1);
@@ -62,19 +67,24 @@ export default function Swap() {
   }, [selectedWallet, availableTokens]);
 
   const loadTokensForChain = async () => {
-    if (!selectedWallet || !selectedChainId || selectedWallet.type !== 'ethereum') return;
-    
+    if (
+      !selectedWallet ||
+      !selectedChainId ||
+      selectedWallet.type !== 'ethereum'
+    )
+      return;
+
     try {
       const tokens = oneInchBalanceService.getPopularTokens(selectedChainId);
       setAvailableTokens(tokens);
-      
+
       // Reset tokens when chain changes
-      const ethToken = tokens.find(t => t.symbol === 'ETH');
-      const usdcToken = tokens.find(t => t.symbol === 'USDC');
-      
+      const ethToken = tokens.find((t) => t.symbol === 'ETH');
+      const usdcToken = tokens.find((t) => t.symbol === 'USDC');
+
       setFromToken(ethToken || null);
       setToToken(usdcToken || null);
-      
+
       // Clear amounts when switching chains
       setFromAmount('');
       setToAmount('');
@@ -85,10 +95,11 @@ export default function Swap() {
 
   const loadWalletBalances = async () => {
     if (!selectedWallet) return;
-    
+
     setIsLoadingBalances(true);
     try {
-      const walletBalances = await oneInchBalanceService.getWalletBalances(selectedWallet);
+      const walletBalances =
+        await oneInchBalanceService.getWalletBalances(selectedWallet);
       setBalances(walletBalances);
     } catch (error) {
       console.error('Error loading balances:', error);
@@ -103,7 +114,7 @@ export default function Swap() {
   };
 
   const handleWalletChange = (walletAddress: string) => {
-    const wallet = ethereumWallets.find(w => w.address === walletAddress);
+    const wallet = ethereumWallets.find((w) => w.address === walletAddress);
     if (wallet) {
       setSelectedWallet(wallet);
       setSelectedChainId(wallet.chainId || 1);
@@ -112,7 +123,7 @@ export default function Swap() {
 
   const handleChainSwitch = async (chainId: number) => {
     if (!selectedWallet) return;
-    
+
     setIsSwitchingChain(true);
     try {
       const success = await ChainService.switchChain(chainId);
@@ -120,11 +131,15 @@ export default function Swap() {
         setSelectedChainId(chainId);
         // Note: The wallet will update automatically via Privy when the chain switches
       } else {
-        alert('Failed to switch chain. Please try manually switching in your wallet.');
+        alert(
+          'Failed to switch chain. Please try manually switching in your wallet.'
+        );
       }
     } catch (error) {
       console.error('Error switching chain:', error);
-      alert('Failed to switch chain. Please try manually switching in your wallet.');
+      alert(
+        'Failed to switch chain. Please try manually switching in your wallet.'
+      );
     } finally {
       setIsSwitchingChain(false);
     }
@@ -137,7 +152,7 @@ export default function Swap() {
 
   const handleSwapTokens = () => {
     if (!fromToken || !toToken) return;
-    
+
     const tempToken = fromToken;
     setFromToken(toToken);
     setToToken(tempToken);
@@ -147,8 +162,16 @@ export default function Swap() {
 
   const handleSwap = async () => {
     try {
-      if (!fromAmount || !fromToken || !toToken || !selectedWallet || !selectedChainId) {
-        alert('Please fill in all fields, select a wallet, and choose a network');
+      if (
+        !fromAmount ||
+        !fromToken ||
+        !toToken ||
+        !selectedWallet ||
+        !selectedChainId
+      ) {
+        alert(
+          'Please fill in all fields, select a wallet, and choose a network'
+        );
         return;
       }
 
@@ -170,14 +193,16 @@ export default function Swap() {
           decimals: toToken.decimals,
           chainId: chainId.toString(),
         },
-        amount: (parseFloat(fromAmount) * Math.pow(10, fromToken.decimals)).toString(),
+        amount: (
+          parseFloat(fromAmount) * Math.pow(10, fromToken.decimals)
+        ).toString(),
         slippage: parseFloat(slippage),
         fromAddress: selectedWallet.address,
       });
 
       // Execute swap
       await executeSwap();
-      
+
       // Reload balances after swap
       loadWalletBalances();
     } catch (error) {
@@ -191,7 +216,9 @@ export default function Swap() {
     return (
       <DashboardLayout>
         <div className='max-w-md mx-auto text-center py-12'>
-          <h1 className='text-2xl font-bold text-gray-900 mb-4'>Connect Wallet</h1>
+          <h1 className='text-2xl font-bold text-gray-900 mb-4'>
+            Connect Wallet
+          </h1>
           <p className='text-gray-600 mb-6'>
             Please connect an Ethereum wallet to start swapping tokens.
           </p>
@@ -201,14 +228,17 @@ export default function Swap() {
   }
 
   // Show Ethereum wallet required if only Sui wallets
-  const ethereumWallets = connectedWallets.filter(w => w.type === 'ethereum');
+  const ethereumWallets = connectedWallets.filter((w) => w.type === 'ethereum');
   if (ethereumWallets.length === 0) {
     return (
       <DashboardLayout>
         <div className='max-w-md mx-auto text-center py-12'>
-          <h1 className='text-2xl font-bold text-gray-900 mb-4'>Ethereum Wallet Required</h1>
+          <h1 className='text-2xl font-bold text-gray-900 mb-4'>
+            Ethereum Wallet Required
+          </h1>
           <p className='text-gray-600 mb-6'>
-            Token swapping requires an Ethereum-compatible wallet. Please connect an Ethereum wallet to continue.
+            Token swapping requires an Ethereum-compatible wallet. Please
+            connect an Ethereum wallet to continue.
           </p>
         </div>
       </DashboardLayout>
@@ -219,7 +249,7 @@ export default function Swap() {
     <DashboardLayout>
       {/* Debug Info - Remove this after fixing */}
       <WalletDebugInfo />
-      
+
       <div className='max-w-md mx-auto space-y-6'>
         {/* Header */}
         <div className='text-center'>
@@ -238,7 +268,8 @@ export default function Swap() {
                 Selected Wallet
               </div>
               <div className='text-xs text-blue-600'>
-                {selectedWallet?.address.slice(0, 6)}...{selectedWallet?.address.slice(-4)}
+                {selectedWallet?.address.slice(0, 6)}...
+                {selectedWallet?.address.slice(-4)}
               </div>
             </div>
             <div className='text-right'>
@@ -250,7 +281,7 @@ export default function Swap() {
               </div>
             </div>
           </div>
-          
+
           {/* Wallet Selection */}
           {ethereumWallets.length > 1 && (
             <div>
@@ -280,7 +311,7 @@ export default function Swap() {
               {SUPPORTED_CHAINS.slice(0, 6).map((chain) => {
                 const isSelected = selectedChainId === chain.id;
                 const networkStatus = ChainService.getNetworkStatus(chain.id);
-                
+
                 return (
                   <button
                     key={chain.id}
@@ -299,8 +330,8 @@ export default function Swap() {
                           networkStatus.color === 'green'
                             ? 'bg-green-400'
                             : networkStatus.color === 'yellow'
-                            ? 'bg-yellow-400'
-                            : 'bg-gray-400'
+                              ? 'bg-yellow-400'
+                              : 'bg-gray-400'
                         }`}
                       />
                     </div>
@@ -311,7 +342,7 @@ export default function Swap() {
                 );
               })}
             </div>
-            
+
             {isSwitchingChain && (
               <div className='mt-2 text-xs text-blue-700'>
                 🔄 Switching network... Please approve in your wallet
@@ -373,7 +404,9 @@ export default function Swap() {
               />
               <button className='absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center space-x-2 bg-white border border-gray-200 rounded-lg px-3 py-2 hover:bg-gray-50'>
                 <span className='text-lg'>🔷</span>
-                <span className='font-semibold'>{fromToken?.symbol || 'Select'}</span>
+                <span className='font-semibold'>
+                  {fromToken?.symbol || 'Select'}
+                </span>
                 <ChevronDownIcon className='w-4 h-4 text-gray-400' />
               </button>
             </div>
@@ -408,7 +441,9 @@ export default function Swap() {
               />
               <button className='absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center space-x-2 bg-white border border-gray-200 rounded-lg px-3 py-2 hover:bg-gray-50'>
                 <span className='text-lg'>💰</span>
-                <span className='font-semibold'>{toToken?.symbol || 'Select'}</span>
+                <span className='font-semibold'>
+                  {toToken?.symbol || 'Select'}
+                </span>
                 <ChevronDownIcon className='w-4 h-4 text-gray-400' />
               </button>
             </div>
@@ -420,7 +455,9 @@ export default function Swap() {
               <div className='text-sm space-y-2'>
                 <div className='flex justify-between'>
                   <span>Expected Output:</span>
-                  <span className='font-medium'>{quote.toAmount} {quote.toToken.symbol}</span>
+                  <span className='font-medium'>
+                    {quote.toAmount} {quote.toToken.symbol}
+                  </span>
                 </div>
                 <div className='flex justify-between'>
                   <span>Price Impact:</span>
@@ -428,7 +465,9 @@ export default function Swap() {
                 </div>
                 <div className='flex justify-between'>
                   <span>Minimum Received:</span>
-                  <span className='font-medium'>{quote.minimumReceived} {quote.toToken.symbol}</span>
+                  <span className='font-medium'>
+                    {quote.minimumReceived} {quote.toToken.symbol}
+                  </span>
                 </div>
               </div>
             </div>
@@ -460,7 +499,8 @@ export default function Swap() {
             <div className='flex items-center space-x-2 text-gray-600 text-sm'>
               <InformationCircleIcon className='w-4 h-4' />
               <span>
-                This swap will be executed using 1inch aggregator to find the best rates across multiple DEXs.
+                This swap will be executed using 1inch aggregator to find the
+                best rates across multiple DEXs.
               </span>
             </div>
           </div>
@@ -468,7 +508,9 @@ export default function Swap() {
 
         {/* Recent Swaps */}
         <div className='bg-white rounded-xl shadow-sm border border-gray-200 p-6'>
-          <h3 className='text-lg font-semibold text-gray-900 mb-4'>Recent Swaps</h3>
+          <h3 className='text-lg font-semibold text-gray-900 mb-4'>
+            Recent Swaps
+          </h3>
           <div className='text-center py-8 text-gray-500'>
             <ArrowsRightLeftIcon className='w-12 h-12 mx-auto mb-3 text-gray-300' />
             <p>No swap history</p>
@@ -477,4 +519,4 @@ export default function Swap() {
       </div>
     </DashboardLayout>
   );
-} 
+}

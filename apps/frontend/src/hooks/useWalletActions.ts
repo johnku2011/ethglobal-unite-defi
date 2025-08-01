@@ -17,8 +17,8 @@ export function useWalletActions() {
    * Disconnect a specific wallet by address
    */
   const disconnectWallet = (walletAddress: string) => {
-    const wallet = connectedWallets.find(w => w.address === walletAddress);
-    
+    const wallet = connectedWallets.find((w) => w.address === walletAddress);
+
     if (!wallet) {
       toast.error('Wallet not found');
       return;
@@ -47,7 +47,7 @@ export function useWalletActions() {
       if (isSuiConnected) {
         disconnectSui();
       }
-      
+
       if (connectedWallets.length > 0) {
         toast.success('All wallets disconnected');
       }
@@ -79,14 +79,14 @@ export function useWalletActions() {
    * Get wallet info by address
    */
   const getWalletInfo = (walletAddress: string) => {
-    return connectedWallets.find(w => w.address === walletAddress);
+    return connectedWallets.find((w) => w.address === walletAddress);
   };
 
   /**
    * Check if a specific wallet is connected
    */
   const isWalletConnected = (walletAddress: string) => {
-    return connectedWallets.some(w => w.address === walletAddress);
+    return connectedWallets.some((w) => w.address === walletAddress);
   };
 
   /**
@@ -119,4 +119,4 @@ export function useWalletActions() {
     isWalletConnected,
     getPrimaryWallet,
   };
-} 
+}

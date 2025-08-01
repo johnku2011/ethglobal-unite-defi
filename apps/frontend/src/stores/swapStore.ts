@@ -24,9 +24,9 @@ const useSwapStore = create<SwapStoreState>((set, get) => ({
   getQuote: async (params: SwapQuoteParams) => {
     try {
       set({ isLoadingQuote: true, quoteError: undefined });
-      
+
       const quote = await swapService.getSwapQuote(params);
-      
+
       // Transform to match our SwapQuote interface
       const transformedQuote: SwapQuote = {
         fromToken: quote.fromToken,
@@ -38,19 +38,21 @@ const useSwapStore = create<SwapStoreState>((set, get) => ({
         route: quote.route,
         priceImpact: quote.priceImpact,
         minimumReceived: (
-          parseFloat(quote.toAmount) * (1 - quote.slippage / 100)
+          parseFloat(quote.toAmount) *
+          (1 - quote.slippage / 100)
         ).toString(),
       };
-      
-      set({ 
-        quote: transformedQuote, 
-        isLoadingQuote: false 
+
+      set({
+        quote: transformedQuote,
+        isLoadingQuote: false,
       });
     } catch (error) {
       console.error('Error getting swap quote:', error);
-      set({ 
-        quoteError: error instanceof Error ? error.message : 'Failed to get quote',
-        isLoadingQuote: false 
+      set({
+        quoteError:
+          error instanceof Error ? error.message : 'Failed to get quote',
+        isLoadingQuote: false,
       });
     }
   },
@@ -65,18 +67,18 @@ const useSwapStore = create<SwapStoreState>((set, get) => ({
       // For now, we'll simulate the swap execution
       // In a real implementation, you would get the connected wallet
       console.log('Executing swap with quote:', quote);
-      
+
       // You would typically get the wallet from context here
       // const wallet = useWallet().connectedWallets[0];
       // const transaction = await swapService.executeSwap(quote, wallet);
-      
+
       // For now, just log success
       console.log('Swap executed successfully (simulated)');
-      
     } catch (error) {
       console.error('Error executing swap:', error);
-      set({ 
-        quoteError: error instanceof Error ? error.message : 'Failed to execute swap'
+      set({
+        quoteError:
+          error instanceof Error ? error.message : 'Failed to execute swap',
       });
     }
   },

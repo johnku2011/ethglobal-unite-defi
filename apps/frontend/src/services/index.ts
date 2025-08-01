@@ -3,7 +3,10 @@
 
 // Implemented services
 export { swapService, SwapService } from './swapService';
-export { oneInchBalanceService, OneInchBalanceService } from './oneinchBalanceService';
+export {
+  oneInchBalanceService,
+  OneInchBalanceService,
+} from './oneinchBalanceService';
 export { ChainService, SUPPORTED_CHAINS } from './chainService';
 
 // These will be implemented in upcoming tasks:

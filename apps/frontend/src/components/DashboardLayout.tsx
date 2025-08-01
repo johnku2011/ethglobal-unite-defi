@@ -270,8 +270,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                   }`}
                 />
                 <span className='text-sm text-gray-600'>
-                  {connectedWallets.length > 0 
-                    ? `${connectedWallets.length} Wallet${connectedWallets.length > 1 ? 's' : ''} Connected` 
+                  {connectedWallets.length > 0
+                    ? `${connectedWallets.length} Wallet${connectedWallets.length > 1 ? 's' : ''} Connected`
                     : 'Disconnected'}
                 </span>
               </div>

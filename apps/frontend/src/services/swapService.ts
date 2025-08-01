@@ -60,10 +60,10 @@ export class SwapService implements ISwapService {
   async getSwapQuote(params: SwapQuoteParams): Promise<SwapQuote> {
     try {
       const { fromToken, toToken, amount, slippage = 1, fromAddress } = params;
-      
+
       // Use chain ID from the token (should be set by the UI)
       const chainId = parseInt(fromToken.chainId) || 1;
-      
+
       const queryParams = new URLSearchParams({
         src: fromToken.address,
         dst: toToken.address,
@@ -77,32 +77,32 @@ export class SwapService implements ISwapService {
         `${this.baseUrl}/swap/v6.0/${chainId}/quote?${queryParams}`,
         {
           headers: {
-            'Authorization': `Bearer ${this.apiKey}`,
-            'accept': 'application/json',
+            Authorization: `Bearer ${this.apiKey}`,
+            accept: 'application/json',
           },
         }
       );
 
       const data: OneInchQuoteResponse = response.data;
 
-             // Transform 1inch response to our SwapQuote format
-       return {
-         fromToken: {
-           address: data.fromToken.address,
-           symbol: data.fromToken.symbol,
-           name: data.fromToken.name,
-           decimals: data.fromToken.decimals,
-           logoUrl: data.fromToken.logoURI,
-           chainId: chainId.toString(),
-         },
-         toToken: {
-           address: data.toToken.address,
-           symbol: data.toToken.symbol,
-           name: data.toToken.name,
-           decimals: data.toToken.decimals,
-           logoUrl: data.toToken.logoURI,
-           chainId: chainId.toString(),
-         },
+      // Transform 1inch response to our SwapQuote format
+      return {
+        fromToken: {
+          address: data.fromToken.address,
+          symbol: data.fromToken.symbol,
+          name: data.fromToken.name,
+          decimals: data.fromToken.decimals,
+          logoUrl: data.fromToken.logoURI,
+          chainId: chainId.toString(),
+        },
+        toToken: {
+          address: data.toToken.address,
+          symbol: data.toToken.symbol,
+          name: data.toToken.name,
+          decimals: data.toToken.decimals,
+          logoUrl: data.toToken.logoURI,
+          chainId: chainId.toString(),
+        },
         fromAmount: data.fromAmount,
         toAmount: data.toAmount,
         estimatedGas: data.estimatedGas.toString(),
@@ -144,7 +144,7 @@ export class SwapService implements ISwapService {
   ): Promise<SwapTransaction> {
     try {
       const chainId = parseInt(quote.fromToken.chainId) || 1;
-      
+
       const queryParams = new URLSearchParams({
         src: quote.fromToken.address,
         dst: quote.toToken.address,
@@ -160,8 +160,8 @@ export class SwapService implements ISwapService {
         `${this.baseUrl}/swap/v6.0/${chainId}/swap?${queryParams}`,
         {
           headers: {
-            'Authorization': `Bearer ${this.apiKey}`,
-            'accept': 'application/json',
+            Authorization: `Bearer ${this.apiKey}`,
+            accept: 'application/json',
           },
         }
       );
@@ -174,10 +174,10 @@ export class SwapService implements ISwapService {
         // This would depend on your wallet implementation
         // For now, we'll simulate the transaction
         console.log('Transaction data:', data.tx);
-        
+
         // In a real implementation, you would send the transaction here
         // txHash = await wallet.sendTransaction(data.tx);
-        
+
         // For now, we'll generate a mock transaction hash
         txHash = `0x${Math.random().toString(16).substr(2, 64)}`;
       } catch (txError) {
@@ -188,7 +188,7 @@ export class SwapService implements ISwapService {
       return {
         id: txHash || `swap_${Date.now()}`,
         type: 'swap',
-                 status: TransactionStatus.PENDING,
+        status: TransactionStatus.PENDING,
         txHash,
         timestamp: new Date(),
         fromToken: quote.fromToken,
@@ -224,12 +224,12 @@ export class SwapService implements ISwapService {
    */
   async trackSwapStatus(transactionId: string): Promise<TransactionStatus> {
     try {
-             // This would check the transaction status on the blockchain
-       // For now, return a placeholder status
-       return TransactionStatus.PENDING;
+      // This would check the transaction status on the blockchain
+      // For now, return a placeholder status
+      return TransactionStatus.PENDING;
     } catch (error) {
       console.error('Error tracking swap status:', error);
-             return TransactionStatus.FAILED;
+      return TransactionStatus.FAILED;
     }
   }
 
@@ -251,4 +251,4 @@ export class SwapService implements ISwapService {
 }
 
 // Export a singleton instance
-export const swapService = new SwapService(); 
+export const swapService = new SwapService();

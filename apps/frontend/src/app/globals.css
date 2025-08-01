@@ -138,12 +138,49 @@
   backface-visibility: hidden;
   transform: translateZ(0);
   -webkit-transform: translateZ(0);
+  contain: layout style;
+}
+
+/* 輪播軌道容器 */
+.carousel-track {
+  display: flex;
+  will-change: transform;
+  backface-visibility: hidden;
+  transform: translate3d(0, 0, 0);
+  transition-timing-function: linear;
 }
 
 /* 價格項目動畫 */
 .crypto-price-item {
+  flex-shrink: 0;
   will-change: transform;
   transform: translateZ(0);
+}
+
+/* 輪播動畫類 */
+.carousel-animating {
+  animation: carouselScroll linear infinite;
+}
+
+/* 暫停動畫 */
+.carousel-paused {
+  animation-play-state: paused;
+}
+
+/* 輪播滾動動畫 */
+@keyframes carouselScroll {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-100%, 0, 0);
+  }
+}
+
+/* 無縫循環重置 */
+.carousel-reset {
+  transform: translate3d(0, 0, 0) !important;
+  animation: none !important;
 }
 
 /* 載入動畫優化 */

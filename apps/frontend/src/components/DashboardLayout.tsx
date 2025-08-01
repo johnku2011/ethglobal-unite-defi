@@ -285,6 +285,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             className='transition-all duration-300'
             autoScroll={true}
             showControls={true}
+            scrollSpeed={10} // 40 秒完成一個循環，比默認 60 秒更快
             symbols={[
               'BTC',
               'ETH',

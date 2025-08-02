@@ -20,14 +20,14 @@ const PUBLIC_CANCELLATION_SRC_TIMELOCK: u64 = 1200;
 const WITHDRAWAL_DST_TIMELOCK: u64 = 300;
 const PUBLIC_WITHDRAWAL_DST_TIMELOCK: u64 = 600;
 const CANCELLATION_DST_TIMELOCK: u64 = 900;
-const SECRET: vector<u8> = b"test_secret_32_bytes_long_1234567";
+const SECRET: vector<u8> = b"6edb61d807a8e236a80fdb5dbfd3817eb95aae50fc56b91f023ace9955b649d8";
 
 #[test_only]
 fun setup_test(): (Scenario, vector<u8>, vector<u8>, vector<u8>, Clock) {
     let mut test = test_scenario::begin(MAKER);
     let clock = clock::create_for_testing(test.ctx());
     let secret = SECRET;
-    let order_hash = b"order_hash_32_bytes_long_1234567";
+    let order_hash = b"1211210d666b8782434ecf3136bc4d415a639bb2f10fadb22f65ab15e33150f4";
     let hashlock = hash::keccak256(&secret);
 
     (test, secret, order_hash, hashlock, clock)

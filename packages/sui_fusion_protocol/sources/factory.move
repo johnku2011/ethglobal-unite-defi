@@ -249,7 +249,7 @@ public fun create_src_escrow<Token>(
     dst_cancellation: u64,
     clock: &Clock,
     ctx: &mut TxContext,
-): ID {
+) {
     assert!(vector::length(&order_hash) == 32, EInvalidOrderHash);
     assert!(vector::length(&hashlock) == 32, EInvalidHashlock);
     assert!(!self.is_src_escrow_exists(order_hash), EDstEscrowExists);
@@ -294,7 +294,6 @@ public fun create_src_escrow<Token>(
         taker,
         source_amount,
     );
-    escrow_id
 }
 
 // Create a new destination escrow
@@ -315,7 +314,7 @@ public fun create_dst_escrow<Token>(
     dst_cancellation: u64,
     clock: &Clock,
     ctx: &mut TxContext,
-): ID {
+) {
     assert!(vector::length(&order_hash) == 32, EInvalidOrderHash);
     assert!(vector::length(&hashlock) == 32, EInvalidHashlock);
     assert!(!self.is_dst_escrow_exists(order_hash), EDstEscrowExists);
@@ -366,8 +365,6 @@ public fun create_dst_escrow<Token>(
         deposit_amount,
         // safety_deposit_amount,
     );
-
-    escrow_id
 }
 
 fun insert_dst_escrow(self: &mut EscrowFactory, order_hash: vector<u8>, escrow: escrow::Escrow) {
@@ -383,7 +380,7 @@ fun is_dst_escrow_exists(self: &EscrowFactory, order_hash: vector<u8>): bool {
 }
 
 fun is_src_escrow_exists(self: &EscrowFactory, order_hash: vector<u8>): bool {
-    self.escrow_srcs.contains(hash::keccak256(&order_hash))
+    self.escrow_srcs.contains(order_hash)
 }
 
 fun emit_escrow_cancelled_event(_: &EscrowFactory, escrow_id: ID, order_hash: vector<u8>) {
@@ -398,11 +395,9 @@ fun emit_escrow_created_event(
     _: &EscrowFactory,
     escrow_id: ID,
     order_hash: vector<u8>,
-    // hashlock: vector<u8>,
     maker: address,
     receiver: address,
     amount: u64,
-    // target_amount: u64,
 ) {
     let event = EscrowCreated {
         escrow_id,

@@ -1,6 +1,6 @@
 module sui_fusion_protocol::constants;
 
-const MIN_SAFETY_DEPOSIT: u64 = 10_000_000;
+const MIN_SAFETY_DEPOSIT: u64 = 100_000;
 const ACTIVE: u8 = 1;
 const WITHDRAWN: u8 = 2;
 const CANCELLED: u8 = 3;

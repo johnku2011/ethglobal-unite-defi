@@ -250,6 +250,7 @@ public fun create_src_escrow<Token>(
     clock: &Clock,
     ctx: &mut TxContext,
 ) {
+     // should verify hash by payload?
     assert!(vector::length(&order_hash) == 32, EInvalidOrderHash);
     assert!(vector::length(&hashlock) == 32, EInvalidHashlock);
     assert!(!self.is_src_escrow_exists(order_hash), EDstEscrowExists);
@@ -315,6 +316,7 @@ public fun create_dst_escrow<Token>(
     clock: &Clock,
     ctx: &mut TxContext,
 ) {
+    // should verify hash by payload?
     assert!(vector::length(&order_hash) == 32, EInvalidOrderHash);
     assert!(vector::length(&hashlock) == 32, EInvalidHashlock);
     assert!(!self.is_dst_escrow_exists(order_hash), EDstEscrowExists);

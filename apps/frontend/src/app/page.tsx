@@ -2,224 +2,371 @@
 
 import React, { useMemo } from 'react';
 import Link from 'next/link';
-import DashboardLayout from '@/components/DashboardLayout';
-
 import { useWallet } from '@/providers/WalletProvider';
 import { useCurrentWalletChain } from '@/providers/ChainProvider';
 import { usePortfolio } from '@/hooks/api/usePortfolioQuery';
-import NetworkStatusBanner from '@/components/NetworkStatusBanner';
-import { CompactDualWalletDisplay } from '@/components/DualWalletDisplay';
-import ConnectedWalletsSection from '@/components/ConnectedWalletsSection';
-import RecentActivity from '@/components/RecentActivity';
 import {
   BanknotesIcon,
   ArrowTrendingUpIcon,
   ArrowsRightLeftIcon,
   LinkIcon,
+  ShieldCheckIcon,
+  CubeTransparentIcon,
+  BoltIcon,
+  ChartBarIcon,
+  GlobeAltIcon,
+  CheckIcon,
+  StarIcon,
 } from '@heroicons/react/24/outline';
+import { CompactDualWalletDisplay } from '@/components/DualWalletDisplay';
 
-export default function Home() {
-  const { connectedWallets } = useWallet();
+export default function LandingPage() {
+  const { connectedWallets, connectEthereum } = useWallet();
   const { wallet: currentWallet } = useCurrentWalletChain();
-
-  // 獲取第一個連接的以太坊錢包地址
+  
+  const isConnected = connectedWallets.length > 0;
+  
+  // Portfolio stats for connected users
   const ethereumWallet = connectedWallets.find(
     (wallet) => wallet.type === 'ethereum'
   );
   const walletAddress = currentWallet?.address || ethereumWallet?.address;
-
-  // 使用現有的hooks獲取數據
   const { data: portfolioData } = usePortfolio(walletAddress);
 
-  // 計算投資組合統計信息
-  const portfolioStats = useMemo(() => {
-    if (!portfolioData || !(portfolioData as any).result) {
-      return {
-        totalValue: '$0.00',
-        changeType: 'neutral' as const,
-        totalAssets: 0,
-        totalChains: 0,
-      };
-    }
-
-    // 使用正確的 API v5 響應結構 (與 portfolio 頁面一致)
+  const portfolioValue = useMemo(() => {
+    if (!portfolioData || !(portfolioData as any).result) return '$0.00';
     const totalValue = (portfolioData as any).result.total || 0;
-    const chainCount = (portfolioData as any).result.by_chain?.length || 0;
-    const assetCount = 1; // 暫時設為 1，實際應該從資產數據計算
-
-    return {
-      totalValue:
-        totalValue > 0
-          ? `$${totalValue.toLocaleString('en-US', {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}`
-          : '$0.00',
-      changeType: 'neutral' as const,
-      totalAssets: assetCount,
-      totalChains: chainCount,
-    };
+    return totalValue > 0
+      ? `$${totalValue.toLocaleString('en-US', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })}`
+      : '$0.00';
   }, [portfolioData]);
 
-  // 統計計數
-  const recentSwapsCount = 0; // 實際應從API數據計算
-  const bridgeTransactionsCount = 0; // 實際應從API數據計算
-
-  // 儀表板統計卡片數據
-  const stats = [
+  const features = [
     {
-      title: 'Total Portfolio Value',
-      value: portfolioStats.totalValue,
-      change: '+0.00%', // 實際應從API數據計算
-      changeType: portfolioStats.changeType,
-      icon: BanknotesIcon,
+      icon: ChartBarIcon,
+      title: 'Multi-Chain Portfolio Tracking',
+      description: 'Monitor all your assets across Ethereum, Polygon, BSC, and Sui in one unified dashboard.',
+      color: 'from-blue-500 to-cyan-500',
     },
     {
-      title: 'Total Assets',
-      value: String(portfolioStats.totalAssets),
-      change: `Across ${portfolioStats.totalChains} chains`,
-      changeType: 'neutral' as const,
-      icon: ArrowTrendingUpIcon,
-    },
-    {
-      title: 'Recent Swaps',
-      value: String(recentSwapsCount),
-      change: 'Last 24h',
-      changeType: 'neutral' as const,
       icon: ArrowsRightLeftIcon,
+      title: 'Optimal Token Swaps',
+      description: 'Get the best rates using 1inch aggregated liquidity across multiple DEXs.',
+      color: 'from-purple-500 to-pink-500',
     },
     {
-      title: 'Bridge Transactions',
-      value: String(bridgeTransactionsCount),
-      change: 'Last 7 days',
-      changeType: 'neutral' as const,
       icon: LinkIcon,
+      title: 'Cross-Chain Bridging',
+      description: 'Seamlessly move assets between different blockchains with secure bridge protocols.',
+      color: 'from-green-500 to-teal-500',
+    },
+    {
+      icon: BoltIcon,
+      title: 'Real-Time Analytics',
+      description: 'Live portfolio performance tracking with detailed charts and profit/loss analysis.',
+      color: 'from-orange-500 to-red-500',
+    },
+    {
+      icon: ShieldCheckIcon,
+      title: 'Secure & Non-Custodial',
+      description: 'Your keys, your crypto. We never store your private keys or have access to your funds.',
+      color: 'from-indigo-500 to-purple-500',
+    },
+    {
+      icon: CubeTransparentIcon,
+      title: 'DeFi Protocols Integration',
+      description: 'Connect with major DeFi protocols and track your yields, staking, and LP positions.',
+      color: 'from-cyan-500 to-blue-500',
     },
   ];
 
+  const stats = [
+    { value: '$2.4B+', label: 'Total Value Tracked' },
+    { value: '50K+', label: 'Active Users' },
+    { value: '15+', label: 'Supported Networks' },
+    { value: '99.9%', label: 'Uptime' },
+  ];
+
+  const testimonials = [
+    {
+      quote: "UniPortfolio simplified my DeFi portfolio management across multiple chains. The real-time tracking is incredible.",
+      author: "Roy Lei",
+      role: "DeFi Trader",
+      avatar: "MR"
+    },
+    {
+      quote: "The cross-chain bridging feature saved me hours. Best DeFi management tool I've used.",
+      author: "Edison Un",
+      role: "Crypto Investor",
+      avatar: "MR"
+    },
+    {
+      quote: "Finally, a platform that gives me complete visibility into my multi-chain DeFi positions.",
+      author: "John Ku", 
+      role: "Portfolio Manager",
+      avatar: "MR"
+    }
+  ];
+
   return (
-    <DashboardLayout>
-      <div className='space-y-6'>
-        {/* Welcome Section */}
-        <div className='bg-gradient-to-r from-primary-500 to-accent-500 rounded-2xl p-8 text-white'>
-          <div className='flex items-center justify-between'>
-            <div className='flex-1'>
-              <h1 className='text-3xl font-bold mb-2'>
-                Welcome to UniPortfolio
-              </h1>
-              <p className='text-primary-100 text-lg mb-4'>
-                Unified DeFi portfolio management across multiple blockchains
-              </p>
-              {/* Multi-Chain Wallet Status */}
-              <div className='bg-white bg-opacity-20 rounded-lg p-4 inline-block border border-white border-opacity-30'>
-                <h3 className='text-sm font-medium text-white mb-3'>
-                  Connected Wallets
-                </h3>
-                <CompactDualWalletDisplay variant='light' />
+    <div className="min-h-screen bg-white">
+      {/* Navigation Header */}
+      <header className="absolute inset-x-0 top-0 z-50">
+        <nav className="flex items-center justify-between p-6 lg:px-8" aria-label="Global">
+          <div className="flex lg:flex-1">
+            <Link href="/" className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-gradient-to-r from-primary-500 to-accent-500 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-sm">UP</span>
               </div>
-            </div>
-            <div className='hidden md:block'>
-              <div className='w-32 h-32 bg-white bg-opacity-10 rounded-full flex items-center justify-center'>
-                <div className='w-20 h-20 bg-white bg-opacity-20 rounded-full flex items-center justify-center'>
-                  <BanknotesIcon className='w-10 h-10 text-white' />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Network Status Banner */}
-        <NetworkStatusBanner />
-
-        {/* Quick Stats */}
-        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
-          {stats.map((stat, index) => (
-            <div
-              key={index}
-              className='bg-white rounded-xl shadow-soft p-6 border border-gray-100'
-            >
-              <div className='flex items-center justify-between'>
-                <div>
-                  <p className='text-sm font-medium text-gray-600 mb-1'>
-                    {stat.title}
-                  </p>
-                  <p className='text-2xl font-bold text-gray-900'>
-                    {stat.value}
-                  </p>
-                  <p className='text-sm text-gray-500 mt-1'>{stat.change}</p>
-                </div>
-                <div className='p-3 bg-primary-50 rounded-lg'>
-                  <stat.icon className='w-6 h-6 text-primary-600' />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Connected Wallets - Premium UI/UX */}
-        <ConnectedWalletsSection />
-
-        {/* Quick Actions */}
-        <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
-          <div className='bg-white rounded-xl shadow-soft p-6 border border-gray-100 text-center'>
-            <div className='w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center mx-auto mb-4'>
-              <ArrowTrendingUpIcon className='w-6 h-6 text-primary-600' />
-            </div>
-            <h4 className='text-lg font-semibold text-gray-900 mb-2'>
-              Portfolio Tracking
-            </h4>
-            <p className='text-gray-600 text-sm mb-4'>
-              Monitor all your assets across Ethereum, Polygon, and Sui in one
-              place
-            </p>
-            <Link
-              href='/portfolio'
-              className='btn-outline w-full block text-center py-2'
-            >
-              View Portfolio
+              <span className="text-xl font-bold text-gradient">UniPortfolio</span>
             </Link>
           </div>
-
-          <div className='bg-white rounded-xl shadow-soft p-6 border border-gray-100 text-center'>
-            <div className='w-12 h-12 bg-accent-100 rounded-lg flex items-center justify-center mx-auto mb-4'>
-              <ArrowsRightLeftIcon className='w-6 h-6 text-accent-600' />
-            </div>
-            <h4 className='text-lg font-semibold text-gray-900 mb-2'>
-              Optimal Swaps
-            </h4>
-            <p className='text-gray-600 text-sm mb-4'>
-              Get the best rates using 1inch aggregated liquidity
-            </p>
-            <Link
-              href='/swap'
-              className='btn-outline w-full block text-center py-2'
-            >
-              Start Swapping
-            </Link>
+          <div className="flex lg:flex-1 lg:justify-end">
+            {isConnected ? (
+              <div className="flex items-center space-x-4">
+                <span className="text-sm text-gray-600">Portfolio: {portfolioValue}</span>
+                <Link
+                  href="/portfolio"
+                  className="btn-primary"
+                >
+                  Dashboard
+                </Link>
+              </div>
+            ) : (
+                              <button
+                  onClick={() => connectEthereum()}
+                  className="btn-primary"
+                >
+                  Connect Wallet
+                </button>
+            )}
           </div>
+        </nav>
+      </header>
 
-          <div className='bg-white rounded-xl shadow-soft p-6 border border-gray-100 text-center'>
-            <div className='w-12 h-12 bg-success-100 rounded-lg flex items-center justify-center mx-auto mb-4'>
-              <LinkIcon className='w-6 h-6 text-success-600' />
-            </div>
-            <h4 className='text-lg font-semibold text-gray-900 mb-2'>
-              Cross-Chain Bridge
-            </h4>
-            <p className='text-gray-600 text-sm mb-4'>
-              Seamlessly move assets between EVM chains and Sui
+      {/* Hero Section */}
+      <div className="relative isolate px-6 pt-14 lg:px-8">
+        <div className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80">
+          <div className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-primary-500 to-accent-500 opacity-20 sm:left-[calc(50%-30rem)] sm:w-[72.1875rem]"></div>
+        </div>
+        
+        <div className="mx-auto max-w-4xl py-32 sm:py-48 lg:py-56">
+          <div className="text-center">
+            <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">
+              Unified <span className="text-gradient">DeFi Portfolio</span><br />
+              Management
+            </h1>
+            <p className="mt-6 text-lg leading-8 text-gray-600 max-w-2xl mx-auto">
+              Track, manage, and optimize your multi-chain DeFi portfolio across Ethereum, Polygon, BSC, and Sui. 
+              Get real-time analytics, optimal swaps, and seamless cross-chain bridging—all in one platform.
             </p>
-            <Link
-              href='/bridge'
-              className='btn-outline w-full block text-center py-2'
-            >
-              Bridge Assets
-            </Link>
+            
+                         {isConnected ? (
+               <div className="mt-10 flex flex-col items-center space-y-4">
+                 <div className="bg-white bg-opacity-90 backdrop-blur-sm rounded-2xl p-6 border border-gray-200 shadow-soft">
+                   <h3 className="text-sm font-medium text-gray-700 mb-3">Connected Wallets</h3>
+                   <CompactDualWalletDisplay variant="light" />
+                   <div className="mt-4 text-2xl font-bold text-gray-900">
+                     Portfolio Value: {portfolioValue}
+                   </div>
+                   <div className="mt-4">
+                     <Link 
+                       href="/portfolio" 
+                       className="btn-primary text-sm px-4 py-2 inline-block text-center"
+                     >
+                       Go to Dashboard →
+                     </Link>
+                   </div>
+                 </div>
+                 <div className="flex items-center justify-center gap-x-6">
+                   <Link href="/portfolio" className="btn-primary text-lg px-8 py-3">
+                     View Dashboard
+                   </Link>
+                   <Link href="/swap" className="btn-outline text-lg px-8 py-3">
+                     Start Trading
+                   </Link>
+                 </div>
+               </div>
+            ) : (
+              <div className="mt-10 flex items-center justify-center gap-x-6">
+                <button
+                  onClick={() => connectEthereum()}
+                  className="btn-primary text-lg px-8 py-3"
+                >
+                  Connect Wallet
+                </button>
+                <a href="#features" className="btn-outline text-lg px-8 py-3">
+                  Learn More
+                </a>
+              </div>
+            )}
           </div>
         </div>
-
-        {/* Recent Activity - Professional Portfolio Positions */}
-        <RecentActivity walletAddress={walletAddress} />
+        
+        <div className="absolute inset-x-0 top-[calc(100%-13rem)] -z-10 transform-gpu overflow-hidden blur-3xl sm:top-[calc(100%-30rem)]">
+          <div className="relative left-[calc(50%+3rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 bg-gradient-to-tr from-accent-500 to-primary-500 opacity-20 sm:left-[calc(50%+36rem)] sm:w-[72.1875rem]"></div>
+        </div>
       </div>
-    </DashboardLayout>
+
+      {/* Stats Section */}
+      {/* <div className="bg-gray-50 py-24 sm:py-32">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <div className="mx-auto max-w-2xl lg:max-w-none">
+            <div className="text-center">
+              <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+                Trusted by DeFi users worldwide
+              </h2>
+              <p className="mt-4 text-lg leading-8 text-gray-600">
+                Join thousands of users managing their multi-chain portfolios with UniPortfolio
+              </p>
+            </div>
+            <dl className="mt-16 grid grid-cols-1 gap-0.5 overflow-hidden rounded-2xl text-center sm:grid-cols-2 lg:grid-cols-4">
+              {stats.map((stat, index) => (
+                <div key={index} className="flex flex-col bg-white p-8">
+                  <dt className="text-sm font-semibold leading-6 text-gray-600">{stat.label}</dt>
+                  <dd className="order-first text-3xl font-bold tracking-tight text-gray-900">{stat.value}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        </div>
+      </div> */}
+
+      {/* Features Section */}
+      <div id="features" className="py-24 sm:py-32">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <div className="mx-auto max-w-2xl text-center">
+            <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+              Everything you need for <span className="text-gradient">DeFi portfolio management</span>
+            </h2>
+            <p className="mt-6 text-lg leading-8 text-gray-600">
+              From portfolio tracking to cross-chain bridging, UniPortfolio provides all the tools you need to manage your DeFi investments effectively.
+            </p>
+          </div>
+          
+          <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-none">
+            <dl className="grid max-w-xl grid-cols-1 gap-x-8 gap-y-16 lg:max-w-none lg:grid-cols-3">
+              {features.map((feature, index) => (
+                <div key={index} className="flex flex-col">
+                  <dt className="flex items-center gap-x-3 text-base font-semibold leading-7 text-gray-900">
+                    <div className={`flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-r ${feature.color}`}>
+                      <feature.icon className="h-6 w-6 text-white" aria-hidden="true" />
+                    </div>
+                    {feature.title}
+                  </dt>
+                  <dd className="mt-4 flex flex-auto flex-col text-base leading-7 text-gray-600">
+                    <p className="flex-auto">{feature.description}</p>
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        </div>
+      </div>
+
+      {/* Testimonials Section */}
+      <div className="bg-gray-50 py-24 sm:py-32">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <div className="mx-auto max-w-2xl text-center">
+            <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+              Loved by DeFi enthusiasts
+            </h2>
+            <p className="mt-6 text-lg leading-8 text-gray-600">
+              See what our users have to say about their experience with UniPortfolio
+            </p>
+          </div>
+          
+          <div className="mx-auto mt-16 flow-root max-w-2xl sm:mt-20 lg:mx-0 lg:max-w-none">
+            <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+              {testimonials.map((testimonial, index) => (
+                <div key={index} className="bg-white rounded-2xl p-8 shadow-soft">
+                  <div className="flex items-center space-x-1 mb-4">
+                    {[...Array(5)].map((_, i) => (
+                      <StarIcon key={i} className="h-5 w-5 text-yellow-400 fill-current" />
+                    ))}
+                  </div>
+                  <blockquote className="text-gray-900">
+                    <p>"{testimonial.quote}"</p>
+                  </blockquote>
+                  <figcaption className="mt-6 flex items-center gap-x-4">
+                    <div className="h-10 w-10 rounded-full bg-gradient-to-r from-primary-500 to-accent-500 flex items-center justify-center">
+                      <span className="text-white font-medium text-sm">{testimonial.avatar}</span>
+                    </div>
+                    <div>
+                      <div className="font-semibold">{testimonial.author}</div>
+                      <div className="text-gray-600">{testimonial.role}</div>
+                    </div>
+                  </figcaption>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* CTA Section */}
+      <div className="bg-gradient-to-r from-primary-600 to-accent-600">
+        <div className="px-6 py-24 sm:px-6 sm:py-32 lg:px-8">
+          <div className="mx-auto max-w-2xl text-center">
+            <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+              Ready to take control of your DeFi portfolio?
+            </h2>
+            <p className="mx-auto mt-6 max-w-xl text-lg leading-8 text-primary-100">
+              Join thousands of users who trust UniPortfolio to manage their multi-chain DeFi investments. Start tracking your portfolio today.
+            </p>
+            <div className="mt-10 flex items-center justify-center gap-x-6">
+              {isConnected ? (
+                <Link href="/portfolio" className="btn-secondary bg-white text-primary-600 hover:bg-gray-100 text-lg px-8 py-3">
+                  Go to Dashboard
+                </Link>
+              ) : (
+                <button
+                  onClick={() => connectEthereum()}
+                  className="btn-secondary bg-white text-primary-600 hover:bg-gray-100 text-lg px-8 py-3"
+                >
+                  Connect Wallet & Start
+                </button>
+              )}
+              <a href="#features" className="text-lg font-semibold leading-6 text-white">
+                Learn more <span aria-hidden="true">→</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <footer className="bg-white">
+        <div className="mx-auto max-w-7xl px-6 py-12 md:flex md:items-center md:justify-between lg:px-8">
+          <div className="flex justify-center space-x-6 md:order-2">
+            <Link href="/portfolio" className="text-gray-400 hover:text-gray-500">
+              Portfolio
+            </Link>
+            <Link href="/swap" className="text-gray-400 hover:text-gray-500">
+              Swap
+            </Link>
+            <Link href="/bridge" className="text-gray-400 hover:text-gray-500">
+              Bridge
+            </Link>
+            <Link href="/transactions" className="text-gray-400 hover:text-gray-500">
+              Transactions
+            </Link>
+          </div>
+          <div className="mt-8 md:order-1 md:mt-0">
+            <div className="flex items-center justify-center md:justify-start space-x-3">
+              <div className="w-6 h-6 bg-gradient-to-r from-primary-500 to-accent-500 rounded-md flex items-center justify-center">
+                <span className="text-white font-bold text-xs">UP</span>
+              </div>
+              <p className="text-center text-xs leading-5 text-gray-500">
+                &copy; 2025 UniPortfolio. All rights reserved.
+              </p>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
   );
 }

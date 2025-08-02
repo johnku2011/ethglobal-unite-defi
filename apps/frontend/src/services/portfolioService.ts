@@ -45,7 +45,7 @@ export class PortfolioService {
 
       // 轉換數據格式
       const processedData = this.transformPortfolioData(
-        rawData,
+        rawData as any,
         params.address
       );
 

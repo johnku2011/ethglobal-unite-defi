@@ -49,8 +49,8 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
       // 處理嵌套屬性
       if (sortField.includes('.')) {
         const parts = sortField.split('.');
-        aValue = parts.reduce((obj, part) => obj?.[part], a);
-        bValue = parts.reduce((obj, part) => obj?.[part], b);
+        aValue = parts.reduce((obj: any, part) => obj?.[part], a);
+        bValue = parts.reduce((obj: any, part) => obj?.[part], b);
       } else {
         aValue = a[sortField as keyof Transaction];
         bValue = b[sortField as keyof Transaction];

@@ -25,7 +25,7 @@ export function useCryptoPrices(
     refetchInterval,
     staleTime: 15000, // 15 seconds until data becomes stale
     refetchOnWindowFocus: true,
-    keepPreviousData: true, // Keep previous data for change comparison
+    placeholderData: (previousData) => previousData, // Keep previous data for change comparison
     enabled,
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff strategy

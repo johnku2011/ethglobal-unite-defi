@@ -29,7 +29,9 @@ export async function GET(
       );
     }
 
-    console.log(`🔍 Checking allowance for token ${tokenAddress} wallet ${walletAddress} on chain ${chainId}`);
+    console.log(
+      `🔍 Checking allowance for token ${tokenAddress} wallet ${walletAddress} on chain ${chainId}`
+    );
 
     // Build query string for 1inch API
     const queryParams = new URLSearchParams({
@@ -50,12 +52,14 @@ export async function GET(
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`❌ 1inch Allowance API error: ${response.status} - ${errorText}`);
-      
+      console.error(
+        `❌ 1inch Allowance API error: ${response.status} - ${errorText}`
+      );
+
       return NextResponse.json(
-        { 
+        {
           error: `1inch API error: ${response.status}`,
-          details: errorText 
+          details: errorText,
         },
         { status: response.status }
       );
@@ -69,16 +73,15 @@ export async function GET(
         'Cache-Control': 'public, max-age=30', // Cache for 30 seconds
       },
     });
-
   } catch (error) {
     console.error('❌ Allowance API route error:', error);
-    
+
     return NextResponse.json(
-      { 
+      {
         error: 'Internal server error',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        details: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );
   }
-} 
+}

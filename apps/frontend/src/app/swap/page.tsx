@@ -72,14 +72,20 @@ export default function Swap() {
   useEffect(() => {
     const fetchQuoteWithDelay = setTimeout(() => {
       if (
-        fromAmount && 
-        parseFloat(fromAmount) > 0 && 
-        fromToken && 
-        toToken && 
-        selectedWallet && 
+        fromAmount &&
+        parseFloat(fromAmount) > 0 &&
+        fromToken &&
+        toToken &&
+        selectedWallet &&
         selectedChainId
       ) {
-        console.log('🔄 Auto-fetching quote for', fromAmount, fromToken.symbol, '→', toToken.symbol);
+        console.log(
+          '🔄 Auto-fetching quote for',
+          fromAmount,
+          fromToken.symbol,
+          '→',
+          toToken.symbol
+        );
         handleGetQuote();
       }
     }, 1000); // 1 second debounce
@@ -88,7 +94,13 @@ export default function Swap() {
   }, [fromAmount, fromToken, toToken, selectedWallet, selectedChainId]);
 
   const handleGetQuote = async () => {
-    if (!fromAmount || !fromToken || !toToken || !selectedWallet || !selectedChainId) {
+    if (
+      !fromAmount ||
+      !fromToken ||
+      !toToken ||
+      !selectedWallet ||
+      !selectedChainId
+    ) {
       return;
     }
 
@@ -100,7 +112,9 @@ export default function Swap() {
         parseFloat(fromAmount) * Math.pow(10, fromToken.decimals)
       ).toString();
 
-      console.log(`💱 Getting quote: ${fromAmount} ${fromToken.symbol} (${amountInWei} wei) → ${toToken.symbol}`);
+      console.log(
+        `💱 Getting quote: ${fromAmount} ${fromToken.symbol} (${amountInWei} wei) → ${toToken.symbol}`
+      );
 
       await getQuote({
         fromToken: {
@@ -129,9 +143,12 @@ export default function Swap() {
   // Update toAmount when quote changes
   useEffect(() => {
     if (quote && quote.toAmount) {
-      const toAmountDecimal = parseFloat(quote.toAmount) / Math.pow(10, toToken?.decimals || 18);
+      const toAmountDecimal =
+        parseFloat(quote.toAmount) / Math.pow(10, toToken?.decimals || 18);
       setToAmount(toAmountDecimal.toFixed(6));
-      console.log(`✅ Quote received: ${fromAmount} ${fromToken?.symbol} → ${toAmountDecimal.toFixed(6)} ${toToken?.symbol}`);
+      console.log(
+        `✅ Quote received: ${fromAmount} ${fromToken?.symbol} → ${toAmountDecimal.toFixed(6)} ${toToken?.symbol}`
+      );
     }
   }, [quote, toToken]);
 
@@ -166,16 +183,24 @@ export default function Swap() {
     if (!selectedWallet) return;
 
     setIsLoadingBalances(true);
-    console.log('🔄 Loading balances for wallet:', selectedWallet.address, 'on chain:', selectedChainId);
-    
+    console.log(
+      '🔄 Loading balances for wallet:',
+      selectedWallet.address,
+      'on chain:',
+      selectedChainId
+    );
+
     try {
       // First try the 1inch Balance API
-      const walletBalances = await oneInchBalanceService.getWalletBalances(selectedWallet);
+      const walletBalances =
+        await oneInchBalanceService.getWalletBalances(selectedWallet);
       console.log('💰 1inch Balance API response:', walletBalances);
-      
+
       // If 1inch API returns empty balances, try native balance checking
       if (Object.keys(walletBalances).length === 0) {
-        console.log('⚠️ 1inch Balance API returned empty, trying native balance...');
+        console.log(
+          '⚠️ 1inch Balance API returned empty, trying native balance...'
+        );
         const nativeBalances = await getNativeBalances();
         setBalances(nativeBalances);
       } else {
@@ -183,7 +208,7 @@ export default function Swap() {
       }
     } catch (error) {
       console.error('❌ Error loading balances:', error);
-      
+
       // Fallback to native balance checking
       try {
         console.log('🔄 Trying fallback native balance...');
@@ -221,15 +246,25 @@ export default function Swap() {
 
       // Get ERC-20 token balances for popular tokens
       for (const token of availableTokens) {
-        if (token.symbol !== 'ETH' && token.address !== '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee') {
+        if (
+          token.symbol !== 'ETH' &&
+          token.address !== '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'
+        ) {
           try {
-            const tokenBalance = await getERC20Balance(token.address, selectedWallet.address, token.decimals);
+            const tokenBalance = await getERC20Balance(
+              token.address,
+              selectedWallet.address,
+              token.decimals
+            );
             if (tokenBalance && parseFloat(tokenBalance) > 0) {
               balances[token.symbol] = tokenBalance;
               console.log(`💰 ${token.symbol} Balance:`, tokenBalance);
             }
           } catch (tokenError) {
-            console.warn(`⚠️ Failed to get ${token.symbol} balance:`, tokenError);
+            console.warn(
+              `⚠️ Failed to get ${token.symbol} balance:`,
+              tokenError
+            );
           }
         }
       }
@@ -241,7 +276,11 @@ export default function Swap() {
     }
   };
 
-  const getERC20Balance = async (tokenAddress: string, walletAddress: string, decimals: number): Promise<string> => {
+  const getERC20Balance = async (
+    tokenAddress: string,
+    walletAddress: string,
+    decimals: number
+  ): Promise<string> => {
     if (!window.ethereum) throw new Error('No ethereum provider');
 
     // ERC-20 balanceOf method signature
@@ -346,7 +385,7 @@ export default function Swap() {
         console.log('🔄 No quote available, fetching one...');
         await handleGetQuote();
         // Wait a moment for quote to be processed
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
       }
 
       if (!quote) {
@@ -411,10 +450,12 @@ export default function Swap() {
         <div className='mb-4 p-3 bg-gray-100 border border-gray-300 rounded-lg text-xs'>
           <div className='font-semibold mb-2'>🔧 Debug Info:</div>
           <div>Selected Wallet: {selectedWallet?.address}</div>
-          <div>Selected Chain: {selectedChainId} ({getChainName()})</div>
+          <div>
+            Selected Chain: {selectedChainId} ({getChainName()})
+          </div>
           <div>Available Tokens: {availableTokens.length}</div>
           <div>Loaded Balances: {Object.keys(balances).length}</div>
-                     <div>API Routes: ✅ Using internal proxy</div>
+          <div>API Routes: ✅ Using internal proxy</div>
           <div>Loading Balances: {isLoadingBalances ? 'Yes' : 'No'}</div>
           {Object.keys(balances).length > 0 && (
             <div className='mt-1'>
@@ -566,7 +607,8 @@ export default function Swap() {
               <label className='text-sm font-medium text-gray-600'>From</label>
               <div className='flex items-center space-x-2'>
                 <span className='text-sm text-gray-500'>
-                  Balance: {getTokenBalance(fromToken)} {fromToken?.symbol || ''}
+                  Balance: {getTokenBalance(fromToken)}{' '}
+                  {fromToken?.symbol || ''}
                 </span>
                 <button
                   onClick={loadWalletBalances}
@@ -609,10 +651,15 @@ export default function Swap() {
                   <div className='flex justify-between items-center'>
                     <span className='text-gray-600'>Rate:</span>
                     <span className='font-semibold'>
-                      1 {fromToken?.symbol} = {quote.toAmount && fromAmount ? 
-                        (parseFloat(quote.toAmount) / Math.pow(10, toToken?.decimals || 18) / parseFloat(fromAmount)).toFixed(6)
-                        : '...'
-                      } {toToken?.symbol}
+                      1 {fromToken?.symbol} ={' '}
+                      {quote.toAmount && fromAmount
+                        ? (
+                            parseFloat(quote.toAmount) /
+                            Math.pow(10, toToken?.decimals || 18) /
+                            parseFloat(fromAmount)
+                          ).toFixed(6)
+                        : '...'}{' '}
+                      {toToken?.symbol}
                     </span>
                   </div>
                   <div className='flex justify-between items-center'>
@@ -695,7 +742,9 @@ export default function Swap() {
               <div className='flex items-center space-x-2 text-red-700'>
                 <InformationCircleIcon className='w-5 h-5' />
                 <span className='text-sm'>
-                  {typeof quoteError === 'string' ? quoteError : quoteError.message}
+                  {typeof quoteError === 'string'
+                    ? quoteError
+                    : quoteError.message}
                 </span>
               </div>
             </div>

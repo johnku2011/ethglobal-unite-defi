@@ -32,12 +32,14 @@ export async function GET(
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`❌ 1inch Tokens API error: ${response.status} - ${errorText}`);
-      
+      console.error(
+        `❌ 1inch Tokens API error: ${response.status} - ${errorText}`
+      );
+
       return NextResponse.json(
-        { 
+        {
           error: `1inch API error: ${response.status}`,
-          details: errorText 
+          details: errorText,
         },
         { status: response.status }
       );
@@ -51,16 +53,15 @@ export async function GET(
         'Cache-Control': 'public, max-age=300', // Cache for 5 minutes
       },
     });
-
   } catch (error) {
     console.error('❌ Tokens API route error:', error);
-    
+
     return NextResponse.json(
-      { 
+      {
         error: 'Internal server error',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        details: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );
   }
-} 
+}

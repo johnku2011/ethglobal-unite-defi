@@ -29,7 +29,9 @@ export async function GET(
       );
     }
 
-    console.log(`📝 Getting approval transaction for token ${tokenAddress} amount ${amount} on chain ${chainId}`);
+    console.log(
+      `📝 Getting approval transaction for token ${tokenAddress} amount ${amount} on chain ${chainId}`
+    );
 
     // Build query string for 1inch API
     const queryParams = new URLSearchParams({
@@ -50,12 +52,14 @@ export async function GET(
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`❌ 1inch Approval Transaction API error: ${response.status} - ${errorText}`);
-      
+      console.error(
+        `❌ 1inch Approval Transaction API error: ${response.status} - ${errorText}`
+      );
+
       return NextResponse.json(
-        { 
+        {
           error: `1inch API error: ${response.status}`,
-          details: errorText 
+          details: errorText,
         },
         { status: response.status }
       );
@@ -69,16 +73,15 @@ export async function GET(
         'Cache-Control': 'public, max-age=60', // Cache for 1 minute
       },
     });
-
   } catch (error) {
     console.error('❌ Approval Transaction API route error:', error);
-    
+
     return NextResponse.json(
-      { 
+      {
         error: 'Internal server error',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        details: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );
   }
-} 
+}

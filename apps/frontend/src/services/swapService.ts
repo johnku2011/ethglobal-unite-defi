@@ -169,7 +169,9 @@ export class SwapService implements ISwapService {
             to: txData.to,
             data: txData.data,
             value: txData.value,
-            gas: txData.gas ? `0x${parseInt(txData.gas).toString(16)}` : undefined,
+            gas: txData.gas
+              ? `0x${parseInt(txData.gas).toString(16)}`
+              : undefined,
           },
         ],
       });
@@ -192,12 +194,19 @@ export class SwapService implements ISwapService {
     requiredAmount: bigint
   ): Promise<void> {
     // Skip approval for native ETH
-    if (tokenAddress.toLowerCase() === '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee') {
+    if (
+      tokenAddress.toLowerCase() ===
+      '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'
+    ) {
       console.log('Native ETH transfer, no approval needed');
       return;
     }
 
-    const allowance = await this.checkAllowance(chainId, tokenAddress, walletAddress);
+    const allowance = await this.checkAllowance(
+      chainId,
+      tokenAddress,
+      walletAddress
+    );
 
     if (allowance >= requiredAmount) {
       console.log('Allowance is sufficient for the swap.');
@@ -399,7 +408,9 @@ export class SwapService implements ISwapService {
       };
     } catch (error) {
       console.error('Error executing swap:', error);
-      throw new Error(`Failed to execute swap: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to execute swap: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
@@ -435,8 +446,8 @@ export class SwapService implements ISwapService {
         return TransactionStatus.PENDING;
       }
 
-      return receipt.status === '0x1' 
-        ? TransactionStatus.CONFIRMED 
+      return receipt.status === '0x1'
+        ? TransactionStatus.CONFIRMED
         : TransactionStatus.FAILED;
     } catch (error) {
       console.error('Error tracking swap status:', error);

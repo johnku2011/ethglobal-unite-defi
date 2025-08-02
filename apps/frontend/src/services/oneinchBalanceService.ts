@@ -60,7 +60,7 @@ export class OneInchBalanceService {
   async getSupportedTokens(chainId: number): Promise<Token[]> {
     try {
       console.log(`🪙 Getting supported tokens for chain ${chainId}`);
-      
+
       const response = await axios.get<OneInchTokensResponse>(
         `${INTERNAL_API_BASE}/tokens/${chainId}`
       );
@@ -122,7 +122,8 @@ export class OneInchBalanceService {
           chainId: '11155111',
         },
       ],
-      8453: [ // Base
+      8453: [
+        // Base
         {
           address: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
           symbol: 'ETH',
@@ -156,7 +157,9 @@ export class OneInchBalanceService {
       }
 
       const chainId = this.getChainId(wallet);
-      console.log(`📊 Getting wallet balances for ${wallet.address} on chain ${chainId}`);
+      console.log(
+        `📊 Getting wallet balances for ${wallet.address} on chain ${chainId}`
+      );
 
       const response = await axios.get<OneInchBalanceResponse>(
         `${INTERNAL_API_BASE}/balance/${chainId}/${wallet.address}`
@@ -180,7 +183,9 @@ export class OneInchBalanceService {
         }
       }
 
-      console.log(`✅ Successfully loaded ${Object.keys(balances).length} token balances`);
+      console.log(
+        `✅ Successfully loaded ${Object.keys(balances).length} token balances`
+      );
       return balances;
     } catch (error) {
       console.error('❌ Error fetching wallet balances via API:', error);
@@ -283,7 +288,8 @@ export class OneInchBalanceService {
           chainId: '11155111',
         },
       ],
-      8453: [ // Base
+      8453: [
+        // Base
         {
           address: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
           symbol: 'ETH',

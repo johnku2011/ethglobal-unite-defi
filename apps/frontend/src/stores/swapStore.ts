@@ -34,7 +34,7 @@ const useSwapStore = create<SwapStoreState>((set, get) => ({
         fromAmount: quote.fromAmount,
         toAmount: quote.toAmount,
         slippage: quote.slippage,
-        gasEstimate: quote.estimatedGas || '0',
+        gasEstimate: (quote as any).estimatedGas || '0',
         route: quote.route,
         priceImpact: quote.priceImpact,
         minimumReceived: (
@@ -50,8 +50,12 @@ const useSwapStore = create<SwapStoreState>((set, get) => ({
     } catch (error) {
       console.error('Error getting swap quote:', error);
       set({
-        quoteError:
-          error instanceof Error ? error.message : 'Failed to get quote',
+        quoteError: {
+          type: 'API_ERROR' as any,
+          message: error instanceof Error ? error.message : 'Failed to get quote',
+          recoverable: true,
+          suggestedAction: 'Please try again later'
+        },
         isLoadingQuote: false,
       });
     }
@@ -77,8 +81,12 @@ const useSwapStore = create<SwapStoreState>((set, get) => ({
     } catch (error) {
       console.error('Error executing swap:', error);
       set({
-        quoteError:
-          error instanceof Error ? error.message : 'Failed to execute swap',
+        quoteError: {
+          type: 'TRANSACTION_FAILED' as any,
+          message: error instanceof Error ? error.message : 'Failed to execute swap',
+          recoverable: true,
+          suggestedAction: 'Please check your wallet and try again'
+        },
       });
     }
   },

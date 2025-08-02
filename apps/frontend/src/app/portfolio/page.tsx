@@ -362,7 +362,7 @@ export default function Portfolio() {
             />
           ) : (
             <SimpleValueChart
-              data={chartData}
+              data={chartData as unknown as { result?: { timestamp: number; value_usd: number; }[] }}
               isLoading={isChartLoading}
               timeRange='1month'
               height={300}

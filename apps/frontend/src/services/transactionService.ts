@@ -114,7 +114,7 @@ export class TransactionService {
       }
 
       // 提取或構建交易詳情
-      const details: TransactionDetails = tx.details || {
+      const details: any = tx.details || {
         txHash: tx.txHash || tx.hash || `unknown-${Date.now()}-${index}`,
         chainId: tx.chainId || tx.chain_id || tx.chain || 1,
         blockNumber: tx.blockNumber || tx.block_number || 0,
@@ -155,7 +155,7 @@ export class TransactionService {
         );
       } else {
         // 確保每個tokenAction都有priceToUsd值
-        details.tokenActions.forEach((action) => {
+        details.tokenActions.forEach((action: any) => {
           if (action.priceToUsd === undefined || action.priceToUsd === null) {
             action.priceToUsd = 1; // 設定一個默認值
             console.log(

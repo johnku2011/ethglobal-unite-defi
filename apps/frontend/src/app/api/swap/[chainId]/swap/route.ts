@@ -32,7 +32,9 @@ export async function GET(
       );
     }
 
-    console.log(`💫 Getting swap transaction for ${amount} from ${src} to ${dst} on chain ${chainId}`);
+    console.log(
+      `💫 Getting swap transaction for ${amount} from ${src} to ${dst} on chain ${chainId}`
+    );
 
     // Build query string for 1inch API
     const queryParams = new URLSearchParams({
@@ -61,35 +63,38 @@ export async function GET(
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`❌ 1inch Swap API error: ${response.status} - ${errorText}`);
-      
+      console.error(
+        `❌ 1inch Swap API error: ${response.status} - ${errorText}`
+      );
+
       return NextResponse.json(
-        { 
+        {
           error: `1inch API error: ${response.status}`,
-          details: errorText 
+          details: errorText,
         },
         { status: response.status }
       );
     }
 
     const data = await response.json();
-    console.log(`✅ Successfully got swap transaction for ${amount} ${src} -> ${dst}`);
+    console.log(
+      `✅ Successfully got swap transaction for ${amount} ${src} -> ${dst}`
+    );
 
     return NextResponse.json(data, {
       headers: {
         'Cache-Control': 'public, max-age=5', // Cache for 5 seconds only
       },
     });
-
   } catch (error) {
     console.error('❌ Swap API route error:', error);
-    
+
     return NextResponse.json(
-      { 
+      {
         error: 'Internal server error',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        details: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );
   }
-} 
+}

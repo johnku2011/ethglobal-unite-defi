@@ -45,6 +45,17 @@ interface OneInchSwapResponse extends OneInchQuoteResponse {
   };
 }
 
+interface OneInchAllowanceResponse {
+  allowance: string;
+}
+
+interface OneInchApprovalResponse {
+  to: string;
+  data: string;
+  value: string;
+  gas?: string;
+}
+
 export class SwapService implements ISwapService {
   private apiKey: string;
   private baseUrl: string;
@@ -52,6 +63,199 @@ export class SwapService implements ISwapService {
   constructor(apiKey?: string) {
     this.apiKey = apiKey || ONEINCH_API_KEY;
     this.baseUrl = ONEINCH_API_BASE;
+  }
+
+  /**
+   * Build query URL for 1inch API calls
+   */
+  private buildQueryURL(path: string, params: Record<string, string>): string {
+    const url = new URL(`${this.baseUrl}${path}`);
+    url.search = new URLSearchParams(params).toString();
+    return url.toString();
+  }
+
+  /**
+   * Make authenticated API call to 1inch
+   */
+  private async call1inchAPI<T>(
+    endpointPath: string,
+    queryParams: Record<string, string>
+  ): Promise<T> {
+    const url = this.buildQueryURL(endpointPath, queryParams);
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${this.apiKey}`,
+      },
+    });
+
+    if (!response.ok) {
+      const body = await response.text();
+      throw new Error(`1inch API returned status ${response.status}: ${body}`);
+    }
+
+    return (await response.json()) as T;
+  }
+
+  /**
+   * Check token allowance for 1inch router
+   */
+  async checkAllowance(
+    chainId: number,
+    tokenAddress: string,
+    walletAddress: string
+  ): Promise<bigint> {
+    try {
+      console.log('Checking token allowance...');
+
+      const allowanceRes = await axios.get<OneInchAllowanceResponse>(
+        `/api/swap/${chainId}/approve/allowance?tokenAddress=${tokenAddress}&walletAddress=${walletAddress.toLowerCase()}`
+      );
+
+      const allowance = BigInt(allowanceRes.data.allowance);
+      console.log('Current allowance:', allowance.toString());
+
+      return allowance;
+    } catch (error) {
+      console.error('Error checking allowance:', error);
+      throw new Error('Failed to check token allowance');
+    }
+  }
+
+  /**
+   * Get approval transaction data
+   */
+  async getApprovalTransaction(
+    chainId: number,
+    tokenAddress: string,
+    amount: string
+  ): Promise<OneInchApprovalResponse> {
+    try {
+      console.log('Getting approval transaction data...');
+
+      const approveTx = await axios.get<OneInchApprovalResponse>(
+        `/api/swap/${chainId}/approve/transaction?tokenAddress=${tokenAddress}&amount=${amount}`
+      );
+
+      console.log('Approval transaction details:', approveTx.data);
+      return approveTx.data;
+    } catch (error) {
+      console.error('Error getting approval transaction:', error);
+      throw new Error('Failed to get approval transaction');
+    }
+  }
+
+  /**
+   * Send transaction using browser wallet
+   */
+  private async sendTransaction(txData: {
+    to: string;
+    data: string;
+    value: string;
+    gas?: string;
+  }): Promise<string> {
+    if (typeof window === 'undefined' || !window.ethereum) {
+      throw new Error('No Ethereum provider found');
+    }
+
+    try {
+      // Request transaction from user's wallet
+      const txHash = await window.ethereum.request({
+        method: 'eth_sendTransaction',
+        params: [
+          {
+            to: txData.to,
+            data: txData.data,
+            value: txData.value,
+            gas: txData.gas ? `0x${parseInt(txData.gas).toString(16)}` : undefined,
+          },
+        ],
+      });
+
+      console.log('Transaction sent:', txHash);
+      return txHash;
+    } catch (error) {
+      console.error('Transaction failed:', error);
+      throw new Error('Transaction was rejected or failed');
+    }
+  }
+
+  /**
+   * Handle token approval if needed
+   */
+  private async approveIfNeeded(
+    chainId: number,
+    tokenAddress: string,
+    walletAddress: string,
+    requiredAmount: bigint
+  ): Promise<void> {
+    // Skip approval for native ETH
+    if (tokenAddress.toLowerCase() === '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee') {
+      console.log('Native ETH transfer, no approval needed');
+      return;
+    }
+
+    const allowance = await this.checkAllowance(chainId, tokenAddress, walletAddress);
+
+    if (allowance >= requiredAmount) {
+      console.log('Allowance is sufficient for the swap.');
+      return;
+    }
+
+    console.log('Insufficient allowance. Creating approval transaction...');
+
+    const approveTx = await this.getApprovalTransaction(
+      chainId,
+      tokenAddress,
+      requiredAmount.toString()
+    );
+
+    const txHash = await this.sendTransaction({
+      to: approveTx.to,
+      data: approveTx.data,
+      value: approveTx.value,
+      gas: approveTx.gas,
+    });
+
+    console.log('Approval transaction sent. Hash:', txHash);
+    console.log('Waiting for approval confirmation...');
+
+    // Wait for transaction confirmation
+    await this.waitForTransaction(txHash);
+  }
+
+  /**
+   * Wait for transaction confirmation
+   */
+  private async waitForTransaction(txHash: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const checkTransaction = async () => {
+        try {
+          const receipt = await window.ethereum?.request({
+            method: 'eth_getTransactionReceipt',
+            params: [txHash],
+          });
+
+          if (receipt) {
+            if (receipt.status === '0x1') {
+              console.log('Transaction confirmed:', txHash);
+              resolve();
+            } else {
+              reject(new Error('Transaction failed'));
+            }
+          } else {
+            // Transaction still pending, check again
+            setTimeout(checkTransaction, 2000);
+          }
+        } catch (error) {
+          reject(error);
+        }
+      };
+
+      checkTransaction();
+    });
   }
 
   /**
@@ -74,13 +278,7 @@ export class SwapService implements ISwapService {
       });
 
       const response = await axios.get(
-        `${this.baseUrl}/swap/v6.0/${chainId}/quote?${queryParams}`,
-        {
-          headers: {
-            Authorization: `Bearer ${this.apiKey}`,
-            accept: 'application/json',
-          },
-        }
+        `/api/swap/${chainId}/quote?${queryParams}`
       );
 
       const data: OneInchQuoteResponse = response.data;
@@ -105,8 +303,9 @@ export class SwapService implements ISwapService {
         },
         fromAmount: data.fromAmount,
         toAmount: data.toAmount,
-        estimatedGas: data.estimatedGas.toString(),
+        gasEstimate: data.estimatedGas.toString(),
         priceImpact: 0, // Would need additional calculation
+        minimumReceived: data.toAmount, // Simplified - should calculate based on slippage
         route: data.protocols.map((protocol: any) => ({
           protocol: protocol.name || 'Unknown',
           percentage: protocol.part || 100,
@@ -145,49 +344,48 @@ export class SwapService implements ISwapService {
     try {
       const chainId = parseInt(quote.fromToken.chainId) || 1;
 
-      const queryParams = new URLSearchParams({
+      // Check and handle token approval first
+      await this.approveIfNeeded(
+        chainId,
+        quote.fromToken.address,
+        wallet.address,
+        BigInt(quote.fromAmount)
+      );
+
+      console.log('Fetching swap transaction...');
+
+      const swapParams = {
         src: quote.fromToken.address,
         dst: quote.toToken.address,
         amount: quote.fromAmount,
-        from: wallet.address,
+        from: wallet.address.toLowerCase(),
         slippage: quote.slippage.toString(),
+        disableEstimate: 'false',
+        allowPartialFill: 'false',
         includeTokensInfo: 'true',
         includeProtocols: 'true',
         includeGas: 'true',
-      });
+      };
 
-      const response = await axios.get(
-        `${this.baseUrl}/swap/v6.0/${chainId}/swap?${queryParams}`,
-        {
-          headers: {
-            Authorization: `Bearer ${this.apiKey}`,
-            accept: 'application/json',
-          },
-        }
+      const queryString = new URLSearchParams(swapParams).toString();
+      const swapTx = await axios.get<{ tx: OneInchSwapResponse['tx'] }>(
+        `/api/swap/${chainId}/swap?${queryString}`
       );
 
-      const data: OneInchSwapResponse = response.data;
+      console.log('Swap transaction:', swapTx.data.tx);
 
-      // Execute the transaction using the wallet
-      let txHash: string | undefined;
-      try {
-        // This would depend on your wallet implementation
-        // For now, we'll simulate the transaction
-        console.log('Transaction data:', data.tx);
+      // Execute the swap transaction
+      const txHash = await this.sendTransaction({
+        to: swapTx.data.tx.to,
+        data: swapTx.data.tx.data,
+        value: swapTx.data.tx.value,
+        gas: swapTx.data.tx.gas.toString(),
+      });
 
-        // In a real implementation, you would send the transaction here
-        // txHash = await wallet.sendTransaction(data.tx);
-
-        // For now, we'll generate a mock transaction hash
-        txHash = `0x${Math.random().toString(16).substr(2, 64)}`;
-      } catch (txError) {
-        console.error('Transaction execution failed:', txError);
-        throw new Error('Transaction execution failed');
-      }
+      console.log('Swap transaction sent. Hash:', txHash);
 
       return {
-        id: txHash || `swap_${Date.now()}`,
-        type: 'swap',
+        id: txHash,
         status: TransactionStatus.PENDING,
         txHash,
         timestamp: new Date(),
@@ -197,11 +395,11 @@ export class SwapService implements ISwapService {
         toAmount: quote.toAmount,
         slippage: quote.slippage,
         priceImpact: 0, // Would need additional calculation
-        gasUsed: data.estimatedGas.toString(),
+        gasUsed: swapTx.data.tx.gas.toString(),
       };
     } catch (error) {
       console.error('Error executing swap:', error);
-      throw new Error('Failed to execute swap');
+      throw new Error(`Failed to execute swap: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
@@ -224,9 +422,22 @@ export class SwapService implements ISwapService {
    */
   async trackSwapStatus(transactionId: string): Promise<TransactionStatus> {
     try {
-      // This would check the transaction status on the blockchain
-      // For now, return a placeholder status
-      return TransactionStatus.PENDING;
+      if (typeof window === 'undefined' || !window.ethereum) {
+        return TransactionStatus.FAILED;
+      }
+
+      const receipt = await window.ethereum.request({
+        method: 'eth_getTransactionReceipt',
+        params: [transactionId],
+      });
+
+      if (!receipt) {
+        return TransactionStatus.PENDING;
+      }
+
+      return receipt.status === '0x1' 
+        ? TransactionStatus.CONFIRMED 
+        : TransactionStatus.FAILED;
     } catch (error) {
       console.error('Error tracking swap status:', error);
       return TransactionStatus.FAILED;

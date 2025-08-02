@@ -2,9 +2,8 @@ import axios from 'axios';
 import type { Token } from '@/types';
 import type { ConnectedWallet } from '@/providers/WalletProvider';
 
-// 1inch API configuration
-const ONEINCH_API_BASE = 'https://api.1inch.dev';
-const ONEINCH_API_KEY = process.env.NEXT_PUBLIC_ONEINCH_API_KEY || '';
+// Use internal API routes instead of direct 1inch API calls to avoid CORS
+const INTERNAL_API_BASE = '/api';
 
 interface OneInchBalanceResponse {
   [tokenAddress: string]: string;
@@ -25,12 +24,8 @@ interface OneInchTokensResponse {
 }
 
 export class OneInchBalanceService {
-  private apiKey: string;
-  private baseUrl: string;
-
-  constructor(apiKey?: string) {
-    this.apiKey = apiKey || ONEINCH_API_KEY;
-    this.baseUrl = ONEINCH_API_BASE;
+  constructor() {
+    // No need for API key here since it's handled by our internal API routes
   }
 
   /**
@@ -54,6 +49,7 @@ export class OneInchBalanceService {
       56: 'BSC',
       42161: 'Arbitrum',
       10: 'Optimism',
+      8453: 'Base',
     };
     return chainNames[chainId] || `Chain ${chainId}`;
   }
@@ -63,14 +59,10 @@ export class OneInchBalanceService {
    */
   async getSupportedTokens(chainId: number): Promise<Token[]> {
     try {
+      console.log(`🪙 Getting supported tokens for chain ${chainId}`);
+      
       const response = await axios.get<OneInchTokensResponse>(
-        `${this.baseUrl}/swap/v6.0/${chainId}/tokens`,
-        {
-          headers: {
-            Authorization: `Bearer ${this.apiKey}`,
-            accept: 'application/json',
-          },
-        }
+        `${INTERNAL_API_BASE}/tokens/${chainId}`
       );
 
       const tokens = Object.values(response.data.tokens).map(
@@ -84,9 +76,11 @@ export class OneInchBalanceService {
         })
       );
 
+      console.log(`✅ Found ${tokens.length} tokens for chain ${chainId}`);
       return tokens;
     } catch (error) {
-      console.error('Error fetching supported tokens:', error);
+      console.error('❌ Error fetching supported tokens via API:', error);
+      console.log('🔄 Falling back to default tokens...');
       return this.getDefaultTokens(chainId);
     }
   }
@@ -123,9 +117,25 @@ export class OneInchBalanceService {
         {
           address: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',
           symbol: 'USDC',
-          name: 'USD Coin',
+          name: 'USD Coin (Sepolia)',
           decimals: 6,
           chainId: '11155111',
+        },
+      ],
+      8453: [ // Base
+        {
+          address: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+          symbol: 'ETH',
+          name: 'Ethereum',
+          decimals: 18,
+          chainId: '8453',
+        },
+        {
+          address: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+          symbol: 'USDC',
+          name: 'USD Coin',
+          decimals: 6,
+          chainId: '8453',
         },
       ],
     };
@@ -134,27 +144,22 @@ export class OneInchBalanceService {
   }
 
   /**
-   * Get wallet balances using 1inch Balance API
+   * Get wallet balances using internal API route (avoids CORS)
    */
   async getWalletBalances(
     wallet: ConnectedWallet
   ): Promise<Record<string, string>> {
     try {
       if (wallet.type !== 'ethereum') {
-        console.log('Balance API only supports Ethereum-compatible wallets');
+        console.log('❌ Balance API only supports Ethereum-compatible wallets');
         return {};
       }
 
       const chainId = this.getChainId(wallet);
+      console.log(`📊 Getting wallet balances for ${wallet.address} on chain ${chainId}`);
 
       const response = await axios.get<OneInchBalanceResponse>(
-        `${this.baseUrl}/balance/v1.2/${chainId}/${wallet.address}`,
-        {
-          headers: {
-            Authorization: `Bearer ${this.apiKey}`,
-            accept: 'application/json',
-          },
-        }
+        `${INTERNAL_API_BASE}/balance/${chainId}/${wallet.address}`
       );
 
       // Convert balances from wei to human readable format
@@ -171,12 +176,18 @@ export class OneInchBalanceService {
           const decimals = token.decimals;
           const humanReadable = this.formatTokenBalance(balance, decimals);
           balances[token.symbol] = humanReadable;
+          console.log(`💰 ${token.symbol}: ${humanReadable}`);
         }
       }
 
+      console.log(`✅ Successfully loaded ${Object.keys(balances).length} token balances`);
       return balances;
     } catch (error) {
-      console.error('Error fetching wallet balances:', error);
+      console.error('❌ Error fetching wallet balances via API:', error);
+      if (axios.isAxiosError(error)) {
+        console.error('Response data:', error.response?.data);
+        console.error('Response status:', error.response?.status);
+      }
       return {};
     }
   }
@@ -192,7 +203,7 @@ export class OneInchBalanceService {
       const allBalances = await this.getWalletBalances(wallet);
       return allBalances[token.symbol] || '0.0';
     } catch (error) {
-      console.error('Error fetching token balance:', error);
+      console.error('❌ Error fetching token balance:', error);
       return '0.0';
     }
   }
@@ -216,7 +227,7 @@ export class OneInchBalanceService {
 
       return `${wholePart}.${trimmedFractional}`;
     } catch (error) {
-      console.error('Error formatting balance:', error);
+      console.error('❌ Error formatting balance:', error);
       return '0.0';
     }
   }
@@ -270,6 +281,29 @@ export class OneInchBalanceService {
           name: 'Tether (Sepolia)',
           decimals: 6,
           chainId: '11155111',
+        },
+      ],
+      8453: [ // Base
+        {
+          address: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+          symbol: 'ETH',
+          name: 'Ethereum',
+          decimals: 18,
+          chainId: '8453',
+        },
+        {
+          address: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+          symbol: 'USDC',
+          name: 'USD Coin',
+          decimals: 6,
+          chainId: '8453',
+        },
+        {
+          address: '0x4200000000000000000000000000000000000006',
+          symbol: 'WETH',
+          name: 'Wrapped Ether',
+          decimals: 18,
+          chainId: '8453',
         },
       ],
     };

@@ -16,5 +16,3 @@ export { ChainService, SUPPORTED_CHAINS } from './chainService';
 // Task 5: Portfolio service
 // ✅ Task 6: Swap service - COMPLETED
 // Task 7: Bridge service
-
-console.log('Swap service implemented! Ready for testing.');

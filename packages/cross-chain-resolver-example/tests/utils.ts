@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
+import 'dotenv/config'
 import {Ed25519Keypair} from '@mysten/sui/keypairs/ed25519'
 import {SuiClient, getFullnodeUrl} from '@mysten/sui/client'
 import {Transaction, coinWithBalance} from '@mysten/sui/transactions'
@@ -7,9 +8,8 @@ import {SUI_TYPE_ARG, SUI_CLOCK_OBJECT_ID} from '@mysten/sui/utils'
 
 export const DEVELOPER_PRIVATE_KEY = process.env.DEVELOPER_PRIVATE_KEY || ''
 export const ENV = 'testnet'
-export const PACKAGE_ID = process.env.PACKAGE_ID || '0x9db1e86f54bea50c6b0aac44cfd469e0a797b694462cff367ce41beb40decd8d'
-export const ESCROW_FACTORY_ID =
-    process.env.ESCROW_FACTORY_ID || '0xf7c2c0a019eaad5fa3d4bab8d055062a1d4cdd62beea64938a132a6e4245b509'
+export const PACKAGE_ID = process.env.PACKAGE_ID || ''
+export const ESCROW_FACTORY_ID = process.env.ESCROW_FACTORY_ID || ''
 
 const client = new SuiClient({
     url: getFullnodeUrl('testnet')
@@ -23,22 +23,22 @@ export const getDeveloper = () => {
  * Converts a hex string to an array of uint256 (BigInt).
  * Each uint256 is 32 bytes (64 hex chars).
  */
-export function hexToUint8Array(hexString: string): Uint8Array {
-    if (hexString.length % 2 !== 0) {
-        throw new Error('Hex string must have an even number of characters.')
-    }
+// export function hexToUint8Array(hexString: string): Uint8Array {
+//     if (hexString.length % 2 !== 0) {
+//         throw new Error('Hex string must have an even number of characters.')
+//     }
 
-    const bytes = new Uint8Array(hexString.length / 2)
+//     const bytes = new Uint8Array(hexString.length / 2)
 
-    for (let i = 0; i < hexString.length; i += 2) {
-        const byteString = hexString.substring(i, i + 2)
-        bytes[i / 2] = parseInt(byteString, 16)
-    }
+//     for (let i = 0; i < hexString.length; i += 2) {
+//         const byteString = hexString.substring(i, i + 2)
+//         bytes[i / 2] = parseInt(byteString, 16)
+//     }
 
-    return bytes
-}
+//     return bytes
+// }
 
-export type CreateSrcExcrowInputParams = {
+export type CreateExcrowInputParams = {
     escrowFactoryId: string
     resolverOwnerCapId: string
     orderHash: Uint8Array<ArrayBufferLike> // Unique identifier for the order
@@ -56,7 +56,7 @@ export type CreateSrcExcrowInputParams = {
     dstCancellationTimelock: number // Timelock for the cancellation of the destination escrow
 }
 
-export function createSrcEscrowTx(params: CreateSrcExcrowInputParams) {
+export function createSrcEscrowTx(params: CreateExcrowInputParams) {
     const {
         escrowFactoryId,
         resolverOwnerCapId,
@@ -108,7 +108,7 @@ export function createSrcEscrowTx(params: CreateSrcExcrowInputParams) {
     }
 }
 
-export function createDstEscrowTx(params: CreateSrcExcrowInputParams) {
+export function createDstEscrowTx(params: CreateExcrowInputParams) {
     const {
         escrowFactoryId,
         resolverOwnerCapId,
@@ -185,7 +185,7 @@ export async function createSrcEscrow({
 }): Promise<string | undefined> {
     const tx = new Transaction()
 
-    const resolverOwnerCapId = '0xae44cf5ff1f4e063f1113eda02a2f4439115dc66c62bbce2bc692ccae974f37a'
+    const resolverOwnerCapId = '0x73f386db551d895b847f63fe34a618099c7950b8b4445305ec98afffe5f6a2e5'
 
     tx.add(
         createSrcEscrowTx({
@@ -241,7 +241,7 @@ export async function createDstEscrow({
 }): Promise<string | undefined> {
     const tx = new Transaction()
 
-    const resolverOwnerCapId = '0xae44cf5ff1f4e063f1113eda02a2f4439115dc66c62bbce2bc692ccae974f37a'
+    const resolverOwnerCapId = '0x73f386db551d895b847f63fe34a618099c7950b8b4445305ec98afffe5f6a2e5'
 
     tx.add(
         createDstEscrowTx({
@@ -270,4 +270,103 @@ export async function createDstEscrow({
     })
 
     return res.objectChanges?.find((change) => change.type === 'created')?.objectId
+}
+
+export type WithdrawParams = {
+    escrowFactoryId: string
+    orderHash: Uint8Array<ArrayBufferLike> // Unique identifier for the order
+    secret: Uint8Array<ArrayBufferLike>
+    depositType: string // Type of token for the deposit
+}
+
+export function createWithdrawDstEscrowTx(params: WithdrawParams) {
+    const {escrowFactoryId, depositType, orderHash, secret} = params
+
+    return (tx: Transaction) => {
+        tx.moveCall({
+            target: `${PACKAGE_ID}::factory::withdraw_dst`,
+            typeArguments: [depositType],
+            arguments: [
+                tx.object(escrowFactoryId),
+                bcs.vector(bcs.U8).serialize(orderHash),
+                bcs.vector(bcs.U8).serialize(secret),
+                tx.object(SUI_CLOCK_OBJECT_ID)
+            ]
+        })
+    }
+}
+
+export function createWithdrawSrcEscrowTx(params: WithdrawParams) {
+    const {escrowFactoryId, depositType, orderHash, secret} = params
+
+    return (tx: Transaction) => {
+        tx.moveCall({
+            target: `${PACKAGE_ID}::factory::withdraw_src`,
+            typeArguments: [depositType],
+            arguments: [
+                tx.object(escrowFactoryId),
+                bcs.vector(bcs.U8).serialize(orderHash),
+                bcs.vector(bcs.U8).serialize(secret),
+                tx.object(SUI_CLOCK_OBJECT_ID)
+            ]
+        })
+    }
+}
+
+export async function withdrawDstEscrow({
+    orderHash,
+    secret,
+    depositType
+}: {
+    orderHash: Uint8Array<ArrayBufferLike>
+    secret: Uint8Array<ArrayBufferLike>
+    depositType: string // Type of token for the deposit
+}) {
+    const tx = new Transaction()
+
+    tx.add(
+        createWithdrawDstEscrowTx({
+            escrowFactoryId: ESCROW_FACTORY_ID,
+            orderHash,
+            secret,
+            depositType // Assuming SUI_TYPE_ARG is the type of token for the deposit
+        })
+    )
+
+    const res = await client.signAndExecuteTransaction({
+        signer: getDeveloper(),
+        transaction: tx,
+        options: {showEffects: true, showBalanceChanges: true}
+    })
+
+    return res
+}
+
+export async function withdrawSrcEscrow({
+    orderHash,
+    secret,
+    depositType
+}: {
+    orderHash: Uint8Array<ArrayBufferLike>
+    secret: Uint8Array<ArrayBufferLike>
+    depositType: string // Type of token for the deposit
+}) {
+    const tx = new Transaction()
+
+    tx.add(
+        createWithdrawSrcEscrowTx({
+            escrowFactoryId: ESCROW_FACTORY_ID,
+            orderHash,
+            secret,
+            depositType // Assuming SUI_TYPE_ARG is the type of token for the deposit
+        })
+    )
+
+    const res = await client.signAndExecuteTransaction({
+        signer: getDeveloper(),
+        transaction: tx,
+        options: {showEffects: true, showBalanceChanges: true}
+    })
+
+    return res
 }

@@ -49,6 +49,7 @@
     "@mysten/utils": "^0.1.1",
     "dotenv": "16.4.5",
     "ethers": "6.13.2",
-    "prool": "0.0.24"
+    "prool": "0.0.24",
+    "sha3": "link:@noble/hashes/sha3"
   }
 }

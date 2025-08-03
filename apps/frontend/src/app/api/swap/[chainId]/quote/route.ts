@@ -46,7 +46,7 @@ export async function GET(
 
     // Make request to 1inch Quote API
     const response = await fetch(
-      `${ONEINCH_API_BASE}/swap/v6.1/${chainId}/quote?${queryParams}`,
+      `${ONEINCH_API_BASE}/swap/v6.0/${chainId}/quote?${queryParams}`,
       {
         headers: {
           Authorization: `Bearer ${ONEINCH_API_KEY}`,

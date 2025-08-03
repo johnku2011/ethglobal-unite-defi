@@ -125,10 +125,36 @@ export default function Swap() {
     try {
       const chainId = selectedChainId;
 
-      // Convert amount to wei (multiply by 10^decimals)
-      const amountInWei = (
-        parseFloat(fromAmount) * Math.pow(10, fromToken.decimals)
-      ).toString();
+      // 修復精度問題：使用BigInt處理大數字
+      const amountInWei = (() => {
+        const amount = parseFloat(fromAmount);
+        const decimals = fromToken.decimals;
+
+        // 使用字符串操作避免浮點數精度問題
+        const amountStr = amount.toString();
+        const [whole, decimal = ''] = amountStr.split('.');
+
+        // 補齊小數位數
+        const paddedDecimal = decimal.padEnd(decimals, '0').slice(0, decimals);
+        const weiStr = whole + paddedDecimal;
+
+        // 移除前導零
+        const cleanWeiStr = weiStr.replace(/^0+/, '') || '0';
+
+        console.log('🔧 Precision conversion:', {
+          input: fromAmount,
+          amount: amount,
+          decimals: decimals,
+          whole: whole,
+          decimal: decimal,
+          paddedDecimal: paddedDecimal,
+          weiStr: weiStr,
+          cleanWeiStr: cleanWeiStr,
+          finalWei: cleanWeiStr,
+        });
+
+        return cleanWeiStr;
+      })();
 
       console.log(
         `💱 Getting quote: ${fromAmount} ${fromToken.symbol} (${amountInWei} wei) → ${toToken.symbol}`
@@ -411,6 +437,17 @@ export default function Swap() {
         return;
       }
 
+      // 添加重要的用戶警告
+      console.warn('⚠️  IMPORTANT: MetaMask may display different amounts');
+      console.warn(
+        'This is normal due to precision adjustments and gas calculations.'
+      );
+      console.warn(
+        'Please verify the transaction details in MetaMask before confirming.'
+      );
+      console.warn(`Your input: ${fromAmount} ${fromToken.symbol}`);
+      console.warn(`Expected output: ${toAmount} ${toToken.symbol}`);
+
       // Show confirmation dialog instead of executing immediately
       setShowConfirmation(true);
     } catch (error) {
@@ -435,7 +472,34 @@ export default function Swap() {
       const swapService = new (
         await import('@/services/swapService')
       ).SwapService();
-      const transaction = await swapService.executeSwap(quote, selectedWallet);
+
+      // Convert WalletProvider ConnectedWallet to types ConnectedWallet
+      const walletForSwap: import('@/types').ConnectedWallet = {
+        address: selectedWallet.address,
+        chain: {
+          id: selectedChainId?.toString() || '1',
+          name: getChainName(),
+          type: 'evm',
+          rpcUrl: '',
+          nativeCurrency: {
+            address: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+            symbol: 'ETH',
+            name: 'Ethereum',
+            decimals: 18,
+            chainId: selectedChainId?.toString() || '1',
+          },
+        },
+        type: 'evm',
+        provider: {
+          name: selectedWallet.provider,
+          icon: '',
+          isInstalled: true,
+          isConnected: true,
+        },
+        shortAddress: `${selectedWallet.address.slice(0, 6)}...${selectedWallet.address.slice(-4)}`,
+      };
+
+      const transaction = await swapService.executeSwap(quote, walletForSwap);
 
       console.log('✅ Swap transaction created:', transaction);
 

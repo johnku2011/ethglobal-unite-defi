@@ -256,7 +256,7 @@ const SwapConfirmation: React.FC<SwapConfirmationProps> = ({
             <div className='flex items-center justify-between'>
               <span className='text-sm text-gray-600'>Estimated Gas</span>
               <span className='text-sm font-medium'>
-                {quote.estimatedGas || 'Unknown'} gas
+                {quote.gasEstimate || 'Unknown'} gas
               </span>
             </div>
 

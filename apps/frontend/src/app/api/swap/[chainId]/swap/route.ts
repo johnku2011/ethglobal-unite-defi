@@ -36,6 +36,17 @@ export async function GET(
       `💫 Getting swap transaction for ${amount} from ${src} to ${dst} on chain ${chainId}`
     );
 
+    // 添加詳細的請求參數日誌
+    console.log('🔍 1inch API Request Parameters:', {
+      src,
+      dst,
+      amount,
+      from: from.toLowerCase(),
+      slippage: slippage || '1',
+      chainId,
+      amountInETH: parseFloat(amount) / Math.pow(10, 18),
+    });
+
     // Build query string for 1inch API
     const queryParams = new URLSearchParams({
       src,
@@ -52,7 +63,7 @@ export async function GET(
 
     // Make request to 1inch Swap API
     const response = await fetch(
-      `${ONEINCH_API_BASE}/swap/v6.1/${chainId}/swap?${queryParams}`,
+      `${ONEINCH_API_BASE}/swap/v6.0/${chainId}/swap?${queryParams}`,
       {
         headers: {
           Authorization: `Bearer ${ONEINCH_API_KEY}`,
@@ -77,6 +88,30 @@ export async function GET(
     }
 
     const data = await response.json();
+
+    // 添加詳細的響應日誌
+    console.log('🔍 1inch API Response Details:', {
+      tx: {
+        to: data.tx?.to,
+        value: data.tx?.value,
+        valueInETH: data.tx?.value
+          ? parseFloat(data.tx.value) / Math.pow(10, 18)
+          : 'N/A',
+        gas: data.tx?.gas,
+        gasPrice: data.tx?.gasPrice,
+        data: data.tx?.data ? `${data.tx.data.slice(0, 20)}...` : 'N/A',
+      },
+      originalAmount: amount,
+      originalAmountInETH: parseFloat(amount) / Math.pow(10, 18),
+      difference: data.tx?.value
+        ? Math.abs(parseFloat(data.tx.value) - parseFloat(amount))
+        : 'N/A',
+      differenceInETH: data.tx?.value
+        ? Math.abs(parseFloat(data.tx.value) - parseFloat(amount)) /
+          Math.pow(10, 18)
+        : 'N/A',
+    });
+
     console.log(
       `✅ Successfully got swap transaction for ${amount} ${src} -> ${dst}`
     );

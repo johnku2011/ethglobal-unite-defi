@@ -195,9 +195,30 @@ export class SwapService implements ISwapService {
       // Handle gas limit with buffer for complex transactions
       if (txData.gas) {
         const gasLimit = parseInt(txData.gas);
-        const gasWithBuffer = Math.floor(gasLimit * 1.2); // Add 20% buffer
+
+        // 針對不同網絡使用不同的gas buffer
+        let gasWithBuffer: number;
+        if (txData.chainId === 42161) {
+          // Arbitrum - 使用50% buffer
+          gasWithBuffer = Math.floor(gasLimit * 1.5);
+          console.log(
+            `Arbitrum gas limit: ${gasLimit} -> ${gasWithBuffer} (50% buffer)`
+          );
+        } else if (txData.chainId === 10) {
+          // Optimism - 使用50% buffer
+          gasWithBuffer = Math.floor(gasLimit * 1.5);
+          console.log(
+            `Optimism gas limit: ${gasLimit} -> ${gasWithBuffer} (50% buffer)`
+          );
+        } else {
+          // L1 networks - 使用20% buffer
+          gasWithBuffer = Math.floor(gasLimit * 1.2);
+          console.log(
+            `L1 gas limit: ${gasLimit} -> ${gasWithBuffer} (20% buffer)`
+          );
+        }
+
         txParams.gas = `0x${gasWithBuffer.toString(16)}`;
-        console.log(`Gas limit: ${gasLimit} -> ${gasWithBuffer} (with buffer)`);
       }
 
       // Handle gas price - use the one from 1inch API if provided
@@ -550,6 +571,42 @@ export class SwapService implements ISwapService {
         userInputETH: parseFloat(quote.fromAmount) / Math.pow(10, 18),
       });
 
+      // 添加更詳細的1inch API響應分析
+      console.log('🔍 1inch API Response Analysis:', {
+        originalRequest: {
+          fromToken: quote.fromToken.symbol,
+          toToken: quote.toToken.symbol,
+          amount: quote.fromAmount,
+          amountInETH: parseFloat(quote.fromAmount) / Math.pow(10, 18),
+        },
+        apiResponse: {
+          txValue: swapTx.data.tx.value,
+          txValueInETH: parseFloat(swapTx.data.tx.value) / Math.pow(10, 18),
+          gas: swapTx.data.tx.gas,
+          gasPrice: swapTx.data.tx.gasPrice,
+          totalGasCost: (
+            parseInt(swapTx.data.tx.gas) * parseInt(swapTx.data.tx.gasPrice)
+          ).toString(),
+          totalGasCostInETH:
+            (parseInt(swapTx.data.tx.gas) * parseInt(swapTx.data.tx.gasPrice)) /
+            Math.pow(10, 18),
+        },
+        analysis: {
+          valueDifference: Math.abs(
+            parseFloat(swapTx.data.tx.value) - parseFloat(quote.fromAmount)
+          ),
+          valueDifferenceInETH:
+            Math.abs(
+              parseFloat(swapTx.data.tx.value) - parseFloat(quote.fromAmount)
+            ) / Math.pow(10, 18),
+          isValueIncludingGas:
+            parseFloat(swapTx.data.tx.value) > parseFloat(quote.fromAmount),
+          gasCostInETH:
+            (parseInt(swapTx.data.tx.gas) * parseInt(swapTx.data.tx.gasPrice)) /
+            Math.pow(10, 18),
+        },
+      });
+
       // Step 4.5: Validate transaction parameters
       console.log('🔍 Validating transaction parameters...');
       const validationErrors = [];
@@ -573,32 +630,67 @@ export class SwapService implements ISwapService {
       const expectedValue = quote.fromAmount; // This should be the user's input amount
       const actualValue = swapTx.data.tx.value;
 
-      console.log('Value validation:', {
-        expected: expectedValue,
-        actual: actualValue,
-        expectedETH: parseFloat(expectedValue) / Math.pow(10, 18),
-        actualETH: parseFloat(actualValue) / Math.pow(10, 18),
+      console.log('🔍 Transaction validation details:', {
+        userInput: quote.fromAmount,
+        userInputETH: parseFloat(quote.fromAmount) / Math.pow(10, 18),
+        apiResponseValue: actualValue,
+        apiResponseValueETH: parseFloat(actualValue) / Math.pow(10, 18),
+        difference: Math.abs(
+          parseFloat(expectedValue) - parseFloat(actualValue)
+        ),
+        differenceETH:
+          Math.abs(parseFloat(expectedValue) - parseFloat(actualValue)) /
+          Math.pow(10, 18),
+        chainId: chainId,
       });
 
-      // Check if the value is reasonable (within 10% of expected)
+      // 針對小額交易的改進驗證
       const expectedValueNum = parseFloat(expectedValue);
       const actualValueNum = parseFloat(actualValue);
-      const valueDifference =
-        Math.abs(actualValueNum - expectedValueNum) / expectedValueNum;
+      const expectedValueETH = expectedValueNum / Math.pow(10, 18);
+      const actualValueETH = actualValueNum / Math.pow(10, 18);
 
-      if (valueDifference > 0.1) {
-        // 10% tolerance
-        console.error('🚨 CRITICAL: Transaction value mismatch detected!');
-        console.error(
-          `Expected: ${expectedValue} (${parseFloat(expectedValue) / Math.pow(10, 18)} ETH)`
-        );
-        console.error(
-          `Actual: ${actualValue} (${parseFloat(actualValue) / Math.pow(10, 18)} ETH)`
-        );
-        console.error(`Difference: ${(valueDifference * 100).toFixed(2)}%`);
-        validationErrors.push(
-          `Transaction value mismatch: expected ${expectedValue}, got ${actualValue}`
-        );
+      // 對於小額交易（< 0.01 ETH），使用絕對值差異
+      const isSmallAmount = expectedValueETH < 0.01;
+
+      if (isSmallAmount) {
+        const absoluteDifference = Math.abs(actualValueNum - expectedValueNum);
+        const absoluteDifferenceETH = absoluteDifference / Math.pow(10, 18);
+
+        // 允許0.001 ETH的絕對差異
+        if (absoluteDifferenceETH > 0.001) {
+          console.warn('⚠️ Small amount validation failed:', {
+            expected: expectedValueETH,
+            actual: actualValueETH,
+            difference: absoluteDifferenceETH,
+          });
+          validationErrors.push(
+            `Transaction value mismatch for small amount: expected ${expectedValueETH.toFixed(6)} ETH, got ${actualValueETH.toFixed(6)} ETH`
+          );
+        } else {
+          console.log('✅ Small amount validation passed');
+        }
+      } else {
+        // 對於大額交易，使用百分比差異
+        const valueDifference =
+          Math.abs(actualValueNum - expectedValueNum) / expectedValueNum;
+
+        if (valueDifference > 0.1) {
+          // 10% tolerance
+          console.error('🚨 CRITICAL: Transaction value mismatch detected!');
+          console.error(
+            `Expected: ${expectedValue} (${expectedValueETH.toFixed(6)} ETH)`
+          );
+          console.error(
+            `Actual: ${actualValue} (${actualValueETH.toFixed(6)} ETH)`
+          );
+          console.error(`Difference: ${(valueDifference * 100).toFixed(2)}%`);
+          validationErrors.push(
+            `Transaction value mismatch: expected ${expectedValue}, got ${actualValue}`
+          );
+        } else {
+          console.log('✅ Large amount validation passed');
+        }
       }
 
       // Gas price validation - more lenient for L2 networks

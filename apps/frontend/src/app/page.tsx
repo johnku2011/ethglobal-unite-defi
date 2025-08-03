@@ -147,7 +147,7 @@ export default function LandingPage() {
                 <span className='text-sm text-gray-600'>
                   Portfolio: {portfolioValue}
                 </span>
-                <Link href='/portfolio' className='btn-primary'>
+                <Link href='/dashboard' className='btn-primary'>
                   Dashboard
                 </Link>
               </div>
@@ -191,7 +191,7 @@ export default function LandingPage() {
                   </div>
                   <div className='mt-4'>
                     <Link
-                      href='/portfolio'
+                      href='/dashboard'
                       className='btn-primary text-sm px-4 py-2 inline-block text-center'
                     >
                       Go to Dashboard →
@@ -200,7 +200,7 @@ export default function LandingPage() {
                 </div>
                 <div className='flex items-center justify-center gap-x-6'>
                   <Link
-                    href='/portfolio'
+                    href='/dashboard'
                     className='btn-primary text-lg px-8 py-3'
                   >
                     View Dashboard
@@ -358,7 +358,7 @@ export default function LandingPage() {
             <div className='mt-10 flex items-center justify-center gap-x-6'>
               {isConnected ? (
                 <Link
-                  href='/portfolio'
+                  href='/dashboard'
                   className='btn-secondary bg-white text-primary-600 hover:bg-gray-100 text-lg px-8 py-3'
                 >
                   Go to Dashboard
@@ -387,10 +387,10 @@ export default function LandingPage() {
         <div className='mx-auto max-w-7xl px-6 py-12 md:flex md:items-center md:justify-between lg:px-8'>
           <div className='flex justify-center space-x-6 md:order-2'>
             <Link
-              href='/portfolio'
+              href='/dashboard'
               className='text-gray-400 hover:text-gray-500'
             >
-              Portfolio
+              Dashboard
             </Link>
             <Link href='/swap' className='text-gray-400 hover:text-gray-500'>
               Swap

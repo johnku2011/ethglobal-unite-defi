@@ -90,7 +90,11 @@ export default function PortfolioValueChart() {
 
         {/* Value Chart Component */}
         <ValueChart
-          data={chartData as unknown as { result?: { timestamp: number; value_usd: number; }[] }}
+          data={
+            chartData as unknown as {
+              result?: { timestamp: number; value_usd: number }[];
+            }
+          }
           isLoading={isLoading}
           isRefetching={isRefetching}
           onTimeRangeChange={handleTimeRangeChange}

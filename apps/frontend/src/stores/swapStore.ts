@@ -52,9 +52,10 @@ const useSwapStore = create<SwapStoreState>((set, get) => ({
       set({
         quoteError: {
           type: 'API_ERROR' as any,
-          message: error instanceof Error ? error.message : 'Failed to get quote',
+          message:
+            error instanceof Error ? error.message : 'Failed to get quote',
           recoverable: true,
-          suggestedAction: 'Please try again later'
+          suggestedAction: 'Please try again later',
         },
         isLoadingQuote: false,
       });
@@ -83,9 +84,10 @@ const useSwapStore = create<SwapStoreState>((set, get) => ({
       set({
         quoteError: {
           type: 'TRANSACTION_FAILED' as any,
-          message: error instanceof Error ? error.message : 'Failed to execute swap',
+          message:
+            error instanceof Error ? error.message : 'Failed to execute swap',
           recoverable: true,
-          suggestedAction: 'Please check your wallet and try again'
+          suggestedAction: 'Please check your wallet and try again',
         },
       });
     }

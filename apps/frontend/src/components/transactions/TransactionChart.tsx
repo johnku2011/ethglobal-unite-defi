@@ -286,7 +286,8 @@ const TransactionChart: React.FC<TransactionChartProps> = ({
         const randomType = ['swap', 'transfer', 'receive', 'approve', 'other'][
           Math.floor(Math.random() * 5)
         ];
-        (demoData[randomIndex] as any)[randomType] = Math.floor(Math.random() * 3) + 1;
+        (demoData[randomIndex] as any)[randomType] =
+          Math.floor(Math.random() * 3) + 1;
       }
 
       console.log('📊 創建了示例交易數據:', demoData);

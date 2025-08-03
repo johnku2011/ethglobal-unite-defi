@@ -308,7 +308,8 @@ export default function TransactionsPage() {
             <div className='px-6 py-3 border-t border-gray-200 flex justify-between items-center bg-gray-50'>
               <div className='text-sm text-gray-500'>
                 Showing {transactionData?.items?.length ?? 0} transactions
-                {(transactionData?.total ?? 0) > (transactionData?.items?.length ?? 0) && (
+                {(transactionData?.total ?? 0) >
+                  (transactionData?.items?.length ?? 0) && (
                   <span> (of {transactionData?.total ?? 0} total)</span>
                 )}
               </div>

@@ -194,10 +194,12 @@ export class OneInchPortfolioAPI {
       const portfolioData = await this.getPortfolioData(address);
 
       console.log(`🎉 Portfolio數據獲取成功`);
-      console.log(`📊 獲取到 ${(portfolioData as any).chains?.length || 0} 條鏈數據`);
-              console.log(
-          `💰 總價值: $${(portfolioData as any).totalValueUsd?.toLocaleString() || '0'}`
-        );
+      console.log(
+        `📊 獲取到 ${(portfolioData as any).chains?.length || 0} 條鏈數據`
+      );
+      console.log(
+        `💰 總價值: $${(portfolioData as any).totalValueUsd?.toLocaleString() || '0'}`
+      );
 
       return portfolioData;
     } catch (error) {

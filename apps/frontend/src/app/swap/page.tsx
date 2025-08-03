@@ -6,7 +6,7 @@ import { useWallet } from '@/providers/WalletProvider';
 import useSwapStore from '@/stores/swapStore';
 import { oneInchBalanceService } from '@/services/oneinchBalanceService';
 import { ChainService, SUPPORTED_CHAINS } from '@/services/chainService';
-import WalletDebugInfo from '@/components/WalletDebugInfo';
+// import WalletDebugInfo from '@/components/WalletDebugInfo';
 import SwapConfirmation from '@/components/swap/SwapConfirmation';
 import TransactionStatusComponent from '@/components/swap/TransactionStatus';
 import TokenSelector from '@/components/swap/TokenSelector';
@@ -17,15 +17,13 @@ import {
   ArrowsRightLeftIcon,
   Cog6ToothIcon,
   InformationCircleIcon,
-  ChevronDownIcon,
 } from '@heroicons/react/24/outline';
 
 // For debugging - now using internal API routes
 
 export default function Swap() {
   const { connectedWallets } = useWallet();
-  const { getQuote, executeSwap, quote, isLoadingQuote, quoteError } =
-    useSwapStore();
+  const { getQuote, quote, isLoadingQuote, quoteError } = useSwapStore();
 
   // State
   const [fromAmount, setFromAmount] = useState('');
@@ -459,6 +457,9 @@ export default function Swap() {
           errorMessage = 'Transaction was rejected by user.';
         } else if (error.message.includes('Quote has changed')) {
           errorMessage = 'Quote has changed. Please try again.';
+        } else if (error.message.includes('Transaction validation failed')) {
+          errorMessage =
+            'Transaction validation failed. Please check the amount and try again.';
         } else {
           errorMessage = error.message;
         }
@@ -526,10 +527,10 @@ export default function Swap() {
   return (
     <DashboardLayout>
       {/* Debug Info - Remove this after fixing */}
-      <WalletDebugInfo />
+      {/* <WalletDebugInfo /> */}
 
       {/* Debug Information - Only show in development */}
-      {process.env.NODE_ENV === 'development' && (
+      {/* {process.env.NODE_ENV === 'development' && (
         <div className='mb-4 p-3 bg-gray-100 border border-gray-300 rounded-lg text-xs'>
           <div className='font-semibold mb-2'>🔧 Debug Info:</div>
           <div>Selected Wallet: {selectedWallet?.address}</div>
@@ -546,7 +547,7 @@ export default function Swap() {
             </div>
           )}
         </div>
-      )}
+      )} */}
 
       <div className='max-w-md mx-auto space-y-6 px-4 sm:px-0'>
         {/* Header */}

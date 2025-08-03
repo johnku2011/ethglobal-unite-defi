@@ -155,14 +155,38 @@ export class SwapService implements ISwapService {
     value: string;
     gas?: string;
     gasPrice?: string;
+    from?: string;
+    chainId?: number;
   }): Promise<string> {
     if (typeof window === 'undefined' || !window.ethereum) {
       throw new Error('No Ethereum provider found');
     }
 
     try {
+      // Get the current account address
+      const accounts = await window.ethereum.request({
+        method: 'eth_accounts',
+      });
+
+      if (!accounts || accounts.length === 0) {
+        throw new Error('No wallet account found. Please connect your wallet.');
+      }
+
+      const fromAddress = accounts[0];
+      console.log('Using wallet address:', fromAddress);
+
+      // Validate addresses
+      if (!fromAddress || !fromAddress.match(/^0x[a-fA-F0-9]{40}$/)) {
+        throw new Error('Invalid from address format');
+      }
+
+      if (!txData.to || !txData.to.match(/^0x[a-fA-F0-9]{40}$/)) {
+        throw new Error('Invalid to address format');
+      }
+
       // Prepare transaction parameters
       const txParams: any = {
+        from: fromAddress,
         to: txData.to,
         data: txData.data,
         value: txData.value,
@@ -178,16 +202,46 @@ export class SwapService implements ISwapService {
 
       // Handle gas price - use the one from 1inch API if provided
       if (txData.gasPrice) {
-        txParams.gasPrice = `0x${parseInt(txData.gasPrice).toString(16)}`;
-        console.log(`Using gas price: ${txData.gasPrice} wei`);
+        const gasPrice = parseInt(txData.gasPrice);
+
+        // For L2 networks (Arbitrum, Optimism), use maxFeePerGas and maxPriorityFeePerGas
+        // For L1 networks, use gasPrice
+        if (txData.chainId === 42161 || txData.chainId === 10) {
+          // L2 networks - use EIP-1559 gas parameters
+          txParams.maxFeePerGas = `0x${gasPrice.toString(16)}`;
+          txParams.maxPriorityFeePerGas = `0x${Math.floor(gasPrice * 0.1).toString(16)}`; // 10% of gas price
+          console.log(
+            `Using L2 gas parameters: maxFeePerGas=${gasPrice}, maxPriorityFeePerGas=${Math.floor(gasPrice * 0.1)}`
+          );
+        } else {
+          // L1 networks - use legacy gas price
+          txParams.gasPrice = `0x${gasPrice.toString(16)}`;
+          console.log(`Using L1 gas price: ${gasPrice} wei`);
+        }
       }
 
       console.log('Sending transaction with params:', {
+        from: txParams.from,
         to: txParams.to,
         gas: txParams.gas,
         gasPrice: txParams.gasPrice,
         value: txParams.value,
+        valueETH: parseFloat(txParams.value) / Math.pow(10, 18),
       });
+
+      // Add a warning if the value seems too high
+      const valueETH = parseFloat(txParams.value) / Math.pow(10, 18);
+      if (valueETH > 0.1) {
+        console.warn(
+          '⚠️  WARNING: Transaction value seems high:',
+          valueETH,
+          'ETH'
+        );
+        console.warn(
+          'This might cause MetaMask to display an incorrect amount.'
+        );
+        console.warn('Please verify the amount in MetaMask before confirming.');
+      }
 
       // Request transaction from user's wallet
       const txHash = await window.ethereum.request({
@@ -205,12 +259,29 @@ export class SwapService implements ISwapService {
       if (error instanceof Error) {
         if (error.message.includes('insufficient funds')) {
           errorMessage = 'Insufficient funds for transaction';
-        } else if (error.message.includes('user rejected')) {
+        } else if (
+          error.message.includes('user rejected') ||
+          error.message.includes('User rejected')
+        ) {
           errorMessage = 'Transaction was rejected by user';
         } else if (error.message.includes('gas')) {
           errorMessage = 'Gas estimation failed - please try again';
         } else if (error.message.includes('nonce')) {
           errorMessage = 'Transaction nonce error - please try again';
+        } else if (
+          error.message.includes('Invalid parameters') ||
+          error.message.includes('must provide an Ethereum address')
+        ) {
+          errorMessage =
+            'Invalid transaction parameters. Please check your wallet connection and try again.';
+        } else if (error.message.includes('No wallet account found')) {
+          errorMessage = 'No wallet account found. Please connect your wallet.';
+        } else if (
+          error.message.includes('Invalid from address format') ||
+          error.message.includes('Invalid to address format')
+        ) {
+          errorMessage =
+            'Invalid address format. Please check your wallet connection.';
         } else {
           errorMessage = error.message;
         }
@@ -474,6 +545,9 @@ export class SwapService implements ISwapService {
         gas: swapTx.data.tx.gas,
         gasPrice: swapTx.data.tx.gasPrice,
         value: swapTx.data.tx.value,
+        valueETH: parseFloat(swapTx.data.tx.value) / Math.pow(10, 18),
+        userInput: quote.fromAmount,
+        userInputETH: parseFloat(quote.fromAmount) / Math.pow(10, 18),
       });
 
       // Step 4.5: Validate transaction parameters
@@ -493,6 +567,38 @@ export class SwapService implements ISwapService {
 
       if (parseInt(swapTx.data.tx.gas) < 21000) {
         validationErrors.push('Gas limit too low');
+      }
+
+      // Validate transaction value matches user input
+      const expectedValue = quote.fromAmount; // This should be the user's input amount
+      const actualValue = swapTx.data.tx.value;
+
+      console.log('Value validation:', {
+        expected: expectedValue,
+        actual: actualValue,
+        expectedETH: parseFloat(expectedValue) / Math.pow(10, 18),
+        actualETH: parseFloat(actualValue) / Math.pow(10, 18),
+      });
+
+      // Check if the value is reasonable (within 10% of expected)
+      const expectedValueNum = parseFloat(expectedValue);
+      const actualValueNum = parseFloat(actualValue);
+      const valueDifference =
+        Math.abs(actualValueNum - expectedValueNum) / expectedValueNum;
+
+      if (valueDifference > 0.1) {
+        // 10% tolerance
+        console.error('🚨 CRITICAL: Transaction value mismatch detected!');
+        console.error(
+          `Expected: ${expectedValue} (${parseFloat(expectedValue) / Math.pow(10, 18)} ETH)`
+        );
+        console.error(
+          `Actual: ${actualValue} (${parseFloat(actualValue) / Math.pow(10, 18)} ETH)`
+        );
+        console.error(`Difference: ${(valueDifference * 100).toFixed(2)}%`);
+        validationErrors.push(
+          `Transaction value mismatch: expected ${expectedValue}, got ${actualValue}`
+        );
       }
 
       // Gas price validation - more lenient for L2 networks
@@ -520,11 +626,11 @@ export class SwapService implements ISwapService {
         }
       } else {
         // L1 networks (Ethereum, etc.)
-        if (gasPrice < 1000000000) {
-          // 1 gwei minimum for L1
+        if (gasPrice < 100000000) {
+          // 0.1 gwei minimum for L1 (more lenient)
           validationErrors.push('Gas price too low for L1 network');
-        } else if (gasPriceGwei > 100) {
-          // 100 gwei maximum for L1
+        } else if (gasPriceGwei > 200) {
+          // 200 gwei maximum for L1 (more lenient)
           validationErrors.push('Gas price too high for L1 network');
         }
       }
@@ -541,6 +647,32 @@ export class SwapService implements ISwapService {
 
       console.log('✅ Transaction parameters validated');
 
+      // Step 4.6: Check wallet balance
+      console.log('💰 Checking wallet balance...');
+      const balance = await window.ethereum.request({
+        method: 'eth_getBalance',
+        params: [wallet.address, 'latest'],
+      });
+
+      const balanceWei = parseInt(balance, 16);
+      const requiredWei =
+        parseInt(swapTx.data.tx.value) +
+        parseInt(swapTx.data.tx.gas) * parseInt(swapTx.data.tx.gasPrice);
+
+      console.log('Balance check:', {
+        balanceWei: balanceWei.toString(),
+        requiredWei: requiredWei.toString(),
+        balanceETH: balanceWei / Math.pow(10, 18),
+        requiredETH: requiredWei / Math.pow(10, 18),
+        hasEnoughFunds: balanceWei >= requiredWei,
+      });
+
+      if (balanceWei < requiredWei) {
+        throw new Error(
+          `Insufficient funds: need ${requiredWei / Math.pow(10, 18).toFixed(6)} ETH, have ${balanceWei / Math.pow(10, 18).toFixed(6)} ETH`
+        );
+      }
+
       // Step 5: Execute the swap transaction with retry mechanism
       console.log('🔄 Executing swap transaction...');
       let txHash: string;
@@ -555,6 +687,7 @@ export class SwapService implements ISwapService {
             value: swapTx.data.tx.value,
             gas: swapTx.data.tx.gas.toString(),
             gasPrice: swapTx.data.tx.gasPrice, // Include gas price from 1inch API
+            chainId: chainId, // Include chain ID for gas parameter selection
           });
           console.log('✅ Swap transaction sent successfully:', txHash);
           break;
@@ -613,15 +746,24 @@ export class SwapService implements ISwapService {
       // Enhanced error handling with more specific messages
       let errorMessage = 'Failed to execute swap';
       if (error instanceof Error) {
-        if (error.message.includes('insufficient funds')) {
+        if (
+          error.message.includes('insufficient funds') ||
+          error.message.includes('Insufficient funds')
+        ) {
           errorMessage = 'Insufficient funds for swap';
-        } else if (error.message.includes('user rejected')) {
+        } else if (
+          error.message.includes('user rejected') ||
+          error.message.includes('User rejected')
+        ) {
           errorMessage = 'Transaction was rejected by user';
         } else if (error.message.includes('Quote has changed')) {
           errorMessage = 'Quote has changed. Please try again.';
         } else if (error.message.includes('gas')) {
           errorMessage = 'Gas estimation failed. Please try again.';
-        } else if (error.message.includes('Transaction validation failed')) {
+        } else if (
+          error.message.includes('Transaction validation failed') ||
+          error.message.includes('Transaction value mismatch')
+        ) {
           errorMessage = error.message;
         } else if (error.message.includes('Gas price too low')) {
           errorMessage = 'Network congestion detected. Please try again.';

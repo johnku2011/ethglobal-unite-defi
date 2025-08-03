@@ -75,12 +75,12 @@ const navigation: NavigationItem[] = [
     icon: Cog6ToothIcon,
     description: 'Preferences',
   },
-  {
-    name: 'Wallet Demo',
-    href: '/wallet-demo',
-    icon: WalletIcon,
-    description: 'Disconnect Functions',
-  },
+  // {
+  //   name: 'Wallet Demo',
+  //   href: '/wallet-demo',
+  //   icon: WalletIcon,
+  //   description: 'Disconnect Functions',
+  // },
 ];
 
 interface DashboardLayoutProps {

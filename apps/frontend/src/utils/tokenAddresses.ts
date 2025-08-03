@@ -70,7 +70,7 @@ export function validateTokenAddress(
   const chainTokens = TOKEN_ADDRESSES[chainId as keyof typeof TOKEN_ADDRESSES];
   if (!chainTokens) return false;
 
-  return Object.values(chainTokens).includes(address);
+  return Object.values(chainTokens).includes(address as any);
 }
 
 export function getSupportedTokens(chainId: number): string[] {

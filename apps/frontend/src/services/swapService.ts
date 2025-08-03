@@ -4,7 +4,6 @@ import type {
   SwapQuoteParams,
   SwapTransaction,
   ConnectedWallet,
-  Token,
 } from '@/types';
 import { TransactionStatus } from '@/types';
 import type { ISwapService } from '@/types/services';
@@ -400,7 +399,7 @@ export class SwapService implements ISwapService {
    */
   async getSwapQuote(params: SwapQuoteParams): Promise<SwapQuote> {
     try {
-      const { fromToken, toToken, amount, slippage = 1, fromAddress } = params;
+      const { fromToken, toToken, amount, slippage = 1 } = params;
 
       // Use chain ID from the token (should be set by the UI)
       const chainId = parseInt(fromToken.chainId) || 1;
@@ -585,10 +584,10 @@ export class SwapService implements ISwapService {
           gas: swapTx.data.tx.gas,
           gasPrice: swapTx.data.tx.gasPrice,
           totalGasCost: (
-            parseInt(swapTx.data.tx.gas) * parseInt(swapTx.data.tx.gasPrice)
+            Number(swapTx.data.tx.gas) * Number(swapTx.data.tx.gasPrice)
           ).toString(),
           totalGasCostInETH:
-            (parseInt(swapTx.data.tx.gas) * parseInt(swapTx.data.tx.gasPrice)) /
+            (Number(swapTx.data.tx.gas) * Number(swapTx.data.tx.gasPrice)) /
             Math.pow(10, 18),
         },
         analysis: {
@@ -602,7 +601,7 @@ export class SwapService implements ISwapService {
           isValueIncludingGas:
             parseFloat(swapTx.data.tx.value) > parseFloat(quote.fromAmount),
           gasCostInETH:
-            (parseInt(swapTx.data.tx.gas) * parseInt(swapTx.data.tx.gasPrice)) /
+            (Number(swapTx.data.tx.gas) * Number(swapTx.data.tx.gasPrice)) /
             Math.pow(10, 18),
         },
       });
@@ -622,7 +621,7 @@ export class SwapService implements ISwapService {
         validationErrors.push('Invalid transaction data');
       }
 
-      if (parseInt(swapTx.data.tx.gas) < 21000) {
+      if (swapTx.data.tx.gas < 21000) {
         validationErrors.push('Gas limit too low');
       }
 
@@ -749,7 +748,7 @@ export class SwapService implements ISwapService {
       const balanceWei = parseInt(balance, 16);
       const requiredWei =
         parseInt(swapTx.data.tx.value) +
-        parseInt(swapTx.data.tx.gas) * parseInt(swapTx.data.tx.gasPrice);
+        Number(swapTx.data.tx.gas) * Number(swapTx.data.tx.gasPrice);
 
       console.log('Balance check:', {
         balanceWei: balanceWei.toString(),
@@ -761,7 +760,7 @@ export class SwapService implements ISwapService {
 
       if (balanceWei < requiredWei) {
         throw new Error(
-          `Insufficient funds: need ${requiredWei / Math.pow(10, 18).toFixed(6)} ETH, have ${balanceWei / Math.pow(10, 18).toFixed(6)} ETH`
+          `Insufficient funds: need ${(Number(requiredWei) / Math.pow(10, 18)).toFixed(6)} ETH, have ${(Number(balanceWei) / Math.pow(10, 18)).toFixed(6)} ETH`
         );
       }
 
@@ -819,9 +818,6 @@ export class SwapService implements ISwapService {
         slippage: quote.slippage,
         priceImpact: this.calculatePriceImpact(quote),
         gasUsed: swapTx.data.tx.gas.toString(),
-        gasPrice: swapTx.data.tx.gasPrice,
-        protocols: freshQuote.protocols || [],
-        estimatedGas: freshQuote.estimatedGas || swapTx.data.tx.gas,
       };
 
       console.log('📊 Swap transaction created:', {

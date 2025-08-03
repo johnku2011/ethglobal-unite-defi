@@ -20,13 +20,13 @@ import {
 import {uint8ArrayToHex, UINT_40_MAX, hexToUint8Array} from '@1inch/byte-utils'
 import {SUI_TYPE_ARG} from '@mysten/sui/utils'
 import assert from 'node:assert'
-import {ChainConfig, config} from './config'
-import {Wallet} from './wallet'
-import {Resolver} from './resolver'
-import {EscrowFactory} from './escrow-factory'
-import {createDstEscrow, withdrawDstEscrow} from './utils'
-import factoryContract from '../dist/contracts/TestEscrowFactory.sol/TestEscrowFactory.json'
-import resolverContract from '../dist/contracts/Resolver.sol/Resolver.json'
+import {ChainConfig, config} from './tests/config'
+import {Wallet} from './tests/wallet'
+import {Resolver} from './tests/resolver'
+import {EscrowFactory} from './tests/escrow-factory'
+import {createDstEscrow, withdrawDstEscrow} from './tests/utils'
+import factoryContract from './dist/contracts/TestEscrowFactory.sol/TestEscrowFactory.json'
+import resolverContract from './dist/contracts/Resolver.sol/Resolver.json'
 
 // const {Address} = Sdk
 

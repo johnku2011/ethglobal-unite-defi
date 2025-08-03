@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const ONEINCH_API_KEY = process.env.NEXT_PUBLIC_ONEINCH_API_KEY;
+const ONEINCH_API_KEY = process.env.NEXT_PUBLIC_1INCH_API_KEY;
 const ONEINCH_API_BASE = 'https://api.1inch.dev';
 
 export async function GET(
@@ -28,8 +28,9 @@ export async function GET(
     console.log(`📊 Fetching balance for ${address} on chain ${chainId}`);
 
     // Make request to 1inch Balance API
+    // 根据1inch API文档，正确的路径应该是 /balance/v1.2/{chainId}/{address}
     const response = await fetch(
-      `${ONEINCH_API_BASE}/balance/v1.2/${chainId}/${address}`,
+      `${ONEINCH_API_BASE}/balance/v1.2/${chainId}/balances/${address}`,
       {
         headers: {
           Authorization: `Bearer ${ONEINCH_API_KEY}`,

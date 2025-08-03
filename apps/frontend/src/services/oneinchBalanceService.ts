@@ -265,6 +265,30 @@ export class OneInchBalanceService {
           chainId: '1',
         },
       ],
+      56: [
+        // BSC
+        {
+          address: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+          symbol: 'BNB',
+          name: 'BNB',
+          decimals: 18,
+          chainId: '56',
+        },
+        {
+          address: '0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d',
+          symbol: 'USDC',
+          name: 'USD Coin',
+          decimals: 18,
+          chainId: '56',
+        },
+        {
+          address: '0x55d398326f99059ff775485246999027b3197955',
+          symbol: 'USDT',
+          name: 'Tether',
+          decimals: 18,
+          chainId: '56',
+        },
+      ],
       11155111: [
         {
           address: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
@@ -286,6 +310,78 @@ export class OneInchBalanceService {
           name: 'Tether (Sepolia)',
           decimals: 6,
           chainId: '11155111',
+        },
+      ],
+      137: [
+        // Polygon
+        {
+          address: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+          symbol: 'MATIC',
+          name: 'Polygon',
+          decimals: 18,
+          chainId: '137',
+        },
+        {
+          address: '0x2791bca1f2de4661ed88a30c99a7a9449aa84174',
+          symbol: 'USDC',
+          name: 'USD Coin',
+          decimals: 6,
+          chainId: '137',
+        },
+        {
+          address: '0xc2132d05d31c914a87c6611c10748aeb04b58e8f',
+          symbol: 'USDT',
+          name: 'Tether',
+          decimals: 6,
+          chainId: '137',
+        },
+      ],
+      42161: [
+        // Arbitrum
+        {
+          address: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+          symbol: 'ETH',
+          name: 'Ethereum',
+          decimals: 18,
+          chainId: '42161',
+        },
+        {
+          address: '0xff970a61a04b1ca14834a43f5de4533ebddb5cc8',
+          symbol: 'USDC',
+          name: 'USD Coin',
+          decimals: 6,
+          chainId: '42161',
+        },
+        {
+          address: '0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9',
+          symbol: 'USDT',
+          name: 'Tether',
+          decimals: 6,
+          chainId: '42161',
+        },
+      ],
+      10: [
+        // Optimism
+        {
+          address: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+          symbol: 'ETH',
+          name: 'Ethereum',
+          decimals: 18,
+          chainId: '10',
+        },
+        {
+          address: '0x7f5c764cbc14f9669b88837ca1490cca17c31607',
+          symbol: 'USDC',
+          name: 'USD Coin',
+          decimals: 6,
+          chainId: '10',
+        },
+        {
+          address: '0x94b008aa00579c1307b0ef2c499ad98a8ce58e58',
+          symbol: 'USDT',
+          name: 'Tether',
+          decimals: 6,
+          chainId: '10',
         },
       ],
       8453: [

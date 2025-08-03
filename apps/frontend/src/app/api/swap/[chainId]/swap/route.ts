@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const ONEINCH_API_KEY = process.env.NEXT_PUBLIC_ONEINCH_API_KEY;
+const ONEINCH_API_KEY = process.env.NEXT_PUBLIC_1INCH_API_KEY;
 const ONEINCH_API_BASE = 'https://api.1inch.dev';
 
 export async function GET(

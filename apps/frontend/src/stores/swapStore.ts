@@ -26,6 +26,7 @@ const useSwapStore = create<SwapStoreState>((set, get) => ({
       set({ isLoadingQuote: true, quoteError: undefined });
 
       const quote = await swapService.getSwapQuote(params);
+      console.log('✅ Quote received:', quote);
 
       // Transform to match our SwapQuote interface
       const transformedQuote: SwapQuote = {
@@ -34,7 +35,7 @@ const useSwapStore = create<SwapStoreState>((set, get) => ({
         fromAmount: quote.fromAmount,
         toAmount: quote.toAmount,
         slippage: quote.slippage,
-        gasEstimate: (quote as any).estimatedGas || '0',
+        gasEstimate: quote.gasEstimate || '0',
         route: quote.route,
         priceImpact: quote.priceImpact,
         minimumReceived: (

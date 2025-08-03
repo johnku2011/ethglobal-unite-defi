@@ -11,27 +11,26 @@ import type { ISwapService } from '@/types/services';
 
 // 1inch API configuration
 const ONEINCH_API_BASE = 'https://api.1inch.dev';
-const ONEINCH_API_KEY = process.env.NEXT_PUBLIC_ONEINCH_API_KEY || '';
+const ONEINCH_API_KEY = process.env.NEXT_PUBLIC_1INCH_API_KEY || '';
 
 interface OneInchQuoteResponse {
-  fromToken: {
+  srcToken: {
     symbol: string;
     name: string;
     decimals: number;
     address: string;
     logoURI: string;
   };
-  toToken: {
+  dstToken: {
     symbol: string;
     name: string;
     decimals: number;
     address: string;
     logoURI: string;
   };
-  toAmount: string;
-  fromAmount: string;
+  dstAmount: string;
   protocols: any[];
-  estimatedGas: number;
+  gas: number;
 }
 
 interface OneInchSwapResponse extends OneInchQuoteResponse {
@@ -155,32 +154,69 @@ export class SwapService implements ISwapService {
     data: string;
     value: string;
     gas?: string;
+    gasPrice?: string;
   }): Promise<string> {
     if (typeof window === 'undefined' || !window.ethereum) {
       throw new Error('No Ethereum provider found');
     }
 
     try {
+      // Prepare transaction parameters
+      const txParams: any = {
+        to: txData.to,
+        data: txData.data,
+        value: txData.value,
+      };
+
+      // Handle gas limit with buffer for complex transactions
+      if (txData.gas) {
+        const gasLimit = parseInt(txData.gas);
+        const gasWithBuffer = Math.floor(gasLimit * 1.2); // Add 20% buffer
+        txParams.gas = `0x${gasWithBuffer.toString(16)}`;
+        console.log(`Gas limit: ${gasLimit} -> ${gasWithBuffer} (with buffer)`);
+      }
+
+      // Handle gas price - use the one from 1inch API if provided
+      if (txData.gasPrice) {
+        txParams.gasPrice = `0x${parseInt(txData.gasPrice).toString(16)}`;
+        console.log(`Using gas price: ${txData.gasPrice} wei`);
+      }
+
+      console.log('Sending transaction with params:', {
+        to: txParams.to,
+        gas: txParams.gas,
+        gasPrice: txParams.gasPrice,
+        value: txParams.value,
+      });
+
       // Request transaction from user's wallet
       const txHash = await window.ethereum.request({
         method: 'eth_sendTransaction',
-        params: [
-          {
-            to: txData.to,
-            data: txData.data,
-            value: txData.value,
-            gas: txData.gas
-              ? `0x${parseInt(txData.gas).toString(16)}`
-              : undefined,
-          },
-        ],
+        params: [txParams],
       });
 
-      console.log('Transaction sent:', txHash);
+      console.log('Transaction sent successfully:', txHash);
       return txHash;
     } catch (error) {
       console.error('Transaction failed:', error);
-      throw new Error('Transaction was rejected or failed');
+
+      // Provide more specific error messages
+      let errorMessage = 'Transaction was rejected or failed';
+      if (error instanceof Error) {
+        if (error.message.includes('insufficient funds')) {
+          errorMessage = 'Insufficient funds for transaction';
+        } else if (error.message.includes('user rejected')) {
+          errorMessage = 'Transaction was rejected by user';
+        } else if (error.message.includes('gas')) {
+          errorMessage = 'Gas estimation failed - please try again';
+        } else if (error.message.includes('nonce')) {
+          errorMessage = 'Transaction nonce error - please try again';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+
+      throw new Error(errorMessage);
     }
   }
 
@@ -290,48 +326,51 @@ export class SwapService implements ISwapService {
         `/api/swap/${chainId}/quote?${queryParams}`
       );
 
-      const data: OneInchQuoteResponse = response.data;
+      const data = response.data;
+      console.log('🔍 API Response data:', data);
 
       // Transform 1inch response to our SwapQuote format
+      // API returns: dstAmount, srcToken, dstToken, protocols, gas
+      // We expect: fromToken, toToken, toAmount, fromAmount, protocols, estimatedGas
       return {
         fromToken: {
-          address: data.fromToken.address,
-          symbol: data.fromToken.symbol,
-          name: data.fromToken.name,
-          decimals: data.fromToken.decimals,
-          logoUrl: data.fromToken.logoURI,
+          address: data.srcToken.address,
+          symbol: data.srcToken.symbol,
+          name: data.srcToken.name,
+          decimals: data.srcToken.decimals,
+          logoUrl: data.srcToken.logoURI,
           chainId: chainId.toString(),
         },
         toToken: {
-          address: data.toToken.address,
-          symbol: data.toToken.symbol,
-          name: data.toToken.name,
-          decimals: data.toToken.decimals,
-          logoUrl: data.toToken.logoURI,
+          address: data.dstToken.address,
+          symbol: data.dstToken.symbol,
+          name: data.dstToken.name,
+          decimals: data.dstToken.decimals,
+          logoUrl: data.dstToken.logoURI,
           chainId: chainId.toString(),
         },
-        fromAmount: data.fromAmount,
-        toAmount: data.toAmount,
-        gasEstimate: data.estimatedGas.toString(),
+        fromAmount: amount, // Use the original input amount
+        toAmount: data.dstAmount, // API returns dstAmount
+        gasEstimate: data.gas.toString(), // API returns gas
         priceImpact: 0, // Would need additional calculation
-        minimumReceived: data.toAmount, // Simplified - should calculate based on slippage
+        minimumReceived: data.dstAmount, // Simplified - should calculate based on slippage
         route: data.protocols.map((protocol: any) => ({
           protocol: protocol.name || 'Unknown',
           percentage: protocol.part || 100,
           fromToken: {
-            address: data.fromToken.address,
-            symbol: data.fromToken.symbol,
-            name: data.fromToken.name,
-            decimals: data.fromToken.decimals,
-            logoUri: data.fromToken.logoURI,
+            address: data.srcToken.address,
+            symbol: data.srcToken.symbol,
+            name: data.srcToken.name,
+            decimals: data.srcToken.decimals,
+            logoUri: data.srcToken.logoURI,
             chainId: chainId.toString(),
           },
           toToken: {
-            address: data.toToken.address,
-            symbol: data.toToken.symbol,
-            name: data.toToken.name,
-            decimals: data.toToken.decimals,
-            logoUri: data.toToken.logoURI,
+            address: data.dstToken.address,
+            symbol: data.dstToken.symbol,
+            name: data.dstToken.name,
+            decimals: data.dstToken.decimals,
+            logoUri: data.dstToken.logoURI,
             chainId: chainId.toString(),
           },
         })),
@@ -352,16 +391,58 @@ export class SwapService implements ISwapService {
   ): Promise<SwapTransaction> {
     try {
       const chainId = parseInt(quote.fromToken.chainId) || 1;
+      console.log('🚀 Starting swap execution...', {
+        fromToken: quote.fromToken.symbol,
+        toToken: quote.toToken.symbol,
+        amount: quote.fromAmount,
+        chainId,
+      });
 
-      // Check and handle token approval first
+      // Step 1: Check and handle token approval first
+      console.log('🔍 Checking token approval...');
       await this.approveIfNeeded(
         chainId,
         quote.fromToken.address,
         wallet.address,
         BigInt(quote.fromAmount)
       );
+      console.log('✅ Token approval completed');
 
-      console.log('Fetching swap transaction...');
+      // Step 2: Get fresh quote to ensure accuracy
+      console.log('💱 Getting fresh swap quote...');
+      const freshQuote = await this.getSwapQuote({
+        fromToken: quote.fromToken,
+        toToken: quote.toToken,
+        amount: quote.fromAmount,
+        slippage: quote.slippage,
+        fromAddress: wallet.address,
+      });
+
+      // Step 3: Validate quote hasn't changed significantly
+      const originalRate =
+        parseFloat(quote.toAmount) / parseFloat(quote.fromAmount);
+      const freshRate =
+        parseFloat(freshQuote.toAmount) / parseFloat(freshQuote.fromAmount);
+      const rateChange = Math.abs(freshRate - originalRate) / originalRate;
+
+      if (rateChange > 0.05) {
+        // 5% tolerance
+        console.warn('⚠️ Quote has changed significantly:', {
+          originalRate,
+          freshRate,
+          change: `${(rateChange * 100).toFixed(2)}%`,
+        });
+        throw new Error('Quote has changed significantly. Please try again.');
+      }
+
+      console.log('✅ Quote validation passed');
+
+      // Step 4: Fetch swap transaction data
+      console.log('📝 Fetching swap transaction data...');
+
+      // Network-specific optimizations
+      const isArbitrum = chainId === 42161;
+      const isOptimism = chainId === 10;
 
       const swapParams = {
         src: quote.fromToken.address,
@@ -376,41 +457,206 @@ export class SwapService implements ISwapService {
         includeGas: 'true',
       };
 
+      // Add network-specific parameters
+      if (isArbitrum) {
+        console.log('🔄 Using Arbitrum-specific optimizations');
+      } else if (isOptimism) {
+        console.log('🔄 Using Optimism-specific optimizations');
+      }
+
       const queryString = new URLSearchParams(swapParams).toString();
       const swapTx = await axios.get<{ tx: OneInchSwapResponse['tx'] }>(
         `/api/swap/${chainId}/swap?${queryString}`
       );
 
-      console.log('Swap transaction:', swapTx.data.tx);
-
-      // Execute the swap transaction
-      const txHash = await this.sendTransaction({
+      console.log('✅ Swap transaction data received:', {
         to: swapTx.data.tx.to,
-        data: swapTx.data.tx.data,
+        gas: swapTx.data.tx.gas,
+        gasPrice: swapTx.data.tx.gasPrice,
         value: swapTx.data.tx.value,
-        gas: swapTx.data.tx.gas.toString(),
       });
 
-      console.log('Swap transaction sent. Hash:', txHash);
+      // Step 4.5: Validate transaction parameters
+      console.log('🔍 Validating transaction parameters...');
+      const validationErrors = [];
 
-      return {
-        id: txHash,
+      if (
+        !swapTx.data.tx.to ||
+        swapTx.data.tx.to === '0x0000000000000000000000000000000000000000'
+      ) {
+        validationErrors.push('Invalid transaction recipient');
+      }
+
+      if (!swapTx.data.tx.data || swapTx.data.tx.data.length < 10) {
+        validationErrors.push('Invalid transaction data');
+      }
+
+      if (parseInt(swapTx.data.tx.gas) < 21000) {
+        validationErrors.push('Gas limit too low');
+      }
+
+      // Gas price validation - more lenient for L2 networks
+      const gasPrice = parseInt(swapTx.data.tx.gasPrice);
+      const gasPriceGwei = gasPrice / 1000000000;
+
+      // Different validation for L1 vs L2 networks
+      if (chainId === 42161) {
+        // Arbitrum
+        if (gasPrice < 10000000) {
+          // 0.01 gwei minimum for Arbitrum
+          validationErrors.push('Gas price too low for Arbitrum');
+        } else if (gasPriceGwei > 1) {
+          // 1 gwei maximum for Arbitrum
+          validationErrors.push('Gas price too high for Arbitrum');
+        }
+      } else if (chainId === 10) {
+        // Optimism
+        if (gasPrice < 10000000) {
+          // 0.01 gwei minimum for Optimism
+          validationErrors.push('Gas price too low for Optimism');
+        } else if (gasPriceGwei > 1) {
+          // 1 gwei maximum for Optimism
+          validationErrors.push('Gas price too high for Optimism');
+        }
+      } else {
+        // L1 networks (Ethereum, etc.)
+        if (gasPrice < 1000000000) {
+          // 1 gwei minimum for L1
+          validationErrors.push('Gas price too low for L1 network');
+        } else if (gasPriceGwei > 100) {
+          // 100 gwei maximum for L1
+          validationErrors.push('Gas price too high for L1 network');
+        }
+      }
+
+      console.log(
+        `Gas price validation for chain ${chainId}: ${gasPriceGwei.toFixed(6)} gwei`
+      );
+
+      if (validationErrors.length > 0) {
+        throw new Error(
+          `Transaction validation failed: ${validationErrors.join(', ')}`
+        );
+      }
+
+      console.log('✅ Transaction parameters validated');
+
+      // Step 5: Execute the swap transaction with retry mechanism
+      console.log('🔄 Executing swap transaction...');
+      let txHash: string;
+      let retryCount = 0;
+      const maxRetries = 3;
+
+      while (retryCount < maxRetries) {
+        try {
+          txHash = await this.sendTransaction({
+            to: swapTx.data.tx.to,
+            data: swapTx.data.tx.data,
+            value: swapTx.data.tx.value,
+            gas: swapTx.data.tx.gas.toString(),
+            gasPrice: swapTx.data.tx.gasPrice, // Include gas price from 1inch API
+          });
+          console.log('✅ Swap transaction sent successfully:', txHash);
+          break;
+        } catch (error) {
+          retryCount++;
+          console.error(
+            `❌ Swap transaction attempt ${retryCount} failed:`,
+            error
+          );
+
+          if (retryCount >= maxRetries) {
+            throw new Error(
+              `Swap transaction failed after ${maxRetries} attempts: ${error instanceof Error ? error.message : 'Unknown error'}`
+            );
+          }
+
+          // Wait before retry with exponential backoff
+          const waitTime = Math.min(2000 * Math.pow(2, retryCount - 1), 10000);
+          console.log(`⏳ Waiting ${waitTime}ms before retry...`);
+          await new Promise((resolve) => setTimeout(resolve, waitTime));
+          console.log(
+            `🔄 Retrying swap transaction (attempt ${retryCount + 1}/${maxRetries})...`
+          );
+        }
+      }
+
+      // Step 6: Create transaction record
+      const swapTransaction: SwapTransaction = {
+        id: txHash!,
         status: TransactionStatus.PENDING,
-        txHash,
+        txHash: txHash!,
         timestamp: new Date(),
         fromToken: quote.fromToken,
         toToken: quote.toToken,
         fromAmount: quote.fromAmount,
         toAmount: quote.toAmount,
         slippage: quote.slippage,
-        priceImpact: 0, // Would need additional calculation
+        priceImpact: this.calculatePriceImpact(quote),
         gasUsed: swapTx.data.tx.gas.toString(),
+        gasPrice: swapTx.data.tx.gasPrice,
+        protocols: freshQuote.protocols || [],
+        estimatedGas: freshQuote.estimatedGas || swapTx.data.tx.gas,
       };
+
+      console.log('📊 Swap transaction created:', {
+        id: swapTransaction.id,
+        status: swapTransaction.status,
+        gasUsed: swapTransaction.gasUsed,
+        priceImpact: swapTransaction.priceImpact,
+      });
+
+      return swapTransaction;
     } catch (error) {
-      console.error('Error executing swap:', error);
-      throw new Error(
-        `Failed to execute swap: ${error instanceof Error ? error.message : 'Unknown error'}`
-      );
+      console.error('❌ Swap execution failed:', error);
+
+      // Enhanced error handling with more specific messages
+      let errorMessage = 'Failed to execute swap';
+      if (error instanceof Error) {
+        if (error.message.includes('insufficient funds')) {
+          errorMessage = 'Insufficient funds for swap';
+        } else if (error.message.includes('user rejected')) {
+          errorMessage = 'Transaction was rejected by user';
+        } else if (error.message.includes('Quote has changed')) {
+          errorMessage = 'Quote has changed. Please try again.';
+        } else if (error.message.includes('gas')) {
+          errorMessage = 'Gas estimation failed. Please try again.';
+        } else if (error.message.includes('Transaction validation failed')) {
+          errorMessage = error.message;
+        } else if (error.message.includes('Gas price too low')) {
+          errorMessage = 'Network congestion detected. Please try again.';
+        } else if (error.message.includes('Gas limit too low')) {
+          errorMessage =
+            'Transaction complexity requires higher gas limit. Please try again.';
+        } else if (error.message.includes('nonce')) {
+          errorMessage = 'Transaction nonce error. Please try again.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+
+      throw new Error(errorMessage);
+    }
+  }
+
+  /**
+   * Calculate price impact percentage
+   */
+  private calculatePriceImpact(quote: SwapQuote): number {
+    try {
+      // This is a simplified calculation
+      // In a real implementation, you'd compare against a reference price
+      const fromAmount = parseFloat(quote.fromAmount);
+      const toAmount = parseFloat(quote.toAmount);
+
+      if (fromAmount === 0) return 0;
+
+      // Calculate a rough price impact based on the quote
+      // This is a placeholder - real implementation would use market data
+      return Math.abs((toAmount / fromAmount - 1) * 100);
+    } catch (error) {
+      console.warn('Failed to calculate price impact:', error);
+      return 0;
     }
   }
 

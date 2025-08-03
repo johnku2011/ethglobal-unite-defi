@@ -7,8 +7,12 @@ import useSwapStore from '@/stores/swapStore';
 import { oneInchBalanceService } from '@/services/oneinchBalanceService';
 import { ChainService, SUPPORTED_CHAINS } from '@/services/chainService';
 import WalletDebugInfo from '@/components/WalletDebugInfo';
+import SwapConfirmation from '@/components/swap/SwapConfirmation';
+import TransactionStatusComponent from '@/components/swap/TransactionStatus';
+import TokenSelector from '@/components/swap/TokenSelector';
+import SwapHistory from '@/components/swap/SwapHistory';
 import type { ConnectedWallet } from '@/providers/WalletProvider';
-import type { Token } from '@/types';
+import type { Token, SwapTransaction, TransactionStatus } from '@/types';
 import {
   ArrowsRightLeftIcon,
   Cog6ToothIcon,
@@ -37,9 +41,25 @@ export default function Swap() {
   const [isLoadingBalances, setIsLoadingBalances] = useState(false);
   const [isSwitchingChain, setIsSwitchingChain] = useState(false);
 
+  // New state for enhanced swap functionality
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [isExecutingSwap, setIsExecutingSwap] = useState(false);
+  const [currentTransaction, setCurrentTransaction] =
+    useState<SwapTransaction | null>(null);
+  const [showTransactionStatus, setShowTransactionStatus] = useState(false);
+
   // Token selection
   const [fromToken, setFromToken] = useState<Token | null>(null);
   const [toToken, setToToken] = useState<Token | null>(null);
+
+  // Debug: Log token changes
+  useEffect(() => {
+    console.log('From token changed:', fromToken?.symbol);
+  }, [fromToken]);
+
+  useEffect(() => {
+    console.log('To token changed:', toToken?.symbol);
+  }, [toToken]);
 
   // Initialize selected wallet and chain
   useEffect(() => {
@@ -393,17 +413,80 @@ export default function Swap() {
         return;
       }
 
+      // Show confirmation dialog instead of executing immediately
+      setShowConfirmation(true);
+    } catch (error) {
+      console.error('Failed to prepare swap:', error);
+      alert('Failed to prepare swap. Please try again.');
+    }
+  };
+
+  const handleConfirmSwap = async () => {
+    if (!quote || !selectedWallet) {
+      alert('Missing quote or wallet. Please try again.');
+      return;
+    }
+
+    setIsExecutingSwap(true);
+    setShowConfirmation(false);
+
+    try {
       console.log('🚀 Executing swap with quote:', quote);
 
-      // Execute swap
-      await executeSwap();
+      // Execute swap using the service
+      const swapService = new (
+        await import('@/services/swapService')
+      ).SwapService();
+      const transaction = await swapService.executeSwap(quote, selectedWallet);
+
+      console.log('✅ Swap transaction created:', transaction);
+
+      // Set current transaction and show status
+      setCurrentTransaction(transaction);
+      setShowTransactionStatus(true);
 
       // Reload balances after swap
       loadWalletBalances();
     } catch (error) {
-      console.error('Swap failed:', error);
-      alert('Swap failed. Please try again.');
+      console.error('Swap execution failed:', error);
+
+      // Show user-friendly error message
+      let errorMessage = 'Swap failed. Please try again.';
+      if (error instanceof Error) {
+        if (error.message.includes('insufficient funds')) {
+          errorMessage = 'Insufficient funds for this swap.';
+        } else if (error.message.includes('user rejected')) {
+          errorMessage = 'Transaction was rejected by user.';
+        } else if (error.message.includes('Quote has changed')) {
+          errorMessage = 'Quote has changed. Please try again.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+
+      alert(errorMessage);
+    } finally {
+      setIsExecutingSwap(false);
     }
+  };
+
+  const handleCancelSwap = () => {
+    setShowConfirmation(false);
+    setIsExecutingSwap(false);
+  };
+
+  const handleTransactionStatusChange = (status: TransactionStatus) => {
+    if (currentTransaction) {
+      setCurrentTransaction({
+        ...currentTransaction,
+        status,
+      });
+    }
+  };
+
+  const handleCloseTransactionStatus = () => {
+    setShowTransactionStatus(false);
+    setCurrentTransaction(null);
   };
 
   // Show connection prompt if no wallets
@@ -465,7 +548,7 @@ export default function Swap() {
         </div>
       )}
 
-      <div className='max-w-md mx-auto space-y-6'>
+      <div className='max-w-md mx-auto space-y-6 px-4 sm:px-0'>
         {/* Header */}
         <div className='text-center'>
           <h1 className='text-2xl font-bold text-gray-900 mb-2'>Swap Tokens</h1>
@@ -602,7 +685,7 @@ export default function Swap() {
           )}
 
           {/* From Token */}
-          <div className='mb-2'>
+          <div className='mb-4'>
             <div className='flex items-center justify-between mb-2'>
               <label className='text-sm font-medium text-gray-600'>From</label>
               <div className='flex items-center space-x-2'>
@@ -620,21 +703,24 @@ export default function Swap() {
                 </button>
               </div>
             </div>
-            <div className='relative'>
+            <div className='flex items-center space-x-3 bg-gray-50 border border-gray-200 rounded-xl p-4 focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-transparent'>
               <input
                 type='text'
                 value={fromAmount}
                 onChange={(e) => setFromAmount(e.target.value)}
                 placeholder='0.0'
-                className='w-full text-2xl font-semibold bg-gray-50 border border-gray-200 rounded-xl p-4 pr-32 focus:ring-2 focus:ring-primary-500 focus:border-transparent'
+                className='flex-1 text-2xl font-semibold bg-transparent border-none outline-none w-56'
               />
-              <button className='absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center space-x-2 bg-white border border-gray-200 rounded-lg px-3 py-2 hover:bg-gray-50'>
-                <span className='text-lg'>🔷</span>
-                <span className='font-semibold'>
-                  {fromToken?.symbol || 'Select'}
-                </span>
-                <ChevronDownIcon className='w-4 h-4 text-gray-400' />
-              </button>
+              <div className='flex-1 flex-shrink-0'>
+                <TokenSelector
+                  selectedToken={fromToken}
+                  onTokenSelect={setFromToken}
+                  availableTokens={availableTokens}
+                  balances={balances}
+                  isLoadingBalances={isLoadingBalances}
+                  placeholder='Select Token'
+                />
+              </div>
             </div>
           </div>
 
@@ -693,22 +779,25 @@ export default function Swap() {
                 Balance: {getTokenBalance(toToken)} {toToken?.symbol || ''}
               </span>
             </div>
-            <div className='relative'>
+            <div className='flex items-center space-x-3 bg-gray-50 border border-gray-200 rounded-xl p-4'>
               <input
                 type='text'
                 value={toAmount}
                 onChange={(e) => setToAmount(e.target.value)}
                 placeholder={isLoadingQuote ? 'Getting quote...' : '0.0'}
-                className='w-full text-2xl font-semibold bg-gray-50 border border-gray-200 rounded-xl p-4 pr-32 cursor-not-allowed'
+                className='flex-1 text-2xl font-semibold bg-transparent border-none outline-none cursor-not-allowed w-56'
                 readOnly
               />
-              <button className='absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center space-x-2 bg-white border border-gray-200 rounded-lg px-3 py-2 hover:bg-gray-50'>
-                <span className='text-lg'>💰</span>
-                <span className='font-semibold'>
-                  {toToken?.symbol || 'Select'}
-                </span>
-                <ChevronDownIcon className='w-4 h-4 text-gray-400' />
-              </button>
+              <div className='flex-shrink-0'>
+                <TokenSelector
+                  selectedToken={toToken}
+                  onTokenSelect={setToToken}
+                  availableTokens={availableTokens}
+                  balances={balances}
+                  isLoadingBalances={isLoadingBalances}
+                  placeholder='Select Token'
+                />
+              </div>
             </div>
           </div>
 
@@ -773,17 +862,39 @@ export default function Swap() {
           </div>
         </div>
 
-        {/* Recent Swaps */}
-        <div className='bg-white rounded-xl shadow-sm border border-gray-200 p-6'>
-          <h3 className='text-lg font-semibold text-gray-900 mb-4'>
-            Recent Swaps
-          </h3>
-          <div className='text-center py-8 text-gray-500'>
-            <ArrowsRightLeftIcon className='w-12 h-12 mx-auto mb-3 text-gray-300' />
-            <p>No swap history</p>
-          </div>
-        </div>
+        {/* Swap History */}
+        <SwapHistory
+          transactions={[]} // TODO: Get from swapStore
+          onRefresh={() => {
+            // TODO: Refresh swap history
+            console.log('Refreshing swap history...');
+          }}
+          isLoading={false}
+          onViewTransaction={(transaction) => {
+            // TODO: Show transaction details
+            console.log('View transaction:', transaction);
+          }}
+        />
       </div>
+
+      {/* Swap Confirmation Dialog */}
+      {showConfirmation && quote && (
+        <SwapConfirmation
+          quote={quote}
+          onConfirm={handleConfirmSwap}
+          onCancel={handleCancelSwap}
+          isExecuting={isExecutingSwap}
+        />
+      )}
+
+      {/* Transaction Status Dialog */}
+      {showTransactionStatus && currentTransaction && (
+        <TransactionStatusComponent
+          transaction={currentTransaction}
+          onStatusChange={handleTransactionStatusChange}
+          onClose={handleCloseTransactionStatus}
+        />
+      )}
     </DashboardLayout>
   );
 }

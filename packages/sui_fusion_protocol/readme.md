@@ -80,13 +80,13 @@ pnpm install
 ## Diagrams
 
 ### Cross Chain Swap Overview
-![Cross Chain Swap Diagram](../../Cross%20Chain%20Swap%20Diagram.svg)
+![Cross Chain Swap Diagram](./Cross%20Chain%20Swap%20Diagram.svg)
 
 ### EVM to SUI Flow
-![EVM to SUI](../../evm-to-sui.svg)
+![EVM to SUI](./evm-to-sui.svg)
 
 ### SUI to EVM Flow
-![SUI to EVM](../../sui-to-evm.svg)
+![SUI to EVM](./sui-to-evm.svg)
 
 ## Notes
 

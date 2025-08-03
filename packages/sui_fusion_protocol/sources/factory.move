@@ -4,7 +4,6 @@ use sui::{
     clock::{Self, Clock},
     coin::{Self, Coin},
     event,
-    hash,
     object_table::{Self, ObjectTable},
     sui::SUI
 };
@@ -148,7 +147,7 @@ public fun withdraw_dst<T>(
     assert!(escrow.is_taker(ctx.sender()), EInvalidTaker);
 
     let now = clock::timestamp_ms(clock);
-    assert!(now >= escrow.timelocks().dst_public_withdrawal(), EInvalidTimestamp);
+    assert!(now >= escrow.timelocks().dst_withdrawal(), EInvalidTimestamp);
     assert!(now < escrow.timelocks().dst_cancellation(), EInvalidTimestamp);
     assert!(escrow.verify_secret(secret), EInvalidSecret);
 
@@ -332,7 +331,7 @@ public fun create_dst_escrow<Token>(
         dst_cancellation,
     );
 
-    assert!(timelocks.dst_cancellation() < src_cancellation, EInvalidCreationTime);
+    assert!(timelocks.dst_cancellation() < timelocks.src_cancellation(), EInvalidCreationTime);
 
     let resolver = find_resolver(self, resolver_owner_cap);
     let taker = resolver.maker();

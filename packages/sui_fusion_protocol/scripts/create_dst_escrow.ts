@@ -6,6 +6,7 @@ import {
     getDeveloper,
     getEnv,
     getResolverOwnerCaps,
+    hexToUint8Array,
     PACKAGE_ID,
 } from "./utils";
 import { SUI_CLOCK_OBJECT_ID, SUI_TYPE_ARG, toBase64 } from "@mysten/sui/utils";
@@ -94,18 +95,20 @@ async function main() {
 
     const secret = generateRandomBytesNode(32);
     const hashlock = keccak_256(secret);
-    const orderHash = generateRandomBytesNode(32); // Generate a random order hash
+    const orderHash = hexToUint8Array(
+        "18849117470fd765949f46f1dfbe5cdbc25d889ef4c3731fbcf8819c5e4e47d8",
+    );
     const maker = "0xa1574d9f6f883b386a31a50ab27a41f10ba0d28f12f492e0613cdaf143fb4eae"; // Assuming the maker is the sender for this example
     const depositAmount = 1_000; // Replace with actual deposit amount
     const depositTokenType = SUI_TYPE_ARG;
     const safetyDepositAmount = 1_000_000; // Replace with actual safety deposit amount
     const srcWithdrawlTimelock = 300;
     const srcPublicWithdrawlTimelock = 600;
-    const srcCancellationTimelock = 901;
-    const srcPublicCancellationTimelock = 1200;
+    const srcCancellationTimelock = 60 * 1000 * 5 + 1000;
+    const srcPublicCancellationTimelock = 60 * 1000 * 5 + 1000;
     const dstWithdrawlTimelock = 301;
     const dstPublicWithdrawlTimelock = 601;
-    const dstCancellationTimelock = 900;
+    const dstCancellationTimelock = 60 * 1000 * 5; // 5 minutes in milliseconds
 
     console.log("Secret: ", secret, toBase64(secret));
     console.log("HashLock: ", hashlock, toBase64(hashlock));

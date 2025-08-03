@@ -20,7 +20,7 @@ public struct ResolverCreated has copy, drop {
 
 // === Functions ===
 
-public fun create_resolver(escrow_factory_id: ID, ctx: &mut TxContext): Resolver {
+public(package) fun create_resolver(escrow_factory_id: ID, ctx: &mut TxContext): Resolver {
     let resolver = Resolver {
         id: object::new(ctx),
         escrow_factory_id: escrow_factory_id,
@@ -36,7 +36,7 @@ public fun create_resolver(escrow_factory_id: ID, ctx: &mut TxContext): Resolver
     resolver
 }
 
-public fun maker(self: &Resolver): address {
+public(package) fun maker(self: &Resolver): address {
     self.maker
 }
 

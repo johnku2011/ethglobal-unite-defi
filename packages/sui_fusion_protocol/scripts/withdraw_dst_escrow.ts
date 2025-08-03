@@ -1,7 +1,7 @@
 import { getFullnodeUrl, SuiClient } from "@mysten/sui/client";
 import { Transaction } from "@mysten/sui/transactions";
-import { ESCROW_FACTORY_ID, getDeveloper, getEnv, PACKAGE_ID } from "./utils";
-import { fromBase64, SUI_CLOCK_OBJECT_ID, SUI_TYPE_ARG } from "@mysten/sui/utils";
+import { ESCROW_FACTORY_ID, getDeveloper, getEnv, hexToUint8Array, PACKAGE_ID } from "./utils";
+import { fromBase58, fromBase64, SUI_CLOCK_OBJECT_ID, SUI_TYPE_ARG } from "@mysten/sui/utils";
 import { bcs } from "@mysten/sui/bcs";
 
 export type InputParams = {
@@ -39,8 +39,13 @@ async function main() {
 
     tx.setSender(sender);
 
-    const orderHash = fromBase64("hbUKZt5OEqwVkx7hNd9ipToiAijpOAHJfXVp9go1pL8=");
-    const secret = fromBase64("u9ct82p46WvF6/n0acAy5ZSre7xZ56y+PDcpWqPQ/VQ=");
+    const orderHash = hexToUint8Array(
+        "18849117470fd765949f46f1dfbe5cdbc25d889ef4c3731fbcf8819c5e4e47d8",
+    );
+    const secret = Uint8Array.from([
+        181, 130, 141, 112, 234, 114, 200, 55, 95, 110, 206, 190, 224, 213, 140, 101, 148, 206, 198,
+        132, 33, 234, 37, 63, 232, 75, 217, 111, 149, 112, 187, 31,
+    ]);
     tx.add(
         withdrawDstEscrow({
             escrowFactoryId: ESCROW_FACTORY_ID,

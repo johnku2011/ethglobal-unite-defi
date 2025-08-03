@@ -109,3 +109,19 @@ export const createOrder = async (hashLock: string) => {
     );
     return order;
 };
+
+
+export function hexToUint8Array(hexString: string): Uint8Array {
+    if (hexString.length % 2 !== 0) {
+        throw new Error('Hex string must have an even number of characters.')
+    }
+
+    const bytes = new Uint8Array(hexString.length / 2)
+
+    for (let i = 0; i < hexString.length; i += 2) {
+        const byteString = hexString.substring(i, i + 2)
+        bytes[i / 2] = parseInt(byteString, 16)
+    }
+
+    return bytes
+}

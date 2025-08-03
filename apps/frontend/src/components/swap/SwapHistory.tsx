@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   ClockIcon,
   CheckCircleIcon,
@@ -9,7 +9,8 @@ import {
   ArrowPathIcon,
   EyeIcon,
 } from '@heroicons/react/24/outline';
-import type { SwapTransaction, TransactionStatus } from '@/types';
+import type { SwapTransaction } from '@/types';
+import { TransactionStatus } from '@/types';
 
 interface SwapHistoryProps {
   transactions: SwapTransaction[];

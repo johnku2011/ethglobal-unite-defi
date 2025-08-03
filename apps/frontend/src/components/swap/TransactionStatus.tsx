@@ -7,7 +7,8 @@ import {
   ClockIcon,
   ArrowPathIcon,
 } from '@heroicons/react/24/outline';
-import type { SwapTransaction, TransactionStatus } from '@/types';
+import type { SwapTransaction } from '@/types';
+import { TransactionStatus } from '@/types';
 
 interface TransactionStatusProps {
   transaction: SwapTransaction;
@@ -52,6 +53,14 @@ const TransactionStatusComponent: React.FC<TransactionStatusProps> = ({
       borderColor: 'border-red-200',
       title: 'Transaction Failed',
       description: 'Your swap transaction failed. Please try again.',
+    },
+    [TransactionStatus.CANCELLED]: {
+      icon: ExclamationCircleIcon,
+      color: 'text-gray-600',
+      bgColor: 'bg-gray-50',
+      borderColor: 'border-gray-200',
+      title: 'Transaction Cancelled',
+      description: 'Your swap transaction was cancelled.',
     },
   };
 
@@ -107,11 +116,6 @@ const TransactionStatusComponent: React.FC<TransactionStatusProps> = ({
   const formatAmount = (amount: string, decimals: number) => {
     const value = parseFloat(amount) / Math.pow(10, decimals);
     return value.toFixed(6);
-  };
-
-  const formatGasPrice = (gasPrice: string) => {
-    const price = parseInt(gasPrice, 16) / Math.pow(10, 9);
-    return `${price.toFixed(2)} Gwei`;
   };
 
   return (
@@ -210,13 +214,14 @@ const TransactionStatusComponent: React.FC<TransactionStatusProps> = ({
               <div className='flex items-center justify-between'>
                 <span className='text-xs text-gray-500'>Transaction Hash:</span>
                 <a
-                  href={`https://etherscan.io/tx/${transaction.txHash}`}
+                  href={`https://etherscan.io/tx/${transaction.txHash || ''}`}
                   target='_blank'
                   rel='noopener noreferrer'
                   className='text-xs text-blue-600 hover:text-blue-800 truncate ml-2'
                 >
-                  {transaction.txHash.slice(0, 8)}...
-                  {transaction.txHash.slice(-6)}
+                  {transaction.txHash
+                    ? `${transaction.txHash.slice(0, 8)}...${transaction.txHash.slice(-6)}`
+                    : 'Pending...'}
                 </a>
               </div>
             </div>
@@ -230,9 +235,9 @@ const TransactionStatusComponent: React.FC<TransactionStatusProps> = ({
                 <div className='font-medium'>{transaction.gasUsed}</div>
               </div>
               <div>
-                <span className='text-gray-500'>Gas Price:</span>
+                <span className='text-gray-500'>Gas Used:</span>
                 <div className='font-medium'>
-                  {formatGasPrice(transaction.gasPrice || '0x0')}
+                  {transaction.gasUsed || 'Unknown'}
                 </div>
               </div>
               <div>

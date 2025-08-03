@@ -28,6 +28,26 @@ To run tests you need to provide fork urls for Ethereum and Bsc
 SRC_CHAIN_RPC=ETH_FORK_URL DST_CHAIN_RPC=BNB_FORK_URL pnpm test
 ```
 
+### Run cross-chain swap tests
+
+To run the EVM-to-SUI and SUI-to-EVM integration tests:
+
+```shell
+pnpm test-evm-to-sui
+pnpm test-sui-to-evm
+```
+
+Or using Makefile targets:
+
+```shell
+make test-evm-to-sui
+make test-sui-to-evm
+```
+
+These will execute:
+- `tests/evm-to-sui.spec.ts` (EVM to SUI swap flow)
+- `tests/sui-to-evm.spec.ts` (SUI to EVM swap flow)
+
 ### Public rpc
 
 | Chain    | Url                          |

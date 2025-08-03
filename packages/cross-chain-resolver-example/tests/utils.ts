@@ -238,7 +238,7 @@ export async function createDstEscrow({
         dstPublicWithdrawal: bigint
         dstCancellation: bigint
     }
-}): Promise<string | undefined> {
+}) {
     const tx = new Transaction()
 
     const resolverOwnerCapId = '0x73f386db551d895b847f63fe34a618099c7950b8b4445305ec98afffe5f6a2e5'
@@ -269,7 +269,7 @@ export async function createDstEscrow({
         options: {showEffects: true, showObjectChanges: true}
     })
 
-    return res.objectChanges?.find((change) => change.type === 'created')?.objectId
+    return res
 }
 
 export type WithdrawParams = {

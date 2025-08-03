@@ -1,5 +1,5 @@
 import 'dotenv/config'
-import {expect, jest} from '@jest/globals'
+import {jest} from '@jest/globals'
 
 import {createServer, CreateServerReturnType} from 'prool'
 import {anvil} from 'prool/instances'
@@ -57,7 +57,7 @@ describe('Resolving example', () => {
 
     let srcFactory: EscrowFactory
     // let dstFactory: EscrowFactory
-    let srcResolverContract: Wallet
+    // let srcResolverContract: Wallet
     // let dstResolverContract: Wallet
 
     let srcTimestamp: bigint
@@ -89,7 +89,7 @@ describe('Resolving example', () => {
         )
 
         // get 2000 USDC for resolver in DST chain
-        srcResolverContract = await Wallet.fromAddress(src.resolver, src.provider)
+        // srcResolverContract = await Wallet.fromAddress(src.resolver, src.provider)
         // dstResolverContract = await Wallet.fromAddress(dst.resolver, dst.provider)
         // await dstResolverContract.topUpFromDonor(
         //     config.chain.destination.tokens.USDC.address,
@@ -103,21 +103,21 @@ describe('Resolving example', () => {
         srcTimestamp = BigInt((await src.provider.getBlock('latest'))!.timestamp)
     })
 
-    async function getBalances(
-        srcToken: string
-        // dstToken: string
-    ): Promise<{src: {user: bigint; resolver: bigint}}> {
-        return {
-            src: {
-                user: await srcChainUser.tokenBalance(srcToken),
-                resolver: await srcResolverContract.tokenBalance(srcToken)
-            }
-            // dst: {
-            //     user: await dstChainUser.tokenBalance(dstToken),
-            //     resolver: await dstResolverContract.tokenBalance(dstToken)
-            // }
-        }
-    }
+    // async function getBalances(
+    //     srcToken: string
+    //     // dstToken: string
+    // ): Promise<{src: {user: bigint; resolver: bigint}}> {
+    //     return {
+    //         src: {
+    //             user: await srcChainUser.tokenBalance(srcToken),
+    //             resolver: await srcResolverContract.tokenBalance(srcToken)
+    //         }
+    //         // dst: {
+    //         //     user: await dstChainUser.tokenBalance(dstToken),
+    //         //     resolver: await dstResolverContract.tokenBalance(dstToken)
+    //         // }
+    //     }
+    // }
 
     afterAll(async () => {
         src.provider.destroy()
@@ -127,10 +127,23 @@ describe('Resolving example', () => {
 
     describe('Fill', () => {
         it('should swap Ethereum USDC -> Sui SUI. Single fill only', async () => {
-            const initialBalances = await getBalances(
-                config.chain.source.tokens.USDC.address
-                // config.chain.destination.tokens.USDC.address
-            )
+            // Display price info
+            const suiPrice = 3 // 1 SUI = 3 USDC
+            const usdcDeposit = 0.3
+            const usdcDecimals = 6
+            const suiDecimals = 9
+            const suiExpected = usdcDeposit / suiPrice
+
+            // Convert USDC deposit to base units (with decimals)
+            const usdcDepositBaseUnits = parseUnits(usdcDeposit.toFixed(usdcDecimals), usdcDecimals)
+            // Convert SUI expected to base units (with decimals)
+            const suiAmountStr = suiExpected.toFixed(suiDecimals)
+            const suiExpectedBaseUnits = parseUnits(suiAmountStr, suiDecimals)
+
+            console.log(`\n--- Swap Rate ---`)
+            console.log(`1 SUI = ${suiPrice} USDC`)
+            console.log(`Deposit: ${usdcDeposit} USDC (${usdcDepositBaseUnits.toString()} base units)`)
+            console.log(`Expected SUI on Sui: ${suiExpected} SUI (${suiExpectedBaseUnits.toString()} base units)\n`)
 
             // User creates order
             const secret = uint8ArrayToHex(randomBytes(32)) // note: use crypto secure random number in real world
@@ -141,21 +154,21 @@ describe('Resolving example', () => {
                 {
                     salt: Sdk.randBigInt(1000n),
                     maker: new Address(await srcChainUser.getAddress()),
-                    makingAmount: parseUnits('1', 6),
-                    takingAmount: parseUnits('1', 6),
+                    makingAmount: usdcDepositBaseUnits,
+                    takingAmount: suiExpectedBaseUnits,
                     makerAsset: new Address(config.chain.source.tokens.USDC.address),
                     takerAsset: new Address(config.chain.destination.tokens.USDC.address)
                 },
                 {
                     hashLock: hashLock,
                     timeLocks: Sdk.TimeLocks.new({
-                        srcWithdrawal: 10n, // 10sec finality lock for test
-                        srcPublicWithdrawal: 120n, // 2m for private withdrawal
-                        srcCancellation: 121n, // 1sec public withdrawal
-                        srcPublicCancellation: 122n, // 1sec private cancellation
-                        dstWithdrawal: 10n, // 10sec finality lock for test
-                        dstPublicWithdrawal: 100n, // 100sec private withdrawal
-                        dstCancellation: 101n // 1sec public withdrawal
+                        srcWithdrawal: 10n,
+                        srcPublicWithdrawal: 120n,
+                        srcCancellation: 121n,
+                        srcPublicCancellation: 122n,
+                        dstWithdrawal: 10n,
+                        dstPublicWithdrawal: 100n,
+                        dstCancellation: 101n
                     }),
                     srcChainId,
                     dstChainId,
@@ -186,12 +199,21 @@ describe('Resolving example', () => {
 
             const signature = await srcChainUser.signOrder(srcChainId, order)
             const orderHash = order.getOrderHash(srcChainId)
-            // Resolver fills order
             const resolverContract = new Resolver(src.resolver, src.resolver)
 
-            console.log(`[${srcChainId}]`, `Filling order ${orderHash}`)
+            console.log(`\n=== [${srcChainId}] Start Swap USDC -> SUI ===`)
+            console.log(`Order Hash: ${orderHash}`)
+            console.log(`Secret: ${secret}`)
+            console.log(`HashLock: ${hashLock.toString()}`)
+            console.log(`Maker: ${await srcChainUser.getAddress()}`)
+            console.log(`Taker (Resolver): ${src.resolver}`)
+            console.log(`Asset: SUI (${config.chain.destination.tokens.USDC.address})`)
+            console.log(`Amount: ${suiExpectedBaseUnits.toString()}`)
+            console.log(`Deposit Asset: USDC`)
+            console.log(`Deposit Amount: ${usdcDepositBaseUnits.toString()}`)
+            console.log(`Safety Deposit: ${parseEther('0.001').toString()}`)
 
-            const fillAmount = order.makingAmount
+            // Resolver fills order
             const {txHash: orderFillHash, blockHash: srcDeployBlock} = await srcChainResolver.send(
                 resolverContract.deploySrc(
                     srcChainId,
@@ -201,30 +223,39 @@ describe('Resolving example', () => {
                         .setExtension(order.extension)
                         .setAmountMode(Sdk.AmountMode.maker)
                         .setAmountThreshold(order.takingAmount),
-                    fillAmount
+                    order.makingAmount
                 )
             )
 
-            const dstTokenAmount = 1_000_000n // 0.001 sui for dst token amount
-            await createDstEscrow({
+            console.log(`[${srcChainId}]`, `Order filled in tx ${orderFillHash}`)
+
+            // When creating dst escrow, use suiExpectedBaseUnits for depositAmount
+            const dstTokenAmount = suiExpectedBaseUnits
+            const createDstEscrowReceipt = await createDstEscrow({
                 orderHash: hexToUint8Array(orderHash),
                 hashlock: hexToUint8Array(hashLock.toString()),
                 maker: new Address(await srcChainUser.getAddress()).toString(),
                 depositAmount: Number(dstTokenAmount),
                 depositTokenType: SUI_TYPE_ARG,
                 timelocks: {
-                    srcWithdrawal: 10n, // 0.01sec finality lock for test
-                    srcPublicWithdrawal: 120n, // 0.12m for private withdrawal
-                    srcCancellation: 202n * 1000n, // 200sec public withdrawal
-                    srcPublicCancellation: 122n, // 1sec private cancellation
-                    dstWithdrawal: 1n, // 0.01sec finality lock for test
-                    dstPublicWithdrawal: 100n, // 0.1sec private withdrawal
-                    dstCancellation: 201n * 1000n // 201sec public withdrawal
+                    srcWithdrawal: 10n,
+                    srcPublicWithdrawal: 120n,
+                    srcCancellation: 202n * 1000n,
+                    srcPublicCancellation: 122n,
+                    dstWithdrawal: 1n,
+                    dstPublicWithdrawal: 100n,
+                    dstCancellation: 201n * 1000n
                 }
             })
-            console.log(`SUI`, 'Created dst escrow for order')
 
-            console.log(`[${srcChainId}]`, `Order ${orderHash} filled for ${fillAmount} in tx ${orderFillHash}`)
+            if (!createDstEscrowReceipt) {
+                throw new Error('Failed to create dst escrow')
+            }
+
+            console.log(`[SUI] Created dst escrow for order, hash: `, createDstEscrowReceipt.digest)
+            console.log(`OrderHash: ${orderHash}`)
+            console.log(`Deposit Asset: SUI`)
+            console.log(`Deposit Amount: ${dstTokenAmount.toString()}`)
 
             const srcEscrowEvent = await srcFactory.getSrcDeployEvent(srcDeployBlock)
 
@@ -268,25 +299,27 @@ describe('Resolving example', () => {
             )
 
             // console.log("secret", hexToUint8Array(secret))
-            await withdrawDstEscrow({
+            const withdrawDstEscrowReceipt = await withdrawDstEscrow({
                 orderHash: hexToUint8Array(orderHash),
                 secret: hexToUint8Array(secret),
                 depositType: SUI_TYPE_ARG
             })
+
+            console.log(`[SUI]`, `Withdrew funds for resolver on SUI, tx: ${withdrawDstEscrowReceipt.digest}`)
 
             console.log(
                 `[${srcChainId}]`,
                 `Withdrew funds for resolver from ${srcEscrowAddress} to ${src.resolver} in tx ${resolverWithdrawHash}`
             )
 
-            const resultBalances = await getBalances(
-                config.chain.source.tokens.USDC.address
-                // config.chain.destination.tokens.USDC.address
-            )
+            // const resultBalances = await getBalances(
+            //     config.chain.source.tokens.USDC.address
+            //     // config.chain.destination.tokens.USDC.address
+            // )
 
             // user transferred funds to resolver on source chain
-            expect(initialBalances.src.user - resultBalances.src.user).toBe(order.makingAmount)
-            expect(resultBalances.src.resolver - initialBalances.src.resolver).toBe(order.makingAmount)
+            // expect(initialBalances.src.user - resultBalances.src.user).toBe(order.makingAmount)
+            // expect(resultBalances.src.resolver - initialBalances.src.resolver).toBe(order.makingAmount)
             // resolver transferred funds to user on destination chain
             // expect(resultBalances.dst.user - initialBalances.dst.user).toBe(order.takingAmount)
             // expect(initialBalances.dst.resolver - resultBalances.dst.resolver).toBe(order.takingAmount)

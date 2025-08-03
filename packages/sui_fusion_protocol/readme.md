@@ -97,3 +97,10 @@ pnpm install
     make list
     make run SCRIPT=create_dst_escrow.ts
     ```
+
+## Sui Testnet Deployment
+
+- **Sui Testnet Package**
+  - `PACKAGE_ID=0x61b76704d27522ce6d3e643227ce3ef5afc79fddbcc580fafaf5a9643b5ad8a8`
+  - `ESCROW_FACTORY_ID=0x552f8e3054c1cb2fba8fc40b43b44c3c4e7231829d742dc0a87d2fb768caf08e`
+  - [View on SuiVision](https://testnet.suivision.xyz/package/0x61b76704d27522ce6d3e643227ce3ef5afc79fddbcc580fafaf5a9643b5ad8a8)

@@ -25,7 +25,7 @@ import {ChainConfig, config} from './config'
 import {Wallet} from './wallet'
 import {Resolver} from './resolver'
 import {EscrowFactory} from './escrow-factory'
-import {createDstEscrow, createSrcEscrow, withdrawSrcEscrow} from './utils'
+import {createSrcEscrow, withdrawSrcEscrow} from './utils'
 import factoryContract from '../dist/contracts/TestEscrowFactory.sol/TestEscrowFactory.json'
 import resolverContract from '../dist/contracts/Resolver.sol/Resolver.json'
 
@@ -123,10 +123,10 @@ describe('Resolving example', () => {
             parseUnits('10', 6)
         )
 
-        const resolverInstance = new Resolver(
-            dst.resolver, // srcAddress == dstAddress [Resolver Contract]
-            dst.resolver
-        )
+        // const resolverInstance = new Resolver(
+        //     dst.resolver, // srcAddress == dstAddress [Resolver Contract]
+        //     dst.resolver
+        // )
         const usdcInterface = new Interface(['function approve(address spender, uint256 amount) returns (bool)'])
         const approveCalldata = usdcInterface.encodeFunctionData('approve', [
             dst.escrowFactory, // Approve the factory
@@ -151,26 +151,46 @@ describe('Resolving example', () => {
 
     describe('Fill', () => {
         it('should swap Sui SUI -> Ethereum USDC. Single fill only', async () => {
+            // Display price info
+            const suiPrice = 3n // 1 SUI = 3 USDC
+            const suiDeposit = parseUnits('0.01', 9) // 0.1 SUI in base units
+            const usdcExpected = (suiDeposit * suiPrice) / 10n ** 6n // Convert to USDC base units
+            console.log(`\n--- Swap Rate ---`)
+            console.log(`1 SUI = ${suiPrice} USDC`)
+            console.log(`Deposit: ${suiDeposit} SUI`)
+            console.log(`Expected USDC on EVM: ${usdcExpected} USDC\n`)
+
             // User creates order
             const secret = uint8ArrayToHex(randomBytes(32)) // note: use crypto secure random number in real world
             const hashLock = Sdk.HashLock.forSingleFill(secret)
 
             const timeLocks = Sdk.TimeLocks.new({
-                srcWithdrawal: 10n, // 10sec finality lock for test
-                srcPublicWithdrawal: 120n, // 2m for private withdrawal
-                srcCancellation: 121n, // 1sec public withdrawal
-                srcPublicCancellation: 122n, // 1sec private cancellation
-                dstWithdrawal: 10n, // 10sec finality lock for test
-                dstPublicWithdrawal: 100n, // 100sec private withdrawal
-                dstCancellation: 101n // 1sec public withdrawal,
+                srcWithdrawal: 10n,
+                srcPublicWithdrawal: 120n,
+                srcCancellation: 121n,
+                srcPublicCancellation: 122n,
+                dstWithdrawal: 10n,
+                dstPublicWithdrawal: 100n,
+                dstCancellation: 101n
             })
             timeLocks.setDeployedAt(BigInt((await dstChainUser.provider.getBlock('latest'))!.timestamp))
 
             const orderHash = uint8ArrayToHex(randomBytes(32))
-            // Resolver fills order
             const resolverContract = new Resolver(dst.resolver, dst.resolver)
 
-            console.log(`[${dstChainId}]`, `Filling order ${orderHash}`)
+            console.log(`\n=== [${dstChainId}] Start Swap SUI -> USDC ===`)
+            console.log(`Order Hash: ${orderHash}`)
+            console.log(`Secret: ${secret}`)
+            console.log(`HashLock: ${hashLock.toString()}`)
+            console.log(`Maker: ${await dstChainUser.getAddress()}`)
+            console.log(`Taker (Resolver): ${dst.resolver}`)
+            console.log(`Asset: USDC (${config.chain.destination.tokens.USDC.address})`)
+            // Format USDC amount to 6 decimals max for parseUnits
+
+            console.log(`Amount: ${usdcExpected}`)
+            console.log(`Deposit Asset: SUI`)
+            console.log(`Deposit Amount: ${suiDeposit}`)
+            console.log(`Safety Deposit: ${parseEther('0.01').toString()}`)
 
             const dstImmutables = Immutables.new({
                 orderHash: orderHash,
@@ -178,7 +198,7 @@ describe('Resolving example', () => {
                 maker: new Address(await dstChainUser.getAddress()),
                 taker: new Address(dst.resolver),
                 token: new Address(config.chain.destination.tokens.USDC.address),
-                amount: parseUnits('10', 6), // 2 USDC
+                amount: usdcExpected, // 0.35 USDC
                 safetyDeposit: parseEther('0.01'),
                 timeLocks: timeLocks
             })
@@ -187,27 +207,30 @@ describe('Resolving example', () => {
                 resolverContract.deployDst(dstImmutables)
             )
 
-            console.log(`[${dstChainId}]`, `Order ${orderHash} filled with tx ${orderFillHash}`)
-            const dstTokenAmount = 1_000_000n // 0.001 sui for dst token amount
+            console.log(`[${dstChainId}] Order filled on chain`)
+            console.log(`TxHash: ${orderFillHash}`)
+            console.log(`BlockTimestamp: ${dstDeployedAt}`)
+
             await createSrcEscrow({
                 orderHash: hexToUint8Array(orderHash),
                 hashlock: hexToUint8Array(hashLock.toString()),
                 maker: new Address(await dstChainUser.getAddress()).toString(),
-                depositAmount: Number(dstTokenAmount),
+                depositAmount: Number(suiDeposit),
                 depositTokenType: SUI_TYPE_ARG,
                 timelocks: {
-                    srcWithdrawal: 1n, // 0.01sec finality lock for test
-                    srcPublicWithdrawal: 120n, // 0.12m for private withdrawal
-                    srcCancellation: 202n * 1000n, // 200sec public withdrawal
-                    srcPublicCancellation: 122n, // 1sec private cancellation
-                    dstWithdrawal: 1n, // 0.01sec finality lock for test
-                    dstPublicWithdrawal: 100n, // 0.1sec private withdrawal
-                    dstCancellation: 201n * 1000n // 201sec public withdrawal
+                    srcWithdrawal: 1n,
+                    srcPublicWithdrawal: 120n,
+                    srcCancellation: 300n * 1000n,
+                    srcPublicCancellation: 122n,
+                    dstWithdrawal: 1n,
+                    dstPublicWithdrawal: 100n,
+                    dstCancellation: 201n * 1000n
                 }
             })
-            console.log(`SUI`, 'Created dst escrow for order')
-
-            // console.log(`[${dstChainId}]`, `Depositing ${dstImmutables.amount} for order ${orderHash}`)
+            console.log(`[SUI] Created src escrow for order`)
+            console.log(`OrderHash: ${orderHash}`)
+            console.log(`Deposit Asset: SUI`)
+            console.log(`Deposit Amount: ${suiDeposit.toString()}`)
 
             const ESCROW_DST_IMPLEMENTATION = await dstFactory.getDestinationImpl()
             const escrowFactory = new Sdk.EscrowFactory(new Address(dst.escrowFactory))
@@ -217,18 +240,29 @@ describe('Resolving example', () => {
             )
 
             await increaseTime(10)
-            await setTimeout(() => {}, 1000) // wait for 1 sec to ensure time lock is passed
+            await setTimeout(() => {}, 1000)
+            console.log(`Simulating src escrow withdrawal`)
 
-            await withdrawSrcEscrow({
+            const withdrawSrcEscrowReceipt = await withdrawSrcEscrow({
                 orderHash: hexToUint8Array(orderHash),
                 secret: hexToUint8Array(secret),
                 depositType: SUI_TYPE_ARG
             })
-            // // User shares key after validation of dst escrow deployment
-            console.log(`[${dstChainId}]`, `Withdrawing funds for user from ${dstEscrowAddress}`)
-            await dstChainResolver.send(
+
+            console.log(`[SUI] Withdrawn src escrow for order, hash:`, withdrawSrcEscrowReceipt.digest)
+            console.log(`OrderHash: ${orderHash}`)
+            console.log(`Secret Used: ${secret}`)
+
+            console.log(`[${dstChainId}] Withdrawing funds for user from dst escrow`)
+            console.log(`DstEscrowAddress: ${dstEscrowAddress}`)
+            const {txHash: withdrawTxHash} = await dstChainResolver.send(
                 resolverContract.withdraw('dst', dstEscrowAddress, secret, dstImmutables.withDeployedAt(dstDeployedAt))
             )
+            console.log(`[${dstChainId}] Withdrawn funds from dst escrow`)
+            console.log(`TxHash: ${withdrawTxHash}`)
+            console.log(`Asset: USDC (${config.chain.destination.tokens.USDC.address})`)
+            console.log(`Amount: ${parseUnits(usdcExpected.toString(), 6).toString()}`)
+            console.log(`=== [${dstChainId}] End Swap SUI -> USDC ===\n`)
         })
     })
 })

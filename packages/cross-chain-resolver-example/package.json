@@ -4,6 +4,8 @@
   "description": "Example of 1inch cross chain resolver",
   "scripts": {
     "test": "forge build && node --experimental-vm-modules ./node_modules/jest/bin/jest.js",
+    "test:sui-to-evm": "forge build && node --experimental-vm-modules ./node_modules/jest/bin/jest.js ./tests/sui-to-evm.spec.ts",
+    "test:evm-to-sui": "forge build && node --experimental-vm-modules ./node_modules/jest/bin/jest.js ./tests/evm-to-sui.spec.ts",
     "lint": "eslint  \"tests/**/*.ts\""
   },
   "devDependencies": {

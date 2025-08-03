@@ -10,7 +10,6 @@ import {
 } from "./utils";
 import { SUI_CLOCK_OBJECT_ID, SUI_TYPE_ARG, toBase64 } from "@mysten/sui/utils";
 import { bcs } from "@mysten/sui/bcs";
-import { keccak256 } from "ethers";
 import { keccak_256 } from "@noble/hashes/sha3";
 
 export type InputParams = {
@@ -31,7 +30,7 @@ export type InputParams = {
     dstCancellationTimelock: number; // Timelock for the cancellation of the destination escrow
 };
 
-function createSrcEscrow(params: InputParams) {
+export function createSrcEscrow(params: InputParams) {
     const {
         escrowFactoryId,
         resolverOwnerCapId,

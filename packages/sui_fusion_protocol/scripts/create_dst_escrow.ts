@@ -8,7 +8,7 @@ import {
     getResolverOwnerCaps,
     PACKAGE_ID,
 } from "./utils";
-import { fromBase64, SUI_CLOCK_OBJECT_ID, SUI_TYPE_ARG, toBase64 } from "@mysten/sui/utils";
+import { SUI_CLOCK_OBJECT_ID, SUI_TYPE_ARG, toBase64 } from "@mysten/sui/utils";
 import { bcs } from "@mysten/sui/bcs";
 import { keccak_256 } from "@noble/hashes/sha3";
 
